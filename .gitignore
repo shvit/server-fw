@@ -1,0 +1,10 @@
+.cproject
+.project
+.settings/
+latex/
+log/
+obj/
+test_directory_*
+server_fw
+server_fw.pdf
+test

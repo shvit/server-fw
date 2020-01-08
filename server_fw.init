@@ -1,0 +1,128 @@
+#!/bin/sh
+if [ true != "$INIT_D_SCRIPT_SOURCED" ] ; then
+    set "$0" "$@"; INIT_D_SCRIPT_SOURCED=true . /lib/init/init-d-script
+fi
+### BEGIN INIT INFO
+# Provides:          server_fw
+# Required-Start:    $local_fs $remote_fs $syslog $network
+# Required-Stop:     $local_fs $remote_fs $syslog $network
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Firmware TFTP server
+# Description:       Simple TFTP with feature recursive search file by MD5-sum (in *.md5 files).
+#                    In future - will serach firmware in Firebird SQL server
+### END INIT INFO
+
+# Author: Vitaliy Shirinkin <vitaliy.shirinkin@gmail.com>
+# 2019
+
+NAME="server_fw"
+DESC="tftp firmware server"
+
+DAEMON="/usr/sbin/$NAME"
+SCRIPTNAME="/etc/init.d/$NAME"
+PIDFILE="/var/run/$NAME.pid"
+DEFNAME="/etc/default/$NAME"
+
+. /lib/lsb/init-functions
+
+test -f "$DEFNAME" && . "$DEFNAME"
+
+#wait_rsyslogd(){
+#  local counter=0
+#  local fl_echo=0
+#  while [ -z $(pidof rsyslogd) ]; do
+#    if [ $fl_echo -eq 0 ]; then
+#      echo "Waiting rsyslogd (up to $WAIT_TIME sec) ..."
+#      fl_echo=1
+#    fi
+#    sleep 1
+#    counter=`expr $counter + 1`
+#    if [ $counter -ge $WAIT_TIME ]; then
+#      break
+#    fi
+#  done
+#}
+
+d_start() {
+#  wait_rsyslogd
+
+  local ARG=""
+
+  # IPV4
+  if [ ! -z "$IP" ]; then
+    ARG="$ARG --listen $IP"
+  else
+    echo "Address not configured in file /etc/default/$NAME"
+    exit 1
+  fi
+
+  # ROOT_DIR
+  if [ ! -z "$ROOT_DIR" ]; then
+    ARG="$ARG --root-dir $ROOT_DIR"
+  else
+    echo "Server root dir not configured in file /etc/default/$NAME"
+    exit 1
+  fi
+ 
+  # SYSLOG
+  if [ ! -z "$SYSLOG" ]; then
+    ARG="$ARG --syslog $SYSLOG"
+  fi
+
+  # SERACH
+  for dir in $SERACH; do
+    if [ -d "$dir" ]; then
+      ARG="$ARG --search $dir"
+    fi
+  done
+
+  ARG="$ARG --daemon"
+  /usr/bin/logger -p 1 "Arguments $NAME: $ARG"
+  start-stop-daemon --start --quiet --oknodo --exec $DAEMON -- $ARG
+  sleep 1
+}
+
+d_stop() {
+  start-stop-daemon --stop --quiet --oknodo --name $NAME
+}
+
+d_restart() {
+  d_stop
+  d_start
+}
+
+case "$1" in
+    start)
+      init_is_upstart > /dev/null 2>&1 && exit 1
+      
+      log_daemon_msg "Starting $DESC" "$NAME"
+      d_start > /dev/null
+      log_end_msg $?
+      ;;
+    stop)
+      init_is_upstart > /dev/null 2>&1 && exit 0
+      
+      log_daemon_msg "Stopping $DESC" "$NAME"
+      d_stop
+      log_end_msg $?
+      ;;
+    status)
+      status_of_proc $DAEMON $NAME
+      ;;
+    restart)
+      init_is_upstart > /dev/null 2>&1 && exit 1
+      
+      log_daemon_msg "Restarting $DESC" "$NAME"
+      d_stop
+      sleep 1
+      d_start > /dev/null
+      log_end_msg $?
+      ;;
+    *)
+      echo "Usage: $SCRIPTNAME {start|stop|restart|status}" >&2
+      exit 3
+      ;;
+esac
+
+exit 0

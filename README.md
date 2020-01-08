@@ -18,19 +18,43 @@ You don't operate file names of firmware, no, only md5 sums.
 
 ## Requirements
 
-* Ubuntu 18.04
+* Clang 8
+* C++17
+* Ubuntu 18.04 LTE
+* OpenSSL library (sudo apt-get install libssl-dev)
 
 Other not tested, sorry
 
-## How use
-
-1. Make server directory (for example /mnt/tftp).
-2. Place firmware files in server directory (p.1).
-3. Generate md5 files if not exists (using md5sum). One firmware file - one md5 file.
-4. Disable any listening 69 port other executables (see sudo netstat -lup).
-5. Clone this repository.
-6. Build application.
-7. Install.
+## How build and use
+1. Get sources 
+<pre>
+mkdir server_fw
+git clone git@github.com:shvit/server\_fw.git -b master server_fw
+</pre>
+2. Make binary file
+<pre>
+cd server_fw
+make release
+</pre>
+3. Disable any listening 69 port other executables
+<pre>
+sudo netstat -lup|grep "69\|tftp"
+</pre>
+4. Install firmware server
+<p>
+<pre>
+sudo ./install.sh allauto
+</pre>
+By default, make root server directory _/mnt/tftp_ and one search directory _/mnt/backup_
+</p>
+5. Copy firmware files to directory _/mnt/tftp_ or _/mnt/backup_ and make *.md5 files
+<p>
+File in search directory (_/mnt/backup_) can place in separate nested directory or with unique file names<br>
+For each _file_ in search directory make *.md5 file:
+<pre>
+md5sum file > file.md5
+</pre>
+</p>
 
 Profit!
 
