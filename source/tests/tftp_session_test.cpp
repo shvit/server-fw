@@ -25,7 +25,11 @@ public:
   auto was_error() { return tftp::session::was_error(); };
 
   template<typename ... Ts>
-  auto set_error_if_first(Ts && ... args) { return tftp::session::set_error_if_first(std::forward<Ts>(args) ...); };
+  auto set_error_if_first(Ts && ... args)
+  {
+    return tftp::session::set_error_if_first(std::forward<Ts>(args) ...);
+  }
+
 };
 
 [[maybe_unused]]

@@ -89,14 +89,6 @@ namespace unit_tests
 #define ERROR_FUNCTION__RUNTIME__FORMAT(...)  ERROR_FUNCTION__FORMAT(std::runtime_error,__VA_ARGS__)
 
 
-//#define CHK_EXCEPTION__LOGIC(MSG, ...) \
-//  try\
-//  {\
-//    __VA_ARGS__;\
-//    ERROR_CLASS_METHOD__RUNTIME__FORMAT("Need exception when try to %s %s", #__VA_ARGS__, MSG);\
-//  }\
-//  catch (std::logic_error &) { CHECK_INCR; };
-
 #define CHK_EXCEPTION__INV_ARG(...) \
   try\
   {\
@@ -104,16 +96,5 @@ namespace unit_tests
     throw std::runtime_error("Need exception when try \"" + std::string{#__VA_ARGS__}+"\"");\
   }\
   catch (std::invalid_argument & ) { CHECK_INCR; };
-
-//#define CHK_EXCEPTION__ANY(MSG, ...) \
-//  try\
-//  {\
-//    __VA_ARGS__;\
-//    ERROR_CLASS_METHOD__RUNTIME__FORMAT("Need exception when try to %s %s", #__VA_ARGS__, MSG);\
-//  }\
-//  catch (...) { CHECK_INCR; };
-
-
-
 
 #endif /* SOURCE_TESTS_TEST_H_ */
