@@ -21,6 +21,8 @@
 #include <string>
 
 #include "tftp_common.h"
+#include "tftpBase.h"
+
 
 namespace tftp
 {

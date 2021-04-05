@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include "../tftp_common.h"
+#include "../tftpBase.h"
 #include "test.h"     
 
 UNIT_TEST_SUITE_BEGIN(tftp_common)
