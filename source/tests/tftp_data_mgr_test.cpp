@@ -190,7 +190,7 @@ UNIT_TEST_CASE_BEGIN(main, "rx_tx")
 
           fill_buffer(buff_ethalon.data(), left_size, stage * block, iter);
 
-          success_tx = success_tx && (dm.tx(buff_checked.begin(), buff_checked.begin()+left_size, stage * block) == left_size);
+          success_tx = success_tx && (dm.tx(buff_checked.begin(), buff_checked.begin()+left_size, stage * block) == (ssize_t)left_size);
 
           for(size_t chk_pos = 0; chk_pos < left_size; ++chk_pos)
           {

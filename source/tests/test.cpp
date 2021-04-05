@@ -49,7 +49,7 @@ namespace unit_tests{
 
     // directory
     if(tmp_dir_created) TEST_CHECK_TRUE(rmdir(tmp_dir.c_str()) == 0);
-  };
+  }
 
   void fill_buffer(char * addr, size_t size, size_t position, size_t file_id)
   {
@@ -57,7 +57,7 @@ namespace unit_tests{
     {
       *(addr + iter) = static_cast<uint8_t>((position+iter+file_id)  & 0x000000000000FF);
     }
-  };
+  }
 
   std::string md5_as_str(const char * addr)
   {

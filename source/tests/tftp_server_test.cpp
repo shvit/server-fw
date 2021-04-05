@@ -82,11 +82,11 @@ public:
   tftp::buffer_t::size_type rx_size;    // rx data size
   tftp::buffer_t::size_type et_size;    // ethalon data size
 
-  template<typename T> void push_tx_cont(T && val) { tx_size += set_buf_cont_str(tx_buf, tx_size, std::forward<T>(val)); };
-  template<typename T> void push_et_cont(T && val) { et_size += set_buf_cont_str(et_buf, et_size, std::forward<T>(val)); };
+  template<typename T> void push_tx_cont(T && val) { tx_size += set_buf_cont_str(tx_buf, tx_size, std::forward<T>(val)); }
+  template<typename T> void push_et_cont(T && val) { et_size += set_buf_cont_str(et_buf, et_size, std::forward<T>(val)); }
 
-  template<typename T> void push_tx_raw(T && val) { tx_size += set_buf_item_raw(tx_buf, tx_size, val); };
-  template<typename T> void push_et_raw(T && val) { et_size += set_buf_item_raw(et_buf, et_size, val); };
+  template<typename T> void push_tx_raw(T && val) { tx_size += set_buf_item_raw(tx_buf, tx_size, val); }
+  template<typename T> void push_et_raw(T && val) { et_size += set_buf_item_raw(et_buf, et_size, val); }
 
   bool tx()
   {
@@ -110,7 +110,7 @@ public:
     ssize_t last_size=0;
 
     time_t start = time(nullptr);
-    while((time(nullptr) - start) < timeout)
+    while((time(nullptr) - start) < (ssize_t)timeout)
     {
       socklen_t  rx_client_size = a_server_.size();
       last_size = recvfrom(socket_, rx_buf.data(), rx_buf.size(), MSG_DONTWAIT, (struct sockaddr *) a_server_.data(), & rx_client_size);
@@ -203,7 +203,7 @@ public:
   {
     bool ret=make_et(step, iteration);
     //dump_et();
-    ret = (rx(timeout) == et_size);
+    ret = (rx(timeout) == (ssize_t)et_size);
     //dump_rx();
     if(ret) ret = std::equal(rx_buf.cbegin(), rx_buf.cbegin()+et_size, et_buf.cbegin());
     push_counter(et_size);
@@ -255,9 +255,11 @@ UNIT_TEST_CASE_BEGIN(server, "server main check")
   const std::vector<char> listen_addr{((char *) & srv_addr),
                                       ((char *) & srv_addr) + sizeof(srv_addr)};
 
+  std::string addr_str = tftp::sockaddr_to_str(listen_addr.cbegin(), listen_addr.cend());
+
   const char * tst_arg[]={ "./server_fw",
                            "--syslog", "0",
-                           "--ip", tftp::sockaddr_to_str(listen_addr.cbegin(), listen_addr.cend()).c_str(),
+                           "--ip", addr_str.c_str(),
                            "--root-dir", tmp_dir.c_str() };
 
   test_server srv1;

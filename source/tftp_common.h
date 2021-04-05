@@ -522,7 +522,7 @@ auto base::get_buf_item_raw(buffer_t & buf, const buffer_size_t offset) const
   if((offset + sizeof(T)) > buf.size()) std::invalid_argument("Offset "+std::to_string(offset)+" is over buffer size");
 
   return *((T *) (buf.data() + offset));
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -534,7 +534,7 @@ auto base::get_buf_item_ntoh(buffer_t & buf, const buffer_size_t offset) const
   std::reverse(((char *) & value_n),
                ((char *) & value_n) + sizeof(value_n));
   return value_n;
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -550,7 +550,7 @@ auto base::set_buf_item_raw(buffer_t & buf, const buffer_size_t offset, const T 
             buf.data() + offset);
 
   return ret_size;
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -562,7 +562,7 @@ auto base::set_buf_item_hton(buffer_t & buf, const buffer_size_t offset, const T
   std::reverse(((char *) & value_n),
                ((char *) & value_n) + sizeof(value_n));
   return set_buf_item_raw<T>(buf, offset, value_n);
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -574,7 +574,7 @@ void base::set_search_dir(Ts && ... args)
   settings_->backup_dirs.clear();
 
   (settings_->backup_dirs.emplace_back(args), ...);
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -594,7 +594,7 @@ auto base::set_buf_cont_str(buffer_t & buf, const buffer_size_t offset, const T 
   }
 
   return new_size;
-};
+}
 
 //=================================================================================================================================
 
@@ -609,7 +609,7 @@ auto curr_type() -> std::string
   std::string ret{tmp_name};
   if(tmp_name) free(tmp_name);
   return ret;
-};
+}
 
 //=================================================================================================================================
 

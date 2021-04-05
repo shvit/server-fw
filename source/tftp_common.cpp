@@ -45,7 +45,7 @@ settings_val::settings_val():
   use_syslog{},
   log_{nullptr}
 {
-};
+}
 
 //=================================================================================================================================
 
@@ -82,33 +82,33 @@ base::base():
 
   maps.close();
 
-};
+}
 
 base::base(base & src):
     settings_{src.settings_}
 {
-};
+}
 
 base::base(base && src):
     settings_{std::move(src.settings_)}
 {
-};
+}
 
 base::~base()
 {
-};
+}
 
 // ----------------------------------------------------------------------------------
 
 auto base::begin_shared() const -> std::shared_lock<std::shared_mutex>
 {
   return std::shared_lock{mutex_};
-};
+}
 
 auto base::begin_unique() const -> std::unique_lock<std::shared_mutex>
 {
   return std::unique_lock{mutex_};
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -121,7 +121,7 @@ void base::log(int lvl, std::string_view msg) const
   if(lvl <= settings_->use_syslog) syslog(lvl, "[%d] %s %s", curr_tid, to_string_lvl(lvl).data(), msg.data());
 
   if(settings_->log_) settings_->log_(lvl, msg);
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -130,7 +130,7 @@ void base::set_logger(f_log_msg_t new_logger)
   auto lk = begin_unique(); // write lock
 
   settings_->log_ = new_logger;
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -139,14 +139,14 @@ void base::set_syslog_level(const int lvl)
   auto lk = begin_unique(); // write lock
 
   settings_->use_syslog = lvl;
-};
+}
 
 auto base::get_syslog_level() const -> int
 {
   auto lk = begin_shared(); // read lock
 
   return settings_->use_syslog;
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -155,7 +155,7 @@ void base::set_root_dir(std::string_view root_dir)
   auto lk = begin_unique(); // write lock
 
   settings_->root_dir.assign(root_dir);
-};
+}
 
 // ----------------------------------------------------------------------------------
 auto base::get_root_dir() const -> std::string
@@ -171,7 +171,7 @@ auto base::get_root_dir() const -> std::string
   {
     return "";
   }
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -180,7 +180,7 @@ void base::set_lib_dir(std::string_view dir)
   auto lk = begin_unique(); // write lock
 
   settings_->lib_dir.assign(dir);
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -190,7 +190,7 @@ auto base::get_lib_dir() const -> std::string
 
   bool fin_slash = settings_->lib_dir.size() && (*--settings_->lib_dir.end() == '/');
   return settings_->lib_dir + (fin_slash ? "" : "/");
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -199,7 +199,7 @@ void base::set_lib_name_fb(std::string_view fb_name)
   auto lk = begin_unique(); // write lock
 
   settings_->lib_name.assign(fb_name);
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -208,15 +208,15 @@ auto base::get_lib_name_fb() const -> std::string
   auto lk = begin_shared(); // read lock
 
   return std::string{settings_->lib_name};
-};
+}
 
 // ----------------------------------------------------------------------------------
 
-void base::set_connection_db  (std::string_view val) { auto lk = begin_unique(); settings_->db  .assign(val); };
-void base::set_connection_user(std::string_view val) { auto lk = begin_unique(); settings_->user.assign(val); };
-void base::set_connection_pass(std::string_view val) { auto lk = begin_unique(); settings_->pass.assign(val); };
-void base::set_connection_role(std::string_view val) { auto lk = begin_unique(); settings_->role.assign(val); };
-void base::set_connection_dialect(uint16_t      val) { auto lk = begin_unique(); settings_->dialect = val; };
+void base::set_connection_db  (std::string_view val) { auto lk = begin_unique(); settings_->db  .assign(val); }
+void base::set_connection_user(std::string_view val) { auto lk = begin_unique(); settings_->user.assign(val); }
+void base::set_connection_pass(std::string_view val) { auto lk = begin_unique(); settings_->pass.assign(val); }
+void base::set_connection_role(std::string_view val) { auto lk = begin_unique(); settings_->role.assign(val); }
+void base::set_connection_dialect(uint16_t      val) { auto lk = begin_unique(); settings_->dialect = val; }
 
 // ----------------------------------------------------------------------------------
 
@@ -241,7 +241,7 @@ void base::set_connection(std::string_view db,
   //settings_->dialect = dialect;
 
 
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -275,7 +275,7 @@ auto base::local_base_as_inet() -> struct sockaddr_in &
   }
 
   return *((struct sockaddr_in *) settings_->local_base_.data());
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -292,7 +292,7 @@ auto base::local_base_as_inet6() -> struct sockaddr_in6 &
   }
 
   return *((struct sockaddr_in6 *) settings_->local_base_.data());
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -305,7 +305,7 @@ void base::set_local_base_inet(struct in_addr * addr, uint16_t port)
   local_base_as_inet().sin_family = AF_INET;
   local_base_as_inet().sin_addr   = * addr;
   local_base_as_inet().sin_port   = htobe16(port);
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -318,7 +318,7 @@ void base::set_local_base_inet6(struct in6_addr * addr, uint16_t port)
   local_base_as_inet6().sin6_family = AF_INET6;
   local_base_as_inet6().sin6_addr   = * addr;
   local_base_as_inet6().sin6_port  = htobe16(port);
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -327,7 +327,7 @@ auto base::get_local_base_str() const -> std::string
   auto lk = begin_shared(); // read lock
 
   return sockaddr_to_str(settings_->local_base_.cbegin(), settings_->local_base_.cend());
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -336,7 +336,7 @@ void base::set_is_daemon(bool value)
   auto lk = begin_unique(); // write lock
 
   settings_->is_daemon = value;
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -345,7 +345,7 @@ bool base::get_is_daemon() const
   auto lk = begin_shared(); // read lock
 
   return settings_->is_daemon;
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -360,7 +360,7 @@ void base::set_search_dir_append(std::string_view new_dir)
   }
 
   if(need_append) settings_->backup_dirs.emplace_back(new_dir);
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -376,7 +376,7 @@ auto base::get_serach_dir() const -> std::vector<std::string>
   }
 
   return ret;
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -437,7 +437,7 @@ void base::set_local_base(std::string_view addr)
   {
 
   }
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -534,7 +534,7 @@ bool base::load_options(int argc, char* argv[])
   }
 
   return ret;
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -563,7 +563,7 @@ void base::out_help(std::ostream & stream, std::string_view app) const
   stream << "  --fb-role <role> Firebird access role" << std::endl;
   stream << "  --fb-dialect <1...3> Firebird server dialect (default " << default_fb_dialect << ")" << std::endl;
   stream << "  --daemon Run as daemon" << std::endl;
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -571,7 +571,7 @@ void base::out_id(std::ostream & stream) const
 {
   stream << "Simple tftp firmware server 'server_fw' licensed GPL-3.0" << std::endl;
   stream << "(c) 2019 Vitaliy.V.Shirinkin, e-mail: vitaliy.shirinkin@gmail.com" << std::endl;
-};
+}
 
 //=================================================================================================================================
 
@@ -584,8 +584,10 @@ std::string_view to_string(const srv_req val)
     CASE_OPER_TO_STR_VIEW(unknown);
     CASE_OPER_TO_STR_VIEW(read);
     CASE_OPER_TO_STR_VIEW(write);
+    default:
+      throw std::runtime_error("Unknown value");
   }
-};
+}
 
 std::string_view to_string(const transfer_mode val)
 {
@@ -595,8 +597,10 @@ std::string_view to_string(const transfer_mode val)
     CASE_OPER_TO_STR_VIEW(netascii);
     CASE_OPER_TO_STR_VIEW(octet);
     CASE_OPER_TO_STR_VIEW(binary);
+    default:
+      throw std::runtime_error("Unknown value");
   }
-};
+}
 
 #undef CASE_OPER_TO_STR_VIEW
 
@@ -614,7 +618,7 @@ std::string_view to_string_lvl(const int val)
     case LOG_WARNING: return "WARNING";
     default:          return "UNKNOWN";
   }
-};
+}
 
 //=================================================================================================================================
 
@@ -632,19 +636,19 @@ inline std::string sockaddr_to_str(buffer_t::const_iterator addr_begin,
   switch(curr_family)
   {
     case AF_INET:
-      if(addr_dist < sizeof(sockaddr_in)) return "";
+      if((size_t)addr_dist < sizeof(sockaddr_in)) return "";
 
       inet_ntop(curr_family, & ((sockaddr_in *) & *addr_begin)->sin_addr, txt.data(), txt.size());
       return std::string{txt.data()}+":"+std::to_string(be16toh(((struct sockaddr_in *) & *addr_begin)->sin_port));
     case AF_INET6:
-      if(addr_dist < sizeof(sockaddr_in6)) return "";
+      if((size_t)addr_dist < sizeof(sockaddr_in6)) return "";
 
       inet_ntop(curr_family, & ((sockaddr_in6 *) & *addr_begin)->sin6_addr, txt.data(), txt.size());
       return "[" + std::string{txt.data()}+"]:"+std::to_string(be16toh(((struct sockaddr_in6 *) & *addr_begin)->sin6_port));
     default:
       return "";
   }
-};
+}
 
 // ----------------------------------------------------------------------------------
 

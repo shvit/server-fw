@@ -38,13 +38,13 @@ data_mgr::data_mgr():
     ofs_{},
     set_error_{nullptr}
 {
-};
+}
 
 // ----------------------------------------------------------------------------------
 
 data_mgr::~data_mgr()
 {
-};
+}
 
 // ----------------------------------------------------------------------------------
 bool data_mgr::check_directory(std::string_view chk_dir) const
@@ -55,7 +55,7 @@ bool data_mgr::check_directory(std::string_view chk_dir) const
   //path.push_back('\0');
   struct stat sb;
   return (stat(path.c_str(), & sb) == 0) && S_ISDIR(sb.st_mode);
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -71,7 +71,7 @@ bool data_mgr::check_root_dir()
     LOG(LOG_WARNING, "Wrong root directory");
     return false;
   }
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -110,7 +110,7 @@ bool data_mgr::check_fb()
   ret=false; // TODO: remove this hack to enable FB
 
   return ret;
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -129,7 +129,7 @@ ssize_t data_mgr::rx(buffer_t::iterator buf_begin,
   {
     if(auto buf_size=std::distance(buf_begin, buf_end); buf_size > 0)
     {
-      if(ofs_.tellp() != position)
+      if(ofs_.tellp() != (ssize_t)position)
       {
         LOG(LOG_WARNING, "Change write position "+std::to_string(ofs_.tellp())+" -> "+std::to_string(position));
         ofs_.seekp(position);
@@ -148,7 +148,7 @@ ssize_t data_mgr::rx(buffer_t::iterator buf_begin,
 
   return 0;
 
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -169,12 +169,12 @@ ssize_t data_mgr::data_mgr::tx(buffer_t::iterator buf_begin,
     auto buf_size = std::distance(buf_begin, buf_end);
     LOG(LOG_DEBUG, "Generate block (buf size "+std::to_string(buf_size)+"; position "+std::to_string(position)+")");
 
-    if(ifs_->tellg() != position)
+    if(ifs_->tellg() != (ssize_t)position)
     {
       LOG(LOG_WARNING, "Change read position "+std::to_string(ifs_->tellg())+" -> "+std::to_string(position));
       ifs_->seekg(position);
     }
-    auto ret_size = static_cast<ssize_t>(ifs_size_) - position;
+    auto ret_size = static_cast<ssize_t>(ifs_size_) - (ssize_t)position;
     if(ret_size > 0)
     {
       ifs_->read(& *buf_begin, buf_size);
@@ -187,7 +187,7 @@ ssize_t data_mgr::data_mgr::tx(buffer_t::iterator buf_begin,
   LOG(LOG_ERR, "File stream not opened");
   set_error_if_first(0, "Server read stream not opened (file not found)");
   return -1;
-};
+}
 
 
 // ----------------------------------------------------------------------------------
@@ -195,7 +195,7 @@ ssize_t data_mgr::data_mgr::tx(buffer_t::iterator buf_begin,
 bool data_mgr::active_fb_connection()
 {
   return false;
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -203,14 +203,14 @@ bool data_mgr::active_files() const
 {
   return ((request_type_ == srv_req::read)  && ifs_) ||
          ((request_type_ == srv_req::write) && ofs_.is_open());
-};
+}
 
 // ----------------------------------------------------------------------------------
 
 bool data_mgr::active()
 {
   return active_fb_connection() || active_files();
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -279,7 +279,7 @@ bool data_mgr::init(srv_req request_type, std::string_view req_fname)
   LOG(LOG_ERR, "No access to data storage (directory,firebird)");
   set_error_if_first(0, "No access to data storage (directory, firebird)");
   return false;
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -305,7 +305,7 @@ void data_mgr::close()
  ifs_ = nullptr;
  if(ofs_.is_open()) ofs_.close();
 
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -356,7 +356,7 @@ int data_mgr::is_md5()
     fname_ = get_root_dir() + fname_;
   }
   return ret;
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -413,18 +413,15 @@ bool data_mgr::recursive_search_by_md5(const std::string & path)
   }
 
   return ret;
-};
+}
 
 // ----------------------------------------------------------------------------------
 
 void data_mgr::set_error_if_first(const uint16_t e_cod, std::string_view e_msg) const
 {
   if(set_error_) set_error_(e_cod, e_msg);
-};
+}
 
 // ----------------------------------------------------------------------------------
 
-}; // namespace tftp
-
-
-
+} // namespace tftp

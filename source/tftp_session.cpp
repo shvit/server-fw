@@ -56,13 +56,13 @@ session::session():
     error_code_{0},
     error_message_{""}
 {
-};
+}
 
 // ----------------------------------------------------------------------------------
 
 session::~session()
 {
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -70,7 +70,7 @@ auto session::get_buf_rx_u16_ntoh(const size_t offset)
 {
   //return get_buf_u16_ntoh(sess_buffer_rx_, offset);
   return get_buf_item_ntoh<uint16_t>(sess_buffer_rx_, offset*sizeof(uint16_t));
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -78,7 +78,7 @@ void session::set_buf_tx_u16_hton(const size_t offset, const uint16_t value)
 {
   //set_buf_u16_hton(sess_buffer_tx_, offset, value);
   buf_size_tx_ += set_buf_item_hton<uint16_t>(sess_buffer_tx_, offset*sizeof(uint16_t), value);
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -92,14 +92,14 @@ uint16_t session::block_size() const
 bool session::timeout_pass(const time_t gandicap) const
 {
   return (time(nullptr) - oper_time_) < (std::get<1>(opt_timeout_) + gandicap);
-};
+}
 
 // ----------------------------------------------------------------------------------
 
 void session::timeout_reset()
 {
   oper_time_ = time(nullptr);
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -141,7 +141,7 @@ bool session::socket_open()
 
   LOG(LOG_DEBUG, "Socket opened successful");
   return true;
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -321,7 +321,7 @@ bool session::init(const buffer_t::const_iterator addr_begin,
 
   LOG(LOG_INFO, "Session initialise is "+(ret ? "SUCCESSFUL" : "FAIL"));
   return ret;
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -332,7 +332,7 @@ void session::check_buffer_tx_size(const size_t size_append)
     sess_buffer_tx_.resize(buf_size_tx_+size_append);
     LOG(LOG_WARNING, "Deprecated buffer resize to "+std::to_string(sess_buffer_tx_.size())+" bytes");
   }
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -341,7 +341,7 @@ size_t session::push_buffer_string(std::string_view str)
   buffer_size_t ret_size = set_buf_cont_str(sess_buffer_tx_, buf_size_tx_, str, true);
   buf_size_tx_ += ret_size;
   return ret_size;
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -377,7 +377,7 @@ void session::construct_opt_reply()
   if(buf_size_tx_ < 4) buf_size_tx_ = 0;
 
   if(buf_size_tx_) LOG(LOG_DEBUG, "Construct option confirm pkt "+std::to_string(buf_size_tx_)+" octets");
-};
+}
 
 // ----------------------------------------------------------------------------------
 void session::construct_error(const uint16_t e_code, std::string_view e_msg)
@@ -391,14 +391,14 @@ void session::construct_error(const uint16_t e_code, std::string_view e_msg)
   push_buffer_string(e_msg);
 
   LOG(LOG_DEBUG, "Construct error pkt code "+std::to_string(e_code)+" '"+std::string(e_msg)+"'; "+std::to_string(buf_size_tx_)+" octets");
-};
+}
 
 // ----------------------------------------------------------------------------------
 void  session::construct_error()
 {
   if(error_message_.size()) construct_error(error_code_, error_message_);
                        else construct_error(0, "Undefined error");
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -424,7 +424,7 @@ void session::construct_data()
     set_error_if_first(0, "Failed prepare data to send");
     construct_error();
   }
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -486,14 +486,14 @@ void session::run()
   LOG(LOG_INFO, "Finish session");
 
   finished_ = true;
-};
+}
 // ----------------------------------------------------------------------------------
 
 std::thread session::run_thread()
 {
   std::thread th = std::thread(& tftp::session::run, this);
   return th;
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -504,28 +504,28 @@ void session::set_error_if_first(const uint16_t e_cod, std::string_view e_msg)
     error_code_ = e_cod;
     error_message_.assign(e_msg);
   }
-};
+}
 
 // ----------------------------------------------------------------------------------
 
 bool session::was_error()
 {
   return error_code_ || error_message_.size();
-};
+}
 
 // ----------------------------------------------------------------------------------
 
 bool session::is_stage_receive() const noexcept
 {
   return oper_wait_;
-};
+}
 
 // ----------------------------------------------------------------------------------
 
 bool session::is_stage_transmit() const noexcept
 {
   return !oper_wait_;
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -533,7 +533,7 @@ void session::set_stage_receive() noexcept
 {
   oper_wait_ = true;
   LOG(LOG_DEBUG, "OK");
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -541,7 +541,7 @@ void session::set_stage_transmit() noexcept
 {
   oper_wait_ = false;
   LOG(LOG_DEBUG, "OK");
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -561,7 +561,7 @@ bool session::transmit_no_wait()
       case srv_req::read:
         if(!stage_ && !buf_size_tx_) ++stage_; // if no confirm option then start transmit data
         if(stage_) construct_data();
-        if((buf_size_tx_ < (block_size()+4)))
+        if((buf_size_tx_ < (block_size()+4U)))
         {
           oper_last_block_ = stage_;
           LOG(LOG_DEBUG, "Calculated last tx block "+std::to_string(oper_last_block_));
@@ -603,7 +603,7 @@ bool session::transmit_no_wait()
           LOG(LOG_ERR, "sendto() error");
         }
         else
-        if(tx_result_size<buf_size_tx_) // Fail TX: send lost
+        if(tx_result_size<(ssize_t)buf_size_tx_) // Fail TX: send lost
         {
           LOG(LOG_ERR, "sendto() lost data error: sended "+std::to_string(tx_result_size)+" from "+std::to_string(buf_size_tx_));
         }
@@ -622,7 +622,7 @@ bool session::transmit_no_wait()
   if(was_error()) ret=false; // ERROR EXIT
 
   return ret;
-};
+}
 
 // ----------------------------------------------------------------------------------
 
@@ -737,7 +737,7 @@ bool session::receive_no_wait()
   }
 
   return ret;
-};
+}
 
 // ----------------------------------------------------------------------------------
 

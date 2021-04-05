@@ -14,7 +14,6 @@ MOD=$(patsubst $(APP),,$(patsubst $(DIR_SRC)/%.cpp,%,$(wildcard $(DIR_SRC)/*.cpp
 BASE_CFLAGS := $(CFLAGS) -Wall -fPIC -std=c++17 -pthread -pedantic
 CFLAGS = $(BASE_CFLAGS) -g -O0
 LDFLAGS += -lstdc++ -lpthread -ldl
-CXX=clang-8
 
 all: $(APP) $(TST)
 
