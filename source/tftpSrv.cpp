@@ -150,7 +150,7 @@ void Srv::main_loop()
 
       auto new_session = sessions_.emplace(sessions_.end());
 
-      tftp::session & sss = std::get<0>(* new_session);
+      tftp::Session & sss = std::get<0>(* new_session);
 
       {
         this->begin_shared();

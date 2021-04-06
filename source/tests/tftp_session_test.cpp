@@ -9,7 +9,7 @@ using namespace unit_tests;
 
 UNIT_TEST_SUITE_BEGIN(tftp_session)
 
-class test_session: public tftp::session
+class test_session: public tftp::Session
 {
 public:
   // get protected property
@@ -22,12 +22,12 @@ public:
   auto   get_opt_tsize()     { return opt_tsize_; };
 
   // forward protected methods
-  auto was_error() { return tftp::session::was_error(); };
+  auto was_error() { return tftp::Session::was_error(); };
 
   template<typename ... Ts>
   auto set_error_if_first(Ts && ... args)
   {
-    return tftp::session::set_error_if_first(std::forward<Ts>(args) ...);
+    return tftp::Session::set_error_if_first(std::forward<Ts>(args) ...);
   }
 
 };

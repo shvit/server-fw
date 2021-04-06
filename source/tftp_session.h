@@ -29,7 +29,7 @@ namespace tftp
 // ----------------------------------------------------------------------------------
 
 /**
- * \brief TFTP session class 'tftp::session'
+ * \brief TFTP session class 'tftp::Session'
  *
  *  Class for emulate p2p UDP/IP session when request received by server.
  *  For use class:
@@ -39,7 +39,7 @@ namespace tftp
  *
  */
 
-class session: public Base
+class Session: public Base
 {
 protected:
   SrvReq       request_type_;    ///< Server request
@@ -217,16 +217,16 @@ protected:
 public:
   /** \brief Constructor
    */
-  session();
+  Session();
 
   // Deny copy
-  session(const session & ) = delete;
-  session(      session & ) = delete;
-  session(      session &&) = delete;
+  Session(const Session & ) = delete;
+  Session(      Session & ) = delete;
+  Session(      Session &&) = delete;
 
   /** \brief Destructor
    */
-  virtual ~session();
+  virtual ~Session();
 
   /** \brief Session initialize
    *

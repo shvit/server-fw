@@ -160,7 +160,7 @@ public:
    */
   bool check_directory(std::string_view chk_dir) const;
 
-  friend class session;
+  friend class Session;
 };
 
 } // namespace tftp

@@ -31,7 +31,7 @@ namespace tftp
 
 // ----------------------------------------------------------------------------------
 
-session::session():
+Session::Session():
     Base(),
     request_type_{SrvReq::unknown},
     filename_{""},
@@ -60,13 +60,13 @@ session::session():
 
 // ----------------------------------------------------------------------------------
 
-session::~session()
+Session::~Session()
 {
 }
 
 // ----------------------------------------------------------------------------------
 
-auto session::get_buf_rx_u16_ntoh(const size_t offset)
+auto Session::get_buf_rx_u16_ntoh(const size_t offset)
 {
   //return get_buf_u16_ntoh(sess_buffer_rx_, offset);
   return get_buf_item_ntoh<uint16_t>(sess_buffer_rx_, offset*sizeof(uint16_t));
@@ -74,7 +74,7 @@ auto session::get_buf_rx_u16_ntoh(const size_t offset)
 
 // ----------------------------------------------------------------------------------
 
-void session::set_buf_tx_u16_hton(const size_t offset, const uint16_t value)
+void Session::set_buf_tx_u16_hton(const size_t offset, const uint16_t value)
 {
   //set_buf_u16_hton(sess_buffer_tx_, offset, value);
   buf_size_tx_ += set_buf_item_hton<uint16_t>(sess_buffer_tx_, offset*sizeof(uint16_t), value);
@@ -82,35 +82,35 @@ void session::set_buf_tx_u16_hton(const size_t offset, const uint16_t value)
 
 // ----------------------------------------------------------------------------------
 
-uint16_t session::block_size() const
+uint16_t Session::block_size() const
 {
   return std::get<1>(opt_blksize_);
 }
 
 // ----------------------------------------------------------------------------------
 
-bool session::timeout_pass(const time_t gandicap) const
+bool Session::timeout_pass(const time_t gandicap) const
 {
   return (time(nullptr) - oper_time_) < (std::get<1>(opt_timeout_) + gandicap);
 }
 
 // ----------------------------------------------------------------------------------
 
-void session::timeout_reset()
+void Session::timeout_reset()
 {
   oper_time_ = time(nullptr);
 }
 
 // ----------------------------------------------------------------------------------
 
-uint16_t session::blk_num_local(const uint16_t step) const
+uint16_t Session::blk_num_local(const uint16_t step) const
 {
   return ((stage_ + step) & 0x000000000000FFFFU);
 }
 
 // ----------------------------------------------------------------------------------
 
-bool session::socket_open()
+bool Session::socket_open()
 {
   LOG(LOG_DEBUG, "Init socket");
   {
@@ -145,7 +145,7 @@ bool session::socket_open()
 
 // ----------------------------------------------------------------------------------
 
-void session::socket_close()
+void Session::socket_close()
 {
   close(socket_);
   socket_=0;
@@ -153,7 +153,7 @@ void session::socket_close()
 
 // ----------------------------------------------------------------------------------
 
-bool session::init(const Buf::const_iterator addr_begin,
+bool Session::init(const Buf::const_iterator addr_begin,
                    const Buf::const_iterator addr_end,
                    const Buf::const_iterator buf_begin,
                    const Buf::const_iterator buf_end)
@@ -312,7 +312,7 @@ bool session::init(const Buf::const_iterator addr_begin,
   {
     {
       manager_.settings_ = settings_;
-      manager_.set_error_ = std::bind(& session::set_error_if_first, this, std::placeholders::_1, std::placeholders::_2);
+      manager_.set_error_ = std::bind(& Session::set_error_if_first, this, std::placeholders::_1, std::placeholders::_2);
     }
 
     ret = manager_.init(request_type_, filename_);
@@ -325,7 +325,7 @@ bool session::init(const Buf::const_iterator addr_begin,
 
 // ----------------------------------------------------------------------------------
 
-void session::check_buffer_tx_size(const size_t size_append)
+void Session::check_buffer_tx_size(const size_t size_append)
 {
   if((buf_size_tx_+size_append) > sess_buffer_tx_.size())
   {
@@ -336,7 +336,7 @@ void session::check_buffer_tx_size(const size_t size_append)
 
 // ----------------------------------------------------------------------------------
 
-size_t session::push_buffer_string(std::string_view str)
+size_t Session::push_buffer_string(std::string_view str)
 {
   Buf::size_type ret_size = set_buf_cont_str(sess_buffer_tx_, buf_size_tx_, str, true);
   buf_size_tx_ += ret_size;
@@ -345,7 +345,7 @@ size_t session::push_buffer_string(std::string_view str)
 
 // ----------------------------------------------------------------------------------
 
-void session::construct_opt_reply()
+void Session::construct_opt_reply()
 {
   buf_size_tx_=0;
 
@@ -380,7 +380,7 @@ void session::construct_opt_reply()
 }
 
 // ----------------------------------------------------------------------------------
-void session::construct_error(const uint16_t e_code, std::string_view e_msg)
+void Session::construct_error(const uint16_t e_code, std::string_view e_msg)
 {
   buf_size_tx_=0;
 
@@ -394,7 +394,7 @@ void session::construct_error(const uint16_t e_code, std::string_view e_msg)
 }
 
 // ----------------------------------------------------------------------------------
-void  session::construct_error()
+void  Session::construct_error()
 {
   if(error_message_.size()) construct_error(error_code_, error_message_);
                        else construct_error(0, "Undefined error");
@@ -402,7 +402,7 @@ void  session::construct_error()
 
 // ----------------------------------------------------------------------------------
 
-void session::construct_data()
+void Session::construct_data()
 {
   buf_size_tx_ = 0;
 
@@ -428,7 +428,7 @@ void session::construct_data()
 
 // ----------------------------------------------------------------------------------
 
-void session::construct_ack()
+void Session::construct_ack()
 {
   buf_size_tx_ = 0;
   auto blk = blk_num_local();
@@ -440,7 +440,7 @@ void session::construct_ack()
 }
 
 // ----------------------------------------------------------------------------------
-void session::run()
+void Session::run()
 {
   LOG(LOG_INFO, "Running session");
 
@@ -489,15 +489,15 @@ void session::run()
 }
 // ----------------------------------------------------------------------------------
 
-std::thread session::run_thread()
+std::thread Session::run_thread()
 {
-  std::thread th = std::thread(& tftp::session::run, this);
+  std::thread th = std::thread(& tftp::Session::run, this);
   return th;
 }
 
 // ----------------------------------------------------------------------------------
 
-void session::set_error_if_first(const uint16_t e_cod, std::string_view e_msg)
+void Session::set_error_if_first(const uint16_t e_cod, std::string_view e_msg)
 {
   if(!was_error())
   {
@@ -508,28 +508,28 @@ void session::set_error_if_first(const uint16_t e_cod, std::string_view e_msg)
 
 // ----------------------------------------------------------------------------------
 
-bool session::was_error()
+bool Session::was_error()
 {
   return error_code_ || error_message_.size();
 }
 
 // ----------------------------------------------------------------------------------
 
-bool session::is_stage_receive() const noexcept
+bool Session::is_stage_receive() const noexcept
 {
   return oper_wait_;
 }
 
 // ----------------------------------------------------------------------------------
 
-bool session::is_stage_transmit() const noexcept
+bool Session::is_stage_transmit() const noexcept
 {
   return !oper_wait_;
 }
 
 // ----------------------------------------------------------------------------------
 
-void session::set_stage_receive() noexcept
+void Session::set_stage_receive() noexcept
 {
   oper_wait_ = true;
   LOG(LOG_DEBUG, "OK");
@@ -537,7 +537,7 @@ void session::set_stage_receive() noexcept
 
 // ----------------------------------------------------------------------------------
 
-void session::set_stage_transmit() noexcept
+void Session::set_stage_transmit() noexcept
 {
   oper_wait_ = false;
   LOG(LOG_DEBUG, "OK");
@@ -545,7 +545,7 @@ void session::set_stage_transmit() noexcept
 
 // ----------------------------------------------------------------------------------
 
-bool session::transmit_no_wait()
+bool Session::transmit_no_wait()
 {
   if(!is_stage_transmit()) return true;
 
@@ -626,7 +626,7 @@ bool session::transmit_no_wait()
 
 // ----------------------------------------------------------------------------------
 
-bool session::receive_no_wait()
+bool Session::receive_no_wait()
 {
   bool ret = true;
   std::string rx_msg;

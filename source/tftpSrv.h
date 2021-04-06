@@ -36,7 +36,7 @@ class Srv: public Base
 protected:
 
   /// List of running sessions
-  std::list<std::tuple<session, std::thread>> sessions_;
+  std::list<std::tuple<Session, std::thread>> sessions_;
 
   int      socket_; ///< Socket of listener
   Buf buffer_; ///< Income buffer for tftp request
