@@ -24,14 +24,14 @@ namespace tftp
 {
 
 /**
- * \brief TFTP main server class 'tftp::srv'
+ * \brief TFTP main server class 'tftp::Srv'
  *
  *  Class for one listening pair IP:PORT.
  *  Parent class tftp::Base has all server settings storage.
  *
  */
 
-class srv: public Base
+class Srv: public Base
 {
 protected:
 
@@ -51,10 +51,10 @@ protected:
 
 public:
   /// Constructor
-  srv();
+  Srv();
 
   /// Destructor
-  virtual ~srv();
+  virtual ~Srv();
 
   /// Initalise server method
   bool init();

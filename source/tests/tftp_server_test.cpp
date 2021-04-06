@@ -13,7 +13,7 @@ using namespace unit_tests;
 
 UNIT_TEST_SUITE_BEGIN(tftp_server)
 
-class test_server: public tftp::srv
+class test_server: public tftp::Srv
 {
 public:
 };

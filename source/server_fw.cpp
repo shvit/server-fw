@@ -38,7 +38,7 @@ int main(int argc, char* argv[])
 
   openlog("server_fw", LOG_NDELAY, LOG_DAEMON); // LOG_PID
 
-  tftp::srv server;
+  tftp::Srv server;
 
   if(server.load_options(argc, argv))
   {

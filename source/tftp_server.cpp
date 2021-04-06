@@ -27,7 +27,7 @@ namespace tftp
 
 // ----------------------------------------------------------------------------------
 
-srv::srv():
+Srv::Srv():
     Base(),
     sessions_{},
     socket_{0},
@@ -38,13 +38,13 @@ srv::srv():
 
 // ----------------------------------------------------------------------------------
 
-srv::~srv()
+Srv::~Srv()
 {
 }
 
 // ----------------------------------------------------------------------------------
 
-bool srv::socket_open()
+bool Srv::socket_open()
 {
   {
     auto lk = begin_shared();
@@ -95,7 +95,7 @@ bool srv::socket_open()
   return true;
 }
 
-void srv::socket_close()
+void Srv::socket_close()
 {
   close(socket_);
   socket_ = 0;
@@ -103,7 +103,7 @@ void srv::socket_close()
 
 // ----------------------------------------------------------------------------------
 
-bool srv::init()
+bool Srv::init()
 {
   LOG(LOG_INFO, "Server initialise started");
 
@@ -121,13 +121,13 @@ bool srv::init()
 
 // ----------------------------------------------------------------------------------
 
-void srv::stop()
+void Srv::stop()
 {
   stop_ = true;
 }
 
 // ----------------------------------------------------------------------------------
-void srv::main_loop()
+void Srv::main_loop()
 {
   // prepare
   stop_ = false;

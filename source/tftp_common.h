@@ -44,7 +44,7 @@ constexpr std::string_view default_fb_lib_name     = "libfbclient.so";
 
 class Base;
 
-class srv;
+class Srv;
 
 class session;
 
@@ -56,7 +56,10 @@ using pSettings = std::shared_ptr<Settings>;
 
 using Buf = std::vector<char>;
 
-/// Rem: need storage for default value
+/** \bief Optional class storage with default value
+ *
+ *  Info: std::optional<T> does't have default value
+ */
 template<typename T>
 using Opt = std::tuple<bool, T>;
 
@@ -64,7 +67,8 @@ using OptInt = Opt<int>;
 
 // -----------------------------------------------------------------------------
 
-/// Server request enum
+/** \bief Server request enum
+ */
 enum class SrvReq: uint16_t
 {
   unknown=0, ///< Unknown request
@@ -74,7 +78,10 @@ enum class SrvReq: uint16_t
 
 // -----------------------------------------------------------------------------
 
-/// Server transfer mode enum
+/** \bief Server transfer mode enum
+ *
+ *  Notify: "mail" mode not supported
+ */
 enum class TransfMode: uint16_t
 {
   unknown=0,  ///< Unknown transfer mode
@@ -86,7 +93,11 @@ enum class TransfMode: uint16_t
 
 // -----------------------------------------------------------------------------
 
-/// Callabck for custom logging message from server
+/** \bief Callabck for custom logging message from server
+ *
+ *  \param [in] Logging level
+ *  \param [in] Message text
+ */
 using fLogMsg = std::function<void(const int, std::string_view)>;
 
 // -----------------------------------------------------------------------------

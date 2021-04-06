@@ -252,7 +252,7 @@ public:
    */
   std::thread run_thread();
 
-  friend class srv;
+  friend class Srv;
 };
 
 // ----------------------------------------------------------------------------------
