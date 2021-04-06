@@ -130,8 +130,8 @@ UNIT_TEST_CASE_BEGIN(main, "rx_tx")
         std::string md5_file{md5_as_str(& file_md5[iter][0])};
         md5_file.append(" ").append(curr_file_name);
 
-        TEST_CHECK_TRUE(dm.rx(static_cast<tftp::buffer_t::iterator>(& *md5_file.begin()),
-                              static_cast<tftp::buffer_t::iterator>(& *md5_file.end()),
+        TEST_CHECK_TRUE(dm.rx(static_cast<tftp::Buf::iterator>(& *md5_file.begin()),
+                              static_cast<tftp::Buf::iterator>(& *md5_file.end()),
                               0) == 0);
 
         TEST_CHECK_TRUE(dm.active_files());

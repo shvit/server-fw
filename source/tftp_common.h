@@ -34,7 +34,7 @@
 namespace tftp
 {
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 // constants
 constexpr const in_port_t  default_tftp_port       = 69;
@@ -42,7 +42,7 @@ constexpr const int        default_tftp_syslog_lvl = 6;
 constexpr const uint16_t   default_fb_dialect      = 3;
 constexpr std::string_view default_fb_lib_name     = "libfbclient.so";
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 class Base;
 
@@ -56,13 +56,12 @@ class Settings;
 
 using pSettings = std::shared_ptr<Settings>;
 
-using buffer_t = std::vector<char>;
-using buffer_size_t = buffer_t::size_type;
+using Buf = std::vector<char>;
 
 template<typename T>
 using option_t = std::tuple<bool, T>;
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 /// Server request enum
 enum class srv_req: uint16_t
@@ -72,7 +71,7 @@ enum class srv_req: uint16_t
   write=2,   ///< Write request
 };
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 /// Server transfer mode enum
 enum class transfer_mode: uint16_t
@@ -84,12 +83,12 @@ enum class transfer_mode: uint16_t
 //mail,
 };
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 /// Callabck for custom logging message from server
 using fLogMsg = std::function<void(const int, std::string_view)>;
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 template<typename... Ts>
 struct is_container_helper {};
@@ -118,7 +117,7 @@ template<class T>
 constexpr bool is_container_v = is_container<T>::value;
 
 
-//=================================================================================================================================
+// -----------------------------------------------------------------------------
 
 /** Get string with typename class T
  *  \return Typename
@@ -133,13 +132,15 @@ auto curr_type() -> std::string
   return ret;
 }
 
-//=================================================================================================================================
+// -----------------------------------------------------------------------------
 
 std::string_view to_string(const srv_req);       ///< Conversion 'srv_req' to text
+
 std::string_view to_string(const transfer_mode); ///< Conversion 'transfer_mode' to text
+
 std::string_view to_string_lvl(const int);       ///< Conversion debug level to text
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 /** \brief Conversion: Socket address struct to string
  *
@@ -148,10 +149,11 @@ std::string_view to_string_lvl(const int);       ///< Conversion debug level to 
  *  \param [in] addr_end Address buffer - end iterator
  *  \return String with L3 address and port info; sample "0.0.0.0:69"
  */
-std::string sockaddr_to_str(buffer_t::const_iterator addr_begin,
-                            buffer_t::const_iterator addr_end);
+std::string sockaddr_to_str(
+    Buf::const_iterator addr_begin,
+    Buf::const_iterator addr_end);
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 /// Preprocessor defines for simple logging
 #define THIS_CLASS_METHOD() curr_type<std::remove_pointer_t<decltype(this)>>().append("::").append(__func__).append("()")

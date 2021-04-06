@@ -34,19 +34,19 @@ public:
   decltype(auto) set_buf_cont_str(Ts && ... args) { return Base::set_buf_cont_str(std::forward<Ts>(args) ...); }
 
   //template<typename T>
-  //auto get_buf_item_raw(tftp::buffer_t & buf, const tftp::buffer_size_t offset) const
+  //auto get_buf_item_raw(tftp::Buf & buf, const tftp::buffer_size_t offset) const
     //-> std::enable_if_t<std::is_integral_v<T>, T &> { return base::get_buf_item_raw<T>(buf, offset); };
 
   //template<typename T>
-  //auto get_buf_item_ntoh(tftp::buffer_t & buf, const tftp::buffer_size_t offset) const
+  //auto get_buf_item_ntoh(tftp::Buf & buf, const tftp::buffer_size_t offset) const
     //-> std::enable_if_t<std::is_integral_v<T>, T> { return base::get_buf_item_ntoh<T>(buf, offset); };
 
   //template<typename T>
-  //auto set_buf_item_raw(tftp::buffer_t & buf, const tftp::buffer_size_t offset, const T value)
+  //auto set_buf_item_raw(tftp::Buf & buf, const tftp::buffer_size_t offset, const T value)
     //-> std::enable_if_t<std::is_integral_v<T>, void> { base::set_buf_item_raw<T>(buf, offset, value); };
 
   //template<typename T>
-  //auto set_buf_item_hton(tftp::buffer_t & buf, const tftp::buffer_size_t offset, const T value)
+  //auto set_buf_item_hton(tftp::Buf & buf, const tftp::buffer_size_t offset, const T value)
     //-> std::enable_if_t<std::is_integral_v<T>, void> { base::set_buf_item_hton<T>(buf, offset, value); };
 
 
@@ -58,7 +58,7 @@ public:
 UNIT_TEST_CASE_BEGIN(buffer_operations, "Class 'tftp::Base' - buffer operations")
   tst_Base b;
 
-  tftp::buffer_t a1{0x00U, 0x01U, 0x02U, 0x03U, 0x04U, 0x05U, 0x06U, 0x07U,
+  tftp::Buf a1{0x00U, 0x01U, 0x02U, 0x03U, 0x04U, 0x05U, 0x06U, 0x07U,
                     0x08U, 0x09U, 0x0aU, 0x0bU, 0x0cU, 0x0dU, 0x0eU, 0x0fU};
 
   // 2 bytes

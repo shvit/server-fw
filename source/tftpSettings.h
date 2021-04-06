@@ -48,7 +48,7 @@ public:
 
   bool is_daemon; ///< Flag showing run as daemon
 
-  buffer_t local_base_; ///< Listening server address:port (sockaddr_in*)
+  Buf local_base_; ///< Listening server address:port (sockaddr_in*)
 
   // fb lib settings
   std::string lib_dir;  ///< System library directory (Ubuntu 18.04: /usr/lib/x86_64-linux-gnu/)

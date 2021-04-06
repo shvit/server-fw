@@ -54,7 +54,7 @@ bool srv::socket_open()
 
   if (socket_< 0)
   {
-    buffer_t err_msg_buf(1024, 0);
+    Buf err_msg_buf(1024, 0);
     LOG(LOG_ERR, "socket() error: "+std::string{strerror_r(errno, err_msg_buf.data(), err_msg_buf.size())});
     return false;
   };
@@ -86,7 +86,7 @@ bool srv::socket_open()
 
   if(bind_result)
   {
-    buffer_t err_msg_buf(1024, 0);
+    Buf err_msg_buf(1024, 0);
     LOG(LOG_ERR, "bind() error: "+std::string{strerror_r(errno, err_msg_buf.data(), err_msg_buf.size())});
     socket_close();
     return false;
@@ -131,7 +131,7 @@ void srv::main_loop()
 {
   // prepare
   stop_ = false;
-  buffer_t  client_addr(sizeof(struct sockaddr_in6), 0); // use max known buffer size
+  Buf  client_addr(sizeof(struct sockaddr_in6), 0); // use max known buffer size
   socklen_t client_addr_size = client_addr.size();
 
   // main server loop

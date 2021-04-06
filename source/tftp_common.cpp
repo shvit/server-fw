@@ -26,7 +26,7 @@ namespace tftp
 
 #define CASE_OPER_TO_STR_VIEW(NAME) case decltype(val)::NAME: return #NAME;
 
-std::string_view to_string(const srv_req val)
+auto to_string(const srv_req val) -> std::string_view
 {
   switch(val)
   {
@@ -38,7 +38,7 @@ std::string_view to_string(const srv_req val)
   }
 }
 
-std::string_view to_string(const transfer_mode val)
+auto to_string(const transfer_mode val) -> std::string_view
 {
   switch(val)
   {
@@ -53,7 +53,9 @@ std::string_view to_string(const transfer_mode val)
 
 #undef CASE_OPER_TO_STR_VIEW
 
-std::string_view to_string_lvl(const int val)
+//------------------------------------------------------------------------------
+
+auto to_string_lvl(const int val) -> std::string_view
 {
   switch(val)
   {
@@ -69,16 +71,17 @@ std::string_view to_string_lvl(const int val)
   }
 }
 
-//=================================================================================================================================
+//------------------------------------------------------------------------------
 
-std::string sockaddr_to_str(buffer_t::const_iterator addr_begin,
-                                   buffer_t::const_iterator addr_end)
+std::string sockaddr_to_str(
+    Buf::const_iterator addr_begin,
+    Buf::const_iterator addr_end)
 {
   const auto addr_dist{std::distance(addr_begin, addr_end)};
 
   if(addr_dist < 2) return "";
 
-  buffer_t txt(80, 0);
+  Buf txt(80, 0);
 
   auto curr_family=*((uint16_t *) & *addr_begin);
 
@@ -87,19 +90,29 @@ std::string sockaddr_to_str(buffer_t::const_iterator addr_begin,
     case AF_INET:
       if((size_t)addr_dist < sizeof(sockaddr_in)) return "";
 
-      inet_ntop(curr_family, & ((sockaddr_in *) & *addr_begin)->sin_addr, txt.data(), txt.size());
-      return std::string{txt.data()}+":"+std::to_string(be16toh(((struct sockaddr_in *) & *addr_begin)->sin_port));
+      inet_ntop(
+          curr_family,
+          & ((sockaddr_in *) & *addr_begin)->sin_addr,
+          txt.data(),
+          txt.size());
+      return std::string{txt.data()}+":"+
+             std::to_string(be16toh(((struct sockaddr_in *) & *addr_begin)->sin_port));
     case AF_INET6:
       if((size_t)addr_dist < sizeof(sockaddr_in6)) return "";
 
-      inet_ntop(curr_family, & ((sockaddr_in6 *) & *addr_begin)->sin6_addr, txt.data(), txt.size());
-      return "[" + std::string{txt.data()}+"]:"+std::to_string(be16toh(((struct sockaddr_in6 *) & *addr_begin)->sin6_port));
+      inet_ntop(
+          curr_family,
+          & ((sockaddr_in6 *) & *addr_begin)->sin6_addr,
+          txt.data(),
+          txt.size());
+      return "[" + std::string{txt.data()}+"]:"+
+             std::to_string(be16toh(((struct sockaddr_in6 *) & *addr_begin)->sin6_port));
     default:
       return "";
   }
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 } // namespace tftp
 

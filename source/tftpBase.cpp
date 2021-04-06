@@ -44,7 +44,7 @@ Base::Base():
   // Get system library path from current maps
   std::ifstream maps;
   maps.open("/proc/self/maps", std::ios_base::in);
-  for (buffer_t arr(4096, 0); maps.getline(arr.data(), arr.size(), '\n'); )
+  for (Buf arr(4096, 0); maps.getline(arr.data(), arr.size(), '\n'); )
   {
     std::string line{arr.data()};
     std::regex  re("(/.*/)(libc-)");

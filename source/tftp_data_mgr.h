@@ -125,9 +125,9 @@ public:
    *  \param [in] position Position received block
    *  \return 0 on success, -1 on error
    */
-  ssize_t rx(buffer_t::iterator buf_begin,
-             buffer_t::iterator buf_end,
-             const buffer_t::size_type position);
+  ssize_t rx(Buf::iterator buf_begin,
+             Buf::iterator buf_end,
+             const Buf::size_type position);
 
   /** \brief Push data to network (transmit)
    *
@@ -136,9 +136,9 @@ public:
    *  \param [in] position Position transmitted block
    *  \return Processed size, -1 on error
    */
-  ssize_t tx(buffer_t::iterator buf_begin,
-             buffer_t::iterator buf_end,
-             const buffer_t::size_type position);
+  ssize_t tx(Buf::iterator buf_begin,
+             Buf::iterator buf_end,
+             const Buf::size_type position);
 
   /**  Close all opened steams
    */

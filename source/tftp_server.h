@@ -39,7 +39,7 @@ protected:
   std::list<std::tuple<session, std::thread>> sessions_;
 
   int      socket_; ///< Socket of listener
-  buffer_t buffer_; ///< Income buffer for tftp request
+  Buf buffer_; ///< Income buffer for tftp request
 
   bool stop_; ///< Flag "need stop"
 

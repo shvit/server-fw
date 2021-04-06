@@ -119,7 +119,7 @@ bool session::socket_open()
   }
   if (socket_< 0)
   {
-    buffer_t err_msg_buf(1024, 0);
+    Buf err_msg_buf(1024, 0);
     LOG(LOG_ERR, "socket() error: "+std::string{strerror_r(errno, err_msg_buf.data(), err_msg_buf.size())});
     return false;
   };
@@ -133,7 +133,7 @@ bool session::socket_open()
 
   if(res)
   {
-    buffer_t err_msg_buf(1024, 0);
+    Buf err_msg_buf(1024, 0);
     LOG(LOG_ERR, "bind() error: "+std::string{strerror_r(errno, err_msg_buf.data(), err_msg_buf.size())});
     close(socket_);
     return false;
@@ -153,10 +153,10 @@ void session::socket_close()
 
 // ----------------------------------------------------------------------------------
 
-bool session::init(const buffer_t::const_iterator addr_begin,
-                   const buffer_t::const_iterator addr_end,
-                   const buffer_t::const_iterator buf_begin,
-                   const buffer_t::const_iterator buf_end)
+bool session::init(const Buf::const_iterator addr_begin,
+                   const Buf::const_iterator addr_end,
+                   const Buf::const_iterator buf_begin,
+                   const Buf::const_iterator buf_end)
 {
   LOG(LOG_INFO, "Session initialize started");
 
@@ -338,7 +338,7 @@ void session::check_buffer_tx_size(const size_t size_append)
 
 size_t session::push_buffer_string(std::string_view str)
 {
-  buffer_size_t ret_size = set_buf_cont_str(sess_buffer_tx_, buf_size_tx_, str, true);
+  Buf::size_type ret_size = set_buf_cont_str(sess_buffer_tx_, buf_size_tx_, str, true);
   buf_size_tx_ += ret_size;
   return ret_size;
 }

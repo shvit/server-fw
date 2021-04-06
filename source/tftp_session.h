@@ -45,14 +45,14 @@ protected:
   srv_req            request_type_;    ///< Server request
   std::string        filename_;        ///< Requested filename
   transfer_mode      transfer_mode_;   ///< Transfer mode
-  buffer_t           client_;          ///< Client socket address buffer
+  Buf           client_;          ///< Client socket address buffer
   int                socket_;          ///< Socket
   option_t<uint16_t> opt_blksize_;     ///< Option 'blksize'   : {was writed, value}
   option_t<int>      opt_timeout_;     ///< Option 'timeout'   : {was writed, value}
   option_t<int>      opt_tsize_;       ///< Option 'tsize'     : {was writed, value}
   uint16_t           re_tx_count_;     ///< Retransmitt count
-  buffer_t           sess_buffer_tx_;  ///< Session buffer for TX operations
-  buffer_t           sess_buffer_rx_;  ///< Session buffer for RX operations
+  Buf           sess_buffer_tx_;  ///< Session buffer for TX operations
+  Buf           sess_buffer_rx_;  ///< Session buffer for RX operations
   size_t             stage_;           ///< Stage
   size_t             buf_size_tx_;     ///< TX data size
   time_t             oper_time_;       ///< Last remembered action time
@@ -237,10 +237,10 @@ public:
    *  \param [in] buf_end UDP request data packet - end buffer iterator
    *  \return True if initialize success, else - false
    */
-  bool init(const buffer_t::const_iterator addr_begin,
-            const buffer_t::const_iterator addr_end,
-            const buffer_t::const_iterator buf_begin,
-            const buffer_t::const_iterator buf_end);
+  bool init(const Buf::const_iterator addr_begin,
+            const Buf::const_iterator addr_end,
+            const Buf::const_iterator buf_begin,
+            const Buf::const_iterator buf_end);
 
   /** \brief Main session loop
    */

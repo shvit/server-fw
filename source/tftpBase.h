@@ -81,8 +81,10 @@ protected:
    *  \return Referecne value type of T
    */
   template<typename T>
-  auto get_buf_item_raw(buffer_t & buf, const buffer_size_t offset) const
-    -> std::enable_if_t<std::is_integral_v<T>, T &>;
+  auto get_buf_item_raw(
+      Buf & buf,
+      const Buf::size_type offset) const
+          -> std::enable_if_t<std::is_integral_v<T>, T &>;
 
   /** \brief Get value from buffer and convert from network byte order to host byte order
    *
@@ -91,8 +93,10 @@ protected:
    *  \return Value type of T
    */
   template<typename T>
-  auto get_buf_item_ntoh(buffer_t & buf, const buffer_size_t offset) const
-    -> std::enable_if_t<std::is_integral_v<T>, T>;
+  auto get_buf_item_ntoh(
+      Buf & buf,
+      const Buf::size_type offset) const
+          -> std::enable_if_t<std::is_integral_v<T>, T>;
 
   /** \brief Set (write) raw value to buffer
    *
@@ -101,8 +105,11 @@ protected:
    *  \return Size of buffer increment (size added value)
    */
   template<typename T>
-  auto set_buf_item_raw(buffer_t & buf, const buffer_size_t offset, const T & value)
-    -> std::enable_if_t<std::is_integral_v<T>, buffer_size_t>;
+  auto set_buf_item_raw(
+      Buf & buf,
+      const Buf::size_type offset,
+      const T & value)
+          -> std::enable_if_t<std::is_integral_v<T>, Buf::size_type>;
 
   /** \brief Set (write) raw value to buffer and convert from host byte order to network byte order
    *
@@ -112,8 +119,11 @@ protected:
    *  \return Size of buffer increment (size added value)
    */
   template<typename T>
-  auto set_buf_item_hton(buffer_t & buf, const buffer_size_t offset, const T value)
-    -> std::enable_if_t<std::is_integral_v<T>, buffer_size_t>;
+  auto set_buf_item_hton(
+      Buf & buf,
+      const Buf::size_type offset,
+      const T value)
+          -> std::enable_if_t<std::is_integral_v<T>, Buf::size_type>;
 
   /** \brief Write container data to buffer
    *
@@ -126,8 +136,12 @@ protected:
    *
    */
   template<typename T>
-  auto set_buf_cont_str(buffer_t & buf, const buffer_size_t offset, const T & cntnr, bool check_zero_end = false)
-    -> std::enable_if_t<is_container_v<T>, buffer_size_t>;
+  auto set_buf_cont_str(
+      Buf & buf,
+      const Buf::size_type offset,
+      const T & cntnr,
+      bool check_zero_end = false)
+          -> std::enable_if_t<is_container_v<T>, Buf::size_type>;
 
 public:
 
@@ -377,8 +391,10 @@ public:
 //=================================================================================================================================
 
 template<typename T>
-auto Base::get_buf_item_raw(buffer_t & buf, const buffer_size_t offset) const
-  -> std::enable_if_t<std::is_integral_v<T>, T &>
+auto Base::get_buf_item_raw(
+    Buf & buf,
+    const Buf::size_type offset) const
+        -> std::enable_if_t<std::is_integral_v<T>, T &>
 {
   if((offset + sizeof(T)) > buf.size()) std::invalid_argument("Offset "+std::to_string(offset)+" is over buffer size");
 
@@ -388,8 +404,10 @@ auto Base::get_buf_item_raw(buffer_t & buf, const buffer_size_t offset) const
 // ----------------------------------------------------------------------------------
 
 template<typename T>
-auto Base::get_buf_item_ntoh(buffer_t & buf, const buffer_size_t offset) const
-  -> std::enable_if_t<std::is_integral_v<T>, T>
+auto Base::get_buf_item_ntoh(
+    Buf & buf,
+    const Buf::size_type offset) const
+        -> std::enable_if_t<std::is_integral_v<T>, T>
 {
   T value_n{get_buf_item_raw<T>(buf, offset)};
   std::reverse(((char *) & value_n),
@@ -400,10 +418,13 @@ auto Base::get_buf_item_ntoh(buffer_t & buf, const buffer_size_t offset) const
 // ----------------------------------------------------------------------------------
 
 template<typename T>
-auto Base::set_buf_item_raw(buffer_t & buf, const buffer_size_t offset, const T & value)
-  -> std::enable_if_t<std::is_integral_v<T>, buffer_size_t>
+auto Base::set_buf_item_raw(
+    Buf & buf,
+    const Buf::size_type offset,
+    const T & value)
+        -> std::enable_if_t<std::is_integral_v<T>, Buf::size_type>
 {
-  buffer_size_t ret_size = sizeof(T);
+  Buf::size_type ret_size = sizeof(T);
   if((offset + ret_size) > buf.size()) std::invalid_argument("Offset "+std::to_string(offset)+" is over buffer size");
 
   std::copy(((char *) & value),
@@ -416,8 +437,11 @@ auto Base::set_buf_item_raw(buffer_t & buf, const buffer_size_t offset, const T 
 // ----------------------------------------------------------------------------------
 
 template<typename T>
-auto Base::set_buf_item_hton(buffer_t & buf, const buffer_size_t offset, const T value)
-  -> std::enable_if_t<std::is_integral_v<T>, buffer_size_t>
+auto Base::set_buf_item_hton(
+    Buf & buf,
+    const Buf::size_type offset,
+    const T value)
+        -> std::enable_if_t<std::is_integral_v<T>, Buf::size_type>
 {
   T value_n{value};
   std::reverse(((char *) & value_n),
@@ -440,11 +464,14 @@ void Base::set_search_dir(Ts && ... args)
 // ----------------------------------------------------------------------------------
 
 template<typename T>
-auto Base::set_buf_cont_str(buffer_t & buf, const buffer_size_t offset, const T & cntnr, bool check_zero_end)
-  -> std::enable_if_t<is_container_v<T>, buffer_size_t>
+auto Base::set_buf_cont_str(
+    Buf & buf,
+    const Buf::size_type offset,
+    const T & cntnr, bool check_zero_end)
+        -> std::enable_if_t<is_container_v<T>, Buf::size_type>
 {
   auto zero_it = (check_zero_end ? std::find(cntnr.cbegin(), cntnr.cend(), 0) : cntnr.cend());
-  buffer_size_t new_size = std::distance(cntnr.cbegin(), zero_it);
+  Buf::size_type new_size = std::distance(cntnr.cbegin(), zero_it);
 
   if(new_size)
   {

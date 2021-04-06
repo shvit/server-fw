@@ -72,15 +72,15 @@ public:
 
   ~test_helper() { if(socket_ > 0) close(socket_); };
 
-  uint16_t                  blk_size;
-  tftp::buffer_t            a_local_;   // addr local (source)
-  tftp::buffer_t            a_server_;  // addr server for requests only
-  tftp::buffer_t            tx_buf;     // tx data buffer
-  tftp::buffer_t            rx_buf;     // rx data buffer
-  tftp::buffer_t            et_buf;     // ethalon data buffer
-  tftp::buffer_t::size_type tx_size;    // tx data size
-  tftp::buffer_t::size_type rx_size;    // rx data size
-  tftp::buffer_t::size_type et_size;    // ethalon data size
+  uint16_t             blk_size;
+  tftp::Buf            a_local_;   // addr local (source)
+  tftp::Buf            a_server_;  // addr server for requests only
+  tftp::Buf            tx_buf;     // tx data buffer
+  tftp::Buf            rx_buf;     // rx data buffer
+  tftp::Buf            et_buf;     // ethalon data buffer
+  tftp::Buf::size_type tx_size;    // tx data size
+  tftp::Buf::size_type rx_size;    // rx data size
+  tftp::Buf::size_type et_size;    // ethalon data size
 
   template<typename T> void push_tx_cont(T && val) { tx_size += set_buf_cont_str(tx_buf, tx_size, std::forward<T>(val)); }
   template<typename T> void push_et_cont(T && val) { et_size += set_buf_cont_str(et_buf, et_size, std::forward<T>(val)); }

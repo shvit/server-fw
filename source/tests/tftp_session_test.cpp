@@ -67,8 +67,8 @@ UNIT_TEST_CASE_BEGIN(session, "check session")
     //s1.set_logger(logger);
     s1.set_root_dir(tmp_dir);
     s1.set_local_base("0.0.0.0:7777");
-    TEST_CHECK_TRUE(s1.init(static_cast<tftp::buffer_t::const_iterator>((char *) & a),
-                            static_cast<tftp::buffer_t::const_iterator>((char *) & a) + sizeof(a),
+    TEST_CHECK_TRUE(s1.init(static_cast<tftp::Buf::const_iterator>((char *) & a),
+                            static_cast<tftp::Buf::const_iterator>((char *) & a) + sizeof(a),
                             pkt1.cbegin(),
                             pkt1.cend()));
     TEST_CHECK_TRUE(s1.get_request_type() == tftp::srv_req::write);

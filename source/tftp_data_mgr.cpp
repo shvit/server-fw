@@ -114,9 +114,9 @@ bool data_mgr::check_fb()
 
 // ----------------------------------------------------------------------------------
 
-ssize_t data_mgr::rx(buffer_t::iterator buf_begin,
-                     buffer_t::iterator buf_end,
-                     const buffer_t::size_type position)
+ssize_t data_mgr::rx(Buf::iterator buf_begin,
+                     Buf::iterator buf_end,
+                     const Buf::size_type position)
 {
   if(request_type_ != srv_req::write)
   {
@@ -152,9 +152,9 @@ ssize_t data_mgr::rx(buffer_t::iterator buf_begin,
 
 // ----------------------------------------------------------------------------------
 
-ssize_t data_mgr::data_mgr::tx(buffer_t::iterator buf_begin,
-                               buffer_t::iterator buf_end,
-                               const buffer_t::size_type position)
+ssize_t data_mgr::data_mgr::tx(Buf::iterator buf_begin,
+                               Buf::iterator buf_end,
+                               const Buf::size_type position)
 {
   if(request_type_ != srv_req::read)
   {
@@ -386,7 +386,7 @@ bool data_mgr::recursive_search_by_md5(const std::string & path)
           std::ifstream file_md5;
           file_md5.open(full_name, std::ios_base::in);
 
-          for (buffer_t arr(1024,0); file_md5.getline(arr.data(), arr.size(), '\n'); )
+          for (Buf arr(1024,0); file_md5.getline(arr.data(), arr.size(), '\n'); )
           {
             std::string line{arr.data()};
             std::regex regex_md5_sum("([a-f0-9]{32})");
