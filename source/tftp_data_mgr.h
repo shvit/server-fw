@@ -36,7 +36,7 @@ namespace tftp
  *
  */
 
-class data_mgr: public Base
+class DataMgr: public Base
 {
 protected:
   // Processing info
@@ -101,11 +101,11 @@ public:
 
   /**  Constructor
    */
-  data_mgr();
+  DataMgr();
 
   /** Destructor
    */
-  virtual ~data_mgr();
+  virtual ~DataMgr();
 
   /** Check active (opened streams or Firebird connection)
    */

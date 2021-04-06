@@ -27,7 +27,7 @@ namespace tftp
 
 // ----------------------------------------------------------------------------------
 
-data_mgr::data_mgr():
+DataMgr::DataMgr():
     Base(),
     request_type_{SrvReq::unknown},
     fname_{""},
@@ -42,12 +42,12 @@ data_mgr::data_mgr():
 
 // ----------------------------------------------------------------------------------
 
-data_mgr::~data_mgr()
+DataMgr::~DataMgr()
 {
 }
 
 // ----------------------------------------------------------------------------------
-bool data_mgr::check_directory(std::string_view chk_dir) const
+bool DataMgr::check_directory(std::string_view chk_dir) const
 {
   if(!chk_dir.size()) return false;
 
@@ -59,7 +59,7 @@ bool data_mgr::check_directory(std::string_view chk_dir) const
 
 // ----------------------------------------------------------------------------------
 
-bool data_mgr::check_root_dir()
+bool DataMgr::check_root_dir()
 {
   if(check_directory(get_root_dir()))
   {
@@ -75,7 +75,7 @@ bool data_mgr::check_root_dir()
 
 // ----------------------------------------------------------------------------------
 
-bool data_mgr::check_fb()
+bool DataMgr::check_fb()
 {
   std::string fb_lib_path{get_lib_dir()+get_lib_name_fb()};
 
@@ -114,9 +114,10 @@ bool data_mgr::check_fb()
 
 // ----------------------------------------------------------------------------------
 
-ssize_t data_mgr::rx(Buf::iterator buf_begin,
-                     Buf::iterator buf_end,
-                     const Buf::size_type position)
+ssize_t DataMgr::rx(
+    Buf::iterator buf_begin,
+    Buf::iterator buf_end,
+    const Buf::size_type position)
 {
   if(request_type_ != SrvReq::write)
   {
@@ -152,9 +153,10 @@ ssize_t data_mgr::rx(Buf::iterator buf_begin,
 
 // ----------------------------------------------------------------------------------
 
-ssize_t data_mgr::data_mgr::tx(Buf::iterator buf_begin,
-                               Buf::iterator buf_end,
-                               const Buf::size_type position)
+ssize_t DataMgr::tx(
+    Buf::iterator buf_begin,
+    Buf::iterator buf_end,
+    const Buf::size_type position)
 {
   if(request_type_ != SrvReq::read)
   {
@@ -192,14 +194,14 @@ ssize_t data_mgr::data_mgr::tx(Buf::iterator buf_begin,
 
 // ----------------------------------------------------------------------------------
 
-bool data_mgr::active_fb_connection()
+bool DataMgr::active_fb_connection()
 {
   return false;
 }
 
 // ----------------------------------------------------------------------------------
 
-bool data_mgr::active_files() const
+bool DataMgr::active_files() const
 {
   return ((request_type_ == SrvReq::read)  && ifs_) ||
          ((request_type_ == SrvReq::write) && ofs_.is_open());
@@ -207,14 +209,14 @@ bool data_mgr::active_files() const
 
 // ----------------------------------------------------------------------------------
 
-bool data_mgr::active()
+bool DataMgr::active()
 {
   return active_fb_connection() || active_files();
 }
 
 // ----------------------------------------------------------------------------------
 
-bool data_mgr::init(SrvReq request_type, std::string_view req_fname)
+bool DataMgr::init(SrvReq request_type, std::string_view req_fname)
 {
   request_type_ = request_type;
   fname_.assign(req_fname);
@@ -283,7 +285,7 @@ bool data_mgr::init(SrvReq request_type, std::string_view req_fname)
 
 // ----------------------------------------------------------------------------------
 
-void data_mgr::close()
+void DataMgr::close()
 {
  // TODO: close connection
 
@@ -309,7 +311,7 @@ void data_mgr::close()
 
 // ----------------------------------------------------------------------------------
 
-int data_mgr::is_md5()
+int DataMgr::is_md5()
 {
   std::regex regex_md5_pure("([a-f0-9]{32})");
   std::regex regex_md5_file("([a-f0-9]{32})([.][mM][dD][5])");
@@ -360,7 +362,7 @@ int data_mgr::is_md5()
 
 // ----------------------------------------------------------------------------------
 
-bool data_mgr::recursive_search_by_md5(const std::string & path)
+bool DataMgr::recursive_search_by_md5(const std::string & path)
 {
   bool ret = false;
   if (auto dir = opendir(path.c_str()))
@@ -417,7 +419,7 @@ bool data_mgr::recursive_search_by_md5(const std::string & path)
 
 // ----------------------------------------------------------------------------------
 
-void data_mgr::set_error_if_first(const uint16_t e_cod, std::string_view e_msg) const
+void DataMgr::set_error_if_first(const uint16_t e_cod, std::string_view e_msg) const
 {
   if(set_error_) set_error_(e_cod, e_msg);
 }

@@ -52,7 +52,7 @@ Session::Session():
     oper_last_block_{0},
     stop_{false},
     finished_{false},
-    manager_{data_mgr{}},
+    manager_{DataMgr{}},
     error_code_{0},
     error_message_{""}
 {

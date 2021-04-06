@@ -61,7 +61,7 @@ protected:
   size_t       oper_last_block_; ///< Last (finish) block number
   bool         stop_;            ///< Break loop request (when error, etc.)
   bool         finished_;        ///< confirm (reply) break loop request
-  data_mgr     manager_;         ///< Data manager
+  DataMgr     manager_;         ///< Data manager
   uint16_t     error_code_;      ///< First error info - code
   std::string  error_message_;   ///< First error info - message
 

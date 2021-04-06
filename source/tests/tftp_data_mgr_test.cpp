@@ -12,7 +12,7 @@ UNIT_TEST_SUITE_BEGIN(tftp_data_mgr)
 
 using namespace unit_tests;
 
-class test_data_mgr: public tftp::data_mgr
+class test_data_mgr: public tftp::DataMgr
 {
 public:
   // get protected property
@@ -20,11 +20,11 @@ public:
   tftp::pSettings get_settings() { return settings_; };
 
   // forward protected methods
-  bool check_root_dir() { return tftp::data_mgr::check_root_dir(); };
-  bool active_files() { return tftp::data_mgr::active_files(); };
-  bool active() { return tftp::data_mgr::active(); };
-  auto is_md5() { return tftp::data_mgr::is_md5(); };
-  bool recursive_search_by_md5(const std::string & path) { return tftp::data_mgr::recursive_search_by_md5(path); };
+  bool check_root_dir() { return tftp::DataMgr::check_root_dir(); };
+  bool active_files() { return tftp::DataMgr::active_files(); };
+  bool active() { return tftp::DataMgr::active(); };
+  auto is_md5() { return tftp::DataMgr::is_md5(); };
+  bool recursive_search_by_md5(const std::string & path) { return tftp::DataMgr::recursive_search_by_md5(path); };
 
 };
 
