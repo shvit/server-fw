@@ -19,7 +19,7 @@
 #include <sys/stat.h>
 
 #include "tftp_common.h"
-#include "tftp_server.h"
+#include "tftpSrv.h"
 
 int main(int argc, char* argv[])
 {

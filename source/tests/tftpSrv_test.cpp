@@ -6,7 +6,7 @@
 
 
 #include "../tftp_common.h"
-#include "../tftp_server.h"
+#include "../tftpSrv.h"
 #include "test.h"     
 
 using namespace unit_tests;

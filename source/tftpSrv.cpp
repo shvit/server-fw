@@ -19,7 +19,7 @@
 #include <thread>
 #include <unistd.h>
 
-#include "tftp_server.h"
+#include "tftpSrv.h"
 #include "tftp_common.h"
 
 namespace tftp
