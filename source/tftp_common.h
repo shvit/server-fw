@@ -139,8 +139,9 @@ auto curr_type() -> std::string
 {
   int stat{0};
   char * tmp_name = abi::__cxa_demangle(typeid(T).name(), 0, 0, & stat);
+  if(!tmp_name) return "???";
   std::string ret{tmp_name};
-  if(tmp_name) free(tmp_name);
+  free(tmp_name);
   return ret;
 }
 
