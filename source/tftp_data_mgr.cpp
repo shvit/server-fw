@@ -29,7 +29,7 @@ namespace tftp
 
 data_mgr::data_mgr():
     Base(),
-    request_type_{srv_req::unknown},
+    request_type_{SrvReq::unknown},
     fname_{""},
     hash_{""},
     ifs_{nullptr},
@@ -118,7 +118,7 @@ ssize_t data_mgr::rx(Buf::iterator buf_begin,
                      Buf::iterator buf_end,
                      const Buf::size_type position)
 {
-  if(request_type_ != srv_req::write)
+  if(request_type_ != SrvReq::write)
   {
     LOG(LOG_ERR, "Need request type 'write' (really '"+std::string(to_string(request_type_))+"')");
     set_error_if_first(0, "Wrong request type");
@@ -156,7 +156,7 @@ ssize_t data_mgr::data_mgr::tx(Buf::iterator buf_begin,
                                Buf::iterator buf_end,
                                const Buf::size_type position)
 {
-  if(request_type_ != srv_req::read)
+  if(request_type_ != SrvReq::read)
   {
     LOG(LOG_ERR, "Need request type 'read' (really '"+std::string(to_string(request_type_))+"')");
     set_error_if_first(0, "Wrong request");
@@ -201,8 +201,8 @@ bool data_mgr::active_fb_connection()
 
 bool data_mgr::active_files() const
 {
-  return ((request_type_ == srv_req::read)  && ifs_) ||
-         ((request_type_ == srv_req::write) && ofs_.is_open());
+  return ((request_type_ == SrvReq::read)  && ifs_) ||
+         ((request_type_ == SrvReq::write) && ofs_.is_open());
 }
 
 // ----------------------------------------------------------------------------------
@@ -214,7 +214,7 @@ bool data_mgr::active()
 
 // ----------------------------------------------------------------------------------
 
-bool data_mgr::init(srv_req request_type, std::string_view req_fname)
+bool data_mgr::init(SrvReq request_type, std::string_view req_fname)
 {
   request_type_ = request_type;
   fname_.assign(req_fname);
@@ -231,7 +231,7 @@ bool data_mgr::init(srv_req request_type, std::string_view req_fname)
 
     switch(request_type_)
     {
-      case srv_req::read:
+      case SrvReq::read:
         switch(ifs_mode_ = is_md5())
         {
           case 0: //fname_ = get_root_dir() + fname_;
@@ -259,7 +259,7 @@ bool data_mgr::init(srv_req request_type, std::string_view req_fname)
             break;
         }
         break;
-      case srv_req::write:
+      case SrvReq::write:
 	      fname_ = get_root_dir() + fname_;
         ofs_.open(fname_, std::ios_base::out | std::ios::binary);
         if(!ofs_.is_open()) // if not opened

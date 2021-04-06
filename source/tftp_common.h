@@ -65,7 +65,7 @@ using OptInt = Opt<int>;
 // -----------------------------------------------------------------------------
 
 /// Server request enum
-enum class srv_req: uint16_t
+enum class SrvReq: uint16_t
 {
   unknown=0, ///< Unknown request
   read=1,    ///< Read request
@@ -135,7 +135,7 @@ auto curr_type() -> std::string
 
 // -----------------------------------------------------------------------------
 
-std::string_view to_string(const srv_req);       ///< Conversion 'srv_req' to text
+std::string_view to_string(const SrvReq);       ///< Conversion 'SrvReq' to text
 
 std::string_view to_string(const transfer_mode); ///< Conversion 'transfer_mode' to text
 

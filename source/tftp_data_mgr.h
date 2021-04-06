@@ -40,7 +40,7 @@ class data_mgr: public Base
 {
 protected:
   // Processing info
-  srv_req     request_type_; ///< Request type
+  SrvReq     request_type_; ///< Request type
   std::string fname_;        ///< Processed file name
   std::string hash_;         ///< Hash of file (md5)
 
@@ -116,7 +116,7 @@ public:
    *  \param [in] fname Requested file name
    *  \return True if initialize success, else - false
    */
-  bool init(srv_req request_type, std::string_view fname);
+  bool init(SrvReq request_type, std::string_view fname);
 
   /** \brief Pull data from network (receive)
    *

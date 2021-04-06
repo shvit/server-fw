@@ -42,7 +42,7 @@ namespace tftp
 class session: public Base
 {
 protected:
-  srv_req            request_type_;    ///< Server request
+  SrvReq            request_type_;    ///< Server request
   std::string        filename_;        ///< Requested filename
   transfer_mode      transfer_mode_;   ///< Transfer mode
   Buf           client_;          ///< Client socket address buffer

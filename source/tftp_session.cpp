@@ -33,7 +33,7 @@ namespace tftp
 
 session::session():
     Base(),
-    request_type_{srv_req::unknown},
+    request_type_{SrvReq::unknown},
     filename_{""},
     transfer_mode_{transfer_mode::unknown},
     client_{},
@@ -168,7 +168,7 @@ bool session::init(const Buf::const_iterator addr_begin,
   {
     local_base_as_inet().sin_port = 0; // with new automatic port number
 
-    request_type_=(srv_req) be16toh(*((uint16_t *) & *buf_begin));
+    request_type_=(SrvReq) be16toh(*((uint16_t *) & *buf_begin));
     LOG(LOG_INFO, "Recognize request type '"+std::string(to_string(request_type_))+"'");
 
     uint16_t stage = 0;
@@ -290,7 +290,7 @@ bool session::init(const Buf::const_iterator addr_begin,
       }
     } // for loop
   }
-  ret = ret && (request_type_ != srv_req::unknown) && filename_.size() && block_size();
+  ret = ret && (request_type_ != SrvReq::unknown) && filename_.size() && block_size();
 
   // alloc session buffer
   if(ret)
@@ -445,7 +445,7 @@ void session::run()
   LOG(LOG_INFO, "Running session");
 
   // checks
-  if((request_type_ != srv_req::read) && (request_type_ != srv_req::write))
+  if((request_type_ != SrvReq::read) && (request_type_ != SrvReq::write))
   {
     LOG(LOG_ERR, "Fail request mode ");
     return;
@@ -558,7 +558,7 @@ bool session::transmit_no_wait()
 
     switch(request_type_)
     {
-      case srv_req::read:
+      case SrvReq::read:
         if(!stage_ && !buf_size_tx_) ++stage_; // if no confirm option then start transmit data
         if(stage_) construct_data();
         if((buf_size_tx_ < (block_size()+4U)))
@@ -567,7 +567,7 @@ bool session::transmit_no_wait()
           LOG(LOG_DEBUG, "Calculated last tx block "+std::to_string(oper_last_block_));
         }
         break;
-      case srv_req::write:
+      case SrvReq::write:
         if(!buf_size_tx_) construct_ack();
         break;
       default:
@@ -613,7 +613,7 @@ bool session::transmit_no_wait()
           buf_size_tx_ = 0;
           set_stage_receive();
 
-          if((request_type_ == srv_req::write) && oper_last_block_ && (oper_last_block_==stage_))  ret=false; // GOOD EXIT
+          if((request_type_ == SrvReq::write) && oper_last_block_ && (oper_last_block_==stage_))  ret=false; // GOOD EXIT
         }
       }
     }
@@ -663,7 +663,7 @@ bool session::receive_no_wait()
       {
         case 4U: // ACK ------------------------------------------------------------------------------------------
           rx_msg.append(": ACK blk ").append(std::to_string(get_buf_rx_u16_ntoh(1)));
-          if((request_type_ == srv_req::read) &&
+          if((request_type_ == SrvReq::read) &&
              (get_buf_rx_u16_ntoh(1) == blk_num_local()))
           {
             LOG(LOG_DEBUG, "OK! "+rx_msg);
@@ -682,7 +682,7 @@ bool session::receive_no_wait()
           rx_msg.append(": DATA blk ").append(std::to_string(get_buf_rx_u16_ntoh(1)));
           rx_msg.append("; data size ").append(std::to_string(rx_result_size));
           if(bool is_next = (get_buf_rx_u16_ntoh(1) == blk_num_local(1U));
-              (request_type_ == srv_req::write) &&
+              (request_type_ == SrvReq::write) &&
               ((get_buf_rx_u16_ntoh(1) == blk_num_local(0U)) || // current blk
                 is_next))  // or next blk
           {

@@ -71,7 +71,7 @@ UNIT_TEST_CASE_BEGIN(session, "check session")
                             static_cast<tftp::Buf::const_iterator>((char *) & a) + sizeof(a),
                             pkt1.cbegin(),
                             pkt1.cend()));
-    TEST_CHECK_TRUE(s1.get_request_type() == tftp::srv_req::write);
+    TEST_CHECK_TRUE(s1.get_request_type() == tftp::SrvReq::write);
     TEST_CHECK_TRUE(s1.get_transfer_mode() == tftp::transfer_mode::octet);
     TEST_CHECK_TRUE(s1.get_client().size()==sizeof(a) &&
                     std::equal(s1.get_client().cbegin(),

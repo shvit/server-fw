@@ -92,7 +92,7 @@ UNIT_TEST_CASE_BEGIN(main, "rx_tx")
       bool init_res;
 
       // 1 - file with data create
-      TEST_CHECK_TRUE(init_res = dm.init(tftp::srv_req::write, curr_file_name));
+      TEST_CHECK_TRUE(init_res = dm.init(tftp::SrvReq::write, curr_file_name));
 
       if(init_res)
       {
@@ -119,7 +119,7 @@ UNIT_TEST_CASE_BEGIN(main, "rx_tx")
       }
 
       // 2 - file md5 create
-      TEST_CHECK_TRUE(init_res = dm.init(tftp::srv_req::write, curr_file_name+".md5"));
+      TEST_CHECK_TRUE(init_res = dm.init(tftp::SrvReq::write, curr_file_name+".md5"));
 
       if(init_res)
       {
@@ -147,7 +147,7 @@ UNIT_TEST_CASE_BEGIN(main, "rx_tx")
       test_data_mgr dm_find;
       dm_find.set_root_dir(tmp_dir);
       dm_find.set_search_dir(tmp_dir);
-      TEST_CHECK_TRUE(init_res = dm_find.init(tftp::srv_req::read, hash));
+      TEST_CHECK_TRUE(init_res = dm_find.init(tftp::SrvReq::read, hash));
 
       if(init_res)
       {
@@ -175,7 +175,7 @@ UNIT_TEST_CASE_BEGIN(main, "rx_tx")
       TEST_CHECK_FALSE(dm.active());
 
       bool init_res;
-      TEST_CHECK_TRUE(init_res = dm.init(tftp::srv_req::read, curr_file_name));
+      TEST_CHECK_TRUE(init_res = dm.init(tftp::SrvReq::read, curr_file_name));
 
       if(init_res)
       {

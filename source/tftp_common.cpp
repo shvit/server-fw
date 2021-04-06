@@ -26,7 +26,7 @@ namespace tftp
 
 #define CASE_OPER_TO_STR_VIEW(NAME) case decltype(val)::NAME: return #NAME;
 
-auto to_string(const srv_req val) -> std::string_view
+auto to_string(const SrvReq val) -> std::string_view
 {
   switch(val)
   {
