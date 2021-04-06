@@ -38,7 +38,7 @@ auto to_string(const SrvReq val) -> std::string_view
   }
 }
 
-auto to_string(const transfer_mode val) -> std::string_view
+auto to_string(const TransfMode val) -> std::string_view
 {
   switch(val)
   {

@@ -35,7 +35,7 @@ session::session():
     Base(),
     request_type_{SrvReq::unknown},
     filename_{""},
-    transfer_mode_{transfer_mode::unknown},
+    transfer_mode_{TransfMode::unknown},
     client_{},
     socket_{0},
     opt_blksize_{false, 512U},
@@ -202,27 +202,27 @@ bool session::init(const Buf::const_iterator addr_begin,
             {
               std::string mode{it_beg, iter};
 
-              if(mode == to_string(transfer_mode::octet))
+              if(mode == to_string(TransfMode::octet))
               {
-                transfer_mode_=transfer_mode::octet;
+                transfer_mode_=TransfMode::octet;
                 LOG(LOG_INFO, "Recognize transfer mode "+mode+"'");
               }
               else
-              if(mode == to_string(transfer_mode::netascii))
+              if(mode == to_string(TransfMode::netascii))
               {
-                transfer_mode_=transfer_mode::netascii;
+                transfer_mode_=TransfMode::netascii;
                 LOG(LOG_INFO, "Recognize transfer mode "+mode+"'");
               }
               else
-              if(mode == to_string(transfer_mode::binary))
+              if(mode == to_string(TransfMode::binary))
               {
-                transfer_mode_=transfer_mode::octet;
+                transfer_mode_=TransfMode::octet;
                 LOG(LOG_WARNING, "Change mode 'binary' to mode 'octet'");
               }
               //else
               //if(mode == "mail")
               //{
-                //transfer_mode_=transfer_mode::unknown;
+                //transfer_mode_=TransfMode::unknown;
                 //LOG(LOG_WARNING, "Unsupported mode 'mail'");
               //}
               else

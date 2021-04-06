@@ -42,28 +42,28 @@ namespace tftp
 class session: public Base
 {
 protected:
-  SrvReq            request_type_;    ///< Server request
-  std::string        filename_;        ///< Requested filename
-  transfer_mode      transfer_mode_;   ///< Transfer mode
-  Buf           client_;          ///< Client socket address buffer
-  int                socket_;          ///< Socket
-  OptInt             opt_blksize_;     ///< Option 'blksize'   : {was writed, value}
-  OptInt             opt_timeout_;     ///< Option 'timeout'   : {was writed, value}
-  OptInt             opt_tsize_;       ///< Option 'tsize'     : {was writed, value}
-  uint16_t           re_tx_count_;     ///< Retransmitt count
-  Buf           sess_buffer_tx_;  ///< Session buffer for TX operations
-  Buf           sess_buffer_rx_;  ///< Session buffer for RX operations
-  size_t             stage_;           ///< Stage
-  size_t             buf_size_tx_;     ///< TX data size
-  time_t             oper_time_;       ///< Last remembered action time
-  uint16_t           oper_tx_count_;   ///< Transmit try count
-  bool               oper_wait_;       ///< Flag r/w state (mode)
-  size_t             oper_last_block_; ///< Last (finish) block number
-  bool               stop_;            ///< Break loop request (when error, etc.)
-  bool               finished_;        ///< confirm (reply) break loop request
-  data_mgr           manager_;         ///< Data manager
-  uint16_t           error_code_;      ///< First error info - code
-  std::string        error_message_;   ///< First error info - message
+  SrvReq       request_type_;    ///< Server request
+  std::string  filename_;        ///< Requested filename
+  TransfMode   transfer_mode_;   ///< Transfer mode
+  Buf          client_;          ///< Client socket address buffer
+  int          socket_;          ///< Socket
+  OptInt       opt_blksize_;     ///< Option 'blksize'   : {was writed, value}
+  OptInt       opt_timeout_;     ///< Option 'timeout'   : {was writed, value}
+  OptInt       opt_tsize_;       ///< Option 'tsize'     : {was writed, value}
+  uint16_t     re_tx_count_;     ///< Retransmitt count
+  Buf          sess_buffer_tx_;  ///< Session buffer for TX operations
+  Buf          sess_buffer_rx_;  ///< Session buffer for RX operations
+  size_t       stage_;           ///< Stage
+  size_t       buf_size_tx_;     ///< TX data size
+  time_t       oper_time_;       ///< Last remembered action time
+  uint16_t     oper_tx_count_;   ///< Transmit try count
+  bool         oper_wait_;       ///< Flag r/w state (mode)
+  size_t       oper_last_block_; ///< Last (finish) block number
+  bool         stop_;            ///< Break loop request (when error, etc.)
+  bool         finished_;        ///< confirm (reply) break loop request
+  data_mgr     manager_;         ///< Data manager
+  uint16_t     error_code_;      ///< First error info - code
+  std::string  error_message_;   ///< First error info - message
 
   /** \brief Get uint16_t from RX buffer with offset
    *

@@ -75,7 +75,7 @@ enum class SrvReq: uint16_t
 // -----------------------------------------------------------------------------
 
 /// Server transfer mode enum
-enum class transfer_mode: uint16_t
+enum class TransfMode: uint16_t
 {
   unknown=0,  ///< Unknown transfer mode
   netascii=1, ///< Text transfer mode
@@ -137,7 +137,7 @@ auto curr_type() -> std::string
 
 std::string_view to_string(const SrvReq);       ///< Conversion 'SrvReq' to text
 
-std::string_view to_string(const transfer_mode); ///< Conversion 'transfer_mode' to text
+std::string_view to_string(const TransfMode); ///< Conversion 'TransfMode' to text
 
 std::string_view to_string_lvl(const int);       ///< Conversion debug level to text
 
