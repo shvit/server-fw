@@ -44,7 +44,7 @@ namespace tftp
 class Base
 {
 protected:
-  settings settings_;  ///< Shared pointer for settings storage
+  pSettings settings_;  ///< Shared pointer for settings storage
 
   mutable std::shared_mutex mutex_; ///< Read/write mutex for settings threading access
 
@@ -163,7 +163,7 @@ public:
    *  Use mutex unique mode
    *  \param [in] new_logger Custom function of logger
    */
-  void set_logger(f_log_msg_t new_logger);
+  void set_logger(fLogMsg new_logger);
 
   /** \brief Set: syslog level
    *

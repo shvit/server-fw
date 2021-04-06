@@ -52,9 +52,9 @@ class session;
 
 class data_mgr;
 
-class settings_val;
+class Settings;
 
-using settings = std::shared_ptr<settings_val>;
+using pSettings = std::shared_ptr<Settings>;
 
 using buffer_t = std::vector<char>;
 using buffer_size_t = buffer_t::size_type;
@@ -87,7 +87,7 @@ enum class transfer_mode: uint16_t
 // ----------------------------------------------------------------------------------
 
 /// Callabck for custom logging message from server
-using f_log_msg_t = std::function<void(const int, std::string_view)>;
+using fLogMsg = std::function<void(const int, std::string_view)>;
 
 // ----------------------------------------------------------------------------------
 

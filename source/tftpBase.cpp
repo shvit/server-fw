@@ -32,7 +32,7 @@ namespace tftp
 
 
 Base::Base():
-    settings_{settings_val::create()}
+    settings_{Settings::create()}
 {
   local_base_as_inet().sin_family = AF_INET;
   local_base_as_inet().sin_port   = htobe16(default_tftp_port);
@@ -107,7 +107,7 @@ void Base::log(int lvl, std::string_view msg) const
 
 // ----------------------------------------------------------------------------------
 
-void Base::set_logger(f_log_msg_t new_logger)
+void Base::set_logger(fLogMsg new_logger)
 {
   auto lk = begin_unique(); // write lock
 

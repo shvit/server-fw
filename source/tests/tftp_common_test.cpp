@@ -13,7 +13,7 @@ UNIT_TEST_SUITE_BEGIN(tftp_common)
 class tst_Base: public tftp::Base
 {
 public:
-  tftp::settings get_settings() { return settings_; };
+  tftp::pSettings get_settings() { return settings_; };
 
   decltype(auto) tst_local_base_as_inet () { return local_base_as_inet (); };
   decltype(auto) tst_local_base_as_inet6() { return local_base_as_inet6(); };

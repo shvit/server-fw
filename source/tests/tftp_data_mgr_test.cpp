@@ -17,7 +17,7 @@ class test_data_mgr: public tftp::data_mgr
 public:
   // get protected property
   auto & prop_fname() { return fname_; };
-  tftp::settings get_settings() { return settings_; };
+  tftp::pSettings get_settings() { return settings_; };
 
   // forward protected methods
   bool check_root_dir() { return tftp::data_mgr::check_root_dir(); };

@@ -1,8 +1,15 @@
-/*
- * tftpSettings.h
+/**
+ * \file tftpSettings.h
+ * \brief TFTP Settings class header
  *
- *  Created on: 6 апр. 2021 г.
- *      Author: svv
+ *  Storage class for TFTP settings
+ *
+ *  License GPL-3.0
+ *
+ *  \date   06-apr-2021
+ *  \author Vitaliy Shirinkin, e-mail: vitaliy.shirinkin@gmail.com
+ *
+ *  \version 0.1
  */
 
 #ifndef SOURCE_TFTPSETTINGS_H_
@@ -21,26 +28,23 @@ namespace tftp
  * \brief Settings storage class
  *
  *  Class for store server settings.
- *  Can't simple construct, create only from settings_val::create() as shared pointer
+ *  Can't simple construct, create only from Settings::create() as shared pointer
  */
 
-class settings_val: public std::enable_shared_from_this<settings_val>
+class Settings: public std::enable_shared_from_this<Settings>
 {
 protected:
 
   /// No public constructor
-  settings_val();
+  Settings();
 
 public:
 
-  /// Public settings creator
-  static std::shared_ptr<settings_val> create()
-  {
-    return std::make_shared<settings_val>(settings_val{});
-  };
+  /// Public creator
+  static auto create() -> pSettings;
 
   /// Destructor
-  virtual ~settings_val() {};
+  virtual ~Settings();
 
   bool is_daemon; ///< Flag showing run as daemon
 
@@ -63,13 +67,10 @@ public:
 
   //logger
   int use_syslog;    ///< Syslog pass level logging message
-  f_log_msg_t log_;  ///< External callback for logging message
+  fLogMsg log_;  ///< External callback for logging message
 };
 
 // -----------------------------------------------------------------------------
-
-
-
 
 } // namespace tftp
 

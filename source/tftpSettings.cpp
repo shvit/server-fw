@@ -1,8 +1,15 @@
-/*
- * tftpSettings.cpp
+/**
+ * \file tftpSettings.cpp
+ * \brief TFTP Settings class module
  *
- *  Created on: 6 апр. 2021 г.
- *      Author: svv
+ *  Storage class for TFTP settings
+ *
+ *  License GPL-3.0
+ *
+ *  \date   06-apr-2021
+ *  \author Vitaliy Shirinkin, e-mail: vitaliy.shirinkin@gmail.com
+ *
+ *  \version 0.1
  */
 
 #include "tftpSettings.h"
@@ -10,9 +17,16 @@
 namespace tftp
 {
 
+// -----------------------------------------------------------------------------
+
+auto Settings::create() -> pSettings
+{
+  return std::make_shared<Settings>(Settings{});
+}
+
 //------------------------------------------------------------------------------
 
-settings_val::settings_val():
+Settings::Settings():
   is_daemon{false},
   local_base_{},
   lib_dir{},
@@ -26,6 +40,12 @@ settings_val::settings_val():
   dialect{},
   use_syslog{},
   log_{nullptr}
+{
+}
+
+//------------------------------------------------------------------------------
+
+Settings::~Settings()
 {
 }
 
