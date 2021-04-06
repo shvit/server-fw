@@ -26,8 +26,6 @@
 #include <unistd.h>
 #include <iostream>
 #include <memory>
-
-
 #include <iomanip>
 
 
@@ -58,8 +56,11 @@ using pSettings = std::shared_ptr<Settings>;
 
 using Buf = std::vector<char>;
 
+/// Rem: need storage for default value
 template<typename T>
-using option_t = std::tuple<bool, T>;
+using Opt = std::tuple<bool, T>;
+
+using OptInt = Opt<int>;
 
 // -----------------------------------------------------------------------------
 
