@@ -31,7 +31,7 @@ namespace tftp
 // -----------------------------------------------------------------------------
 
 
-base::base():
+Base::Base():
     settings_{settings_val::create()}
 {
   local_base_as_inet().sin_family = AF_INET;
@@ -66,35 +66,35 @@ base::base():
 
 }
 
-base::base(base & src):
+Base::Base(Base & src):
     settings_{src.settings_}
 {
 }
 
-base::base(base && src):
+Base::Base(Base && src):
     settings_{std::move(src.settings_)}
 {
 }
 
-base::~base()
+Base::~Base()
 {
 }
 
 // ----------------------------------------------------------------------------------
 
-auto base::begin_shared() const -> std::shared_lock<std::shared_mutex>
+auto Base::begin_shared() const -> std::shared_lock<std::shared_mutex>
 {
   return std::shared_lock{mutex_};
 }
 
-auto base::begin_unique() const -> std::unique_lock<std::shared_mutex>
+auto Base::begin_unique() const -> std::unique_lock<std::shared_mutex>
 {
   return std::unique_lock{mutex_};
 }
 
 // ----------------------------------------------------------------------------------
 
-void base::log(int lvl, std::string_view msg) const
+void Base::log(int lvl, std::string_view msg) const
 {
   pid_t curr_tid=syscall(SYS_gettid);
 
@@ -107,7 +107,7 @@ void base::log(int lvl, std::string_view msg) const
 
 // ----------------------------------------------------------------------------------
 
-void base::set_logger(f_log_msg_t new_logger)
+void Base::set_logger(f_log_msg_t new_logger)
 {
   auto lk = begin_unique(); // write lock
 
@@ -116,14 +116,14 @@ void base::set_logger(f_log_msg_t new_logger)
 
 // ----------------------------------------------------------------------------------
 
-void base::set_syslog_level(const int lvl)
+void Base::set_syslog_level(const int lvl)
 {
   auto lk = begin_unique(); // write lock
 
   settings_->use_syslog = lvl;
 }
 
-auto base::get_syslog_level() const -> int
+auto Base::get_syslog_level() const -> int
 {
   auto lk = begin_shared(); // read lock
 
@@ -132,7 +132,7 @@ auto base::get_syslog_level() const -> int
 
 // ----------------------------------------------------------------------------------
 
-void base::set_root_dir(std::string_view root_dir)
+void Base::set_root_dir(std::string_view root_dir)
 {
   auto lk = begin_unique(); // write lock
 
@@ -140,7 +140,7 @@ void base::set_root_dir(std::string_view root_dir)
 }
 
 // ----------------------------------------------------------------------------------
-auto base::get_root_dir() const -> std::string
+auto Base::get_root_dir() const -> std::string
 {
   auto lk = begin_shared(); // read lock
 
@@ -157,7 +157,7 @@ auto base::get_root_dir() const -> std::string
 
 // ----------------------------------------------------------------------------------
 
-void base::set_lib_dir(std::string_view dir)
+void Base::set_lib_dir(std::string_view dir)
 {
   auto lk = begin_unique(); // write lock
 
@@ -166,7 +166,7 @@ void base::set_lib_dir(std::string_view dir)
 
 // ----------------------------------------------------------------------------------
 
-auto base::get_lib_dir() const -> std::string
+auto Base::get_lib_dir() const -> std::string
 {
   auto lk = begin_shared(); // read lock
 
@@ -176,7 +176,7 @@ auto base::get_lib_dir() const -> std::string
 
 // ----------------------------------------------------------------------------------
 
-void base::set_lib_name_fb(std::string_view fb_name)
+void Base::set_lib_name_fb(std::string_view fb_name)
 {
   auto lk = begin_unique(); // write lock
 
@@ -185,7 +185,7 @@ void base::set_lib_name_fb(std::string_view fb_name)
 
 // ----------------------------------------------------------------------------------
 
-auto base::get_lib_name_fb() const -> std::string
+auto Base::get_lib_name_fb() const -> std::string
 {
   auto lk = begin_shared(); // read lock
 
@@ -194,15 +194,15 @@ auto base::get_lib_name_fb() const -> std::string
 
 // ----------------------------------------------------------------------------------
 
-void base::set_connection_db  (std::string_view val) { auto lk = begin_unique(); settings_->db  .assign(val); }
-void base::set_connection_user(std::string_view val) { auto lk = begin_unique(); settings_->user.assign(val); }
-void base::set_connection_pass(std::string_view val) { auto lk = begin_unique(); settings_->pass.assign(val); }
-void base::set_connection_role(std::string_view val) { auto lk = begin_unique(); settings_->role.assign(val); }
-void base::set_connection_dialect(uint16_t      val) { auto lk = begin_unique(); settings_->dialect = val; }
+void Base::set_connection_db  (std::string_view val) { auto lk = begin_unique(); settings_->db  .assign(val); }
+void Base::set_connection_user(std::string_view val) { auto lk = begin_unique(); settings_->user.assign(val); }
+void Base::set_connection_pass(std::string_view val) { auto lk = begin_unique(); settings_->pass.assign(val); }
+void Base::set_connection_role(std::string_view val) { auto lk = begin_unique(); settings_->role.assign(val); }
+void Base::set_connection_dialect(uint16_t      val) { auto lk = begin_unique(); settings_->dialect = val; }
 
 // ----------------------------------------------------------------------------------
 
-void base::set_connection(std::string_view db,
+void Base::set_connection(std::string_view db,
                          std::string_view user,
                          std::string_view pass,
                          std::string_view role,
@@ -227,7 +227,7 @@ void base::set_connection(std::string_view db,
 
 // ----------------------------------------------------------------------------------
 
-auto base::get_connection() const
+auto Base::get_connection() const
   -> std::tuple<std::string,
                 std::string,
                 std::string,
@@ -244,7 +244,7 @@ auto base::get_connection() const
 }
 
 // ----------------------------------------------------------------------------------
-auto base::local_base_as_inet() -> struct sockaddr_in &
+auto Base::local_base_as_inet() -> struct sockaddr_in &
 {
   if(settings_->local_base_.empty())
   {
@@ -261,7 +261,7 @@ auto base::local_base_as_inet() -> struct sockaddr_in &
 
 // ----------------------------------------------------------------------------------
 
-auto base::local_base_as_inet6() -> struct sockaddr_in6 &
+auto Base::local_base_as_inet6() -> struct sockaddr_in6 &
 {
   if(settings_->local_base_.empty())
   {
@@ -278,7 +278,7 @@ auto base::local_base_as_inet6() -> struct sockaddr_in6 &
 
 // ----------------------------------------------------------------------------------
 
-void base::set_local_base_inet(struct in_addr * addr, uint16_t port)
+void Base::set_local_base_inet(struct in_addr * addr, uint16_t port)
 {
   auto lk = begin_unique(); // write lock
 
@@ -291,7 +291,7 @@ void base::set_local_base_inet(struct in_addr * addr, uint16_t port)
 
 // ----------------------------------------------------------------------------------
 
-void base::set_local_base_inet6(struct in6_addr * addr, uint16_t port)
+void Base::set_local_base_inet6(struct in6_addr * addr, uint16_t port)
 {
   auto lk = begin_unique(); // write lock
 
@@ -304,7 +304,7 @@ void base::set_local_base_inet6(struct in6_addr * addr, uint16_t port)
 
 // ----------------------------------------------------------------------------------
 
-auto base::get_local_base_str() const -> std::string
+auto Base::get_local_base_str() const -> std::string
 {
   auto lk = begin_shared(); // read lock
 
@@ -313,7 +313,7 @@ auto base::get_local_base_str() const -> std::string
 
 // ----------------------------------------------------------------------------------
 
-void base::set_is_daemon(bool value)
+void Base::set_is_daemon(bool value)
 {
   auto lk = begin_unique(); // write lock
 
@@ -322,7 +322,7 @@ void base::set_is_daemon(bool value)
 
 // ----------------------------------------------------------------------------------
 
-bool base::get_is_daemon() const
+bool Base::get_is_daemon() const
 {
   auto lk = begin_shared(); // read lock
 
@@ -331,7 +331,7 @@ bool base::get_is_daemon() const
 
 // ----------------------------------------------------------------------------------
 
-void base::set_search_dir_append(std::string_view new_dir)
+void Base::set_search_dir_append(std::string_view new_dir)
 {
   auto lk = begin_unique(); // write lock
 
@@ -346,7 +346,7 @@ void base::set_search_dir_append(std::string_view new_dir)
 
 // ----------------------------------------------------------------------------------
 
-auto base::get_serach_dir() const -> std::vector<std::string>
+auto Base::get_serach_dir() const -> std::vector<std::string>
 {
 
   auto lk = begin_shared(); // read lock
@@ -362,7 +362,7 @@ auto base::get_serach_dir() const -> std::vector<std::string>
 
 // ----------------------------------------------------------------------------------
 
-void base::set_local_base(std::string_view addr)
+void Base::set_local_base(std::string_view addr)
 {
   auto lk = begin_unique(); // write lock
 
@@ -423,7 +423,7 @@ void base::set_local_base(std::string_view addr)
 
 // ----------------------------------------------------------------------------------
 
-bool base::load_options(int argc, char* argv[])
+bool Base::load_options(int argc, char* argv[])
 {
   bool ret = true;
 
@@ -520,7 +520,7 @@ bool base::load_options(int argc, char* argv[])
 
 // ----------------------------------------------------------------------------------
 
-void base::out_help(std::ostream & stream, std::string_view app) const
+void Base::out_help(std::ostream & stream, std::string_view app) const
 {
   out_id(stream);
 
@@ -549,7 +549,7 @@ void base::out_help(std::ostream & stream, std::string_view app) const
 
 // ----------------------------------------------------------------------------------
 
-void base::out_id(std::ostream & stream) const
+void Base::out_id(std::ostream & stream) const
 {
   stream << "Simple tftp firmware server 'server_fw' licensed GPL-3.0" << std::endl;
   stream << "(c) 2019 Vitaliy.V.Shirinkin, e-mail: vitaliy.shirinkin@gmail.com" << std::endl;

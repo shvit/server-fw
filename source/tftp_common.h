@@ -44,7 +44,7 @@ constexpr std::string_view default_fb_lib_name     = "libfbclient.so";
 
 // ----------------------------------------------------------------------------------
 
-class base;
+class Base;
 
 class srv;
 

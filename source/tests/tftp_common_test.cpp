@@ -10,7 +10,7 @@
 UNIT_TEST_SUITE_BEGIN(tftp_common)
 
 
-class tst_base: public tftp::base
+class tst_Base: public tftp::Base
 {
 public:
   tftp::settings get_settings() { return settings_; };
@@ -19,19 +19,19 @@ public:
   decltype(auto) tst_local_base_as_inet6() { return local_base_as_inet6(); };
 
   template<typename T, typename ... Ts>
-  decltype(auto) get_buf_item_raw(Ts && ... args) { return base::get_buf_item_raw<T>(std::forward<Ts>(args) ...); }
+  decltype(auto) get_buf_item_raw(Ts && ... args) { return Base::get_buf_item_raw<T>(std::forward<Ts>(args) ...); }
 
   template<typename T, typename ... Ts>
-  decltype(auto) get_buf_item_ntoh(Ts && ... args) { return base::get_buf_item_ntoh<T>(std::forward<Ts>(args) ...); }
+  decltype(auto) get_buf_item_ntoh(Ts && ... args) { return Base::get_buf_item_ntoh<T>(std::forward<Ts>(args) ...); }
 
   template<typename ... Ts>
-  decltype(auto) set_buf_item_raw(Ts && ... args) { return base::set_buf_item_raw(std::forward<Ts>(args) ...); }
+  decltype(auto) set_buf_item_raw(Ts && ... args) { return Base::set_buf_item_raw(std::forward<Ts>(args) ...); }
 
   template<typename ... Ts>
-  decltype(auto) set_buf_item_hton(Ts && ... args) { return base::set_buf_item_hton(std::forward<Ts>(args) ...); }
+  decltype(auto) set_buf_item_hton(Ts && ... args) { return Base::set_buf_item_hton(std::forward<Ts>(args) ...); }
 
   template<typename ... Ts>
-  decltype(auto) set_buf_cont_str(Ts && ... args) { return base::set_buf_cont_str(std::forward<Ts>(args) ...); }
+  decltype(auto) set_buf_cont_str(Ts && ... args) { return Base::set_buf_cont_str(std::forward<Ts>(args) ...); }
 
   //template<typename T>
   //auto get_buf_item_raw(tftp::buffer_t & buf, const tftp::buffer_size_t offset) const
@@ -55,8 +55,8 @@ public:
 
 //---------------------------------------------------------------------------------------------------------------------------------
 
-UNIT_TEST_CASE_BEGIN(buffer_operations, "Class 'tftp::base' - buffer operations")
-  tst_base b;
+UNIT_TEST_CASE_BEGIN(buffer_operations, "Class 'tftp::Base' - buffer operations")
+  tst_Base b;
 
   tftp::buffer_t a1{0x00U, 0x01U, 0x02U, 0x03U, 0x04U, 0x05U, 0x06U, 0x07U,
                     0x08U, 0x09U, 0x0aU, 0x0bU, 0x0cU, 0x0dU, 0x0eU, 0x0fU};
@@ -119,12 +119,12 @@ UNIT_TEST_CASE_END
 
 //---------------------------------------------------------------------------------------------------------------------------------
 
-UNIT_TEST_CASE_BEGIN(base_load_options, "Class 'tftp::base' - options")
+UNIT_TEST_CASE_BEGIN(base_load_options, "Class 'tftp::Base' - options")
 
   // 1
   START_ITER("default options");
   {
-    tst_base b;
+    tst_Base b;
     // is daemon
     TEST_CHECK_FALSE(b.get_settings()->is_daemon);
     TEST_CHECK_FALSE(b.get_is_daemon());
@@ -187,7 +187,7 @@ UNIT_TEST_CASE_BEGIN(base_load_options, "Class 'tftp::base' - options")
           "--lib-dir", "/tmp/libs", "--lib-name", "fbclient"
       };
 
-    tst_base b;
+    tst_Base b;
     b.load_options(sizeof(tst_args)/sizeof(tst_args[0]), const_cast<char **>(tst_args));
     // is daemon
     TEST_CHECK_TRUE(b.get_settings()->is_daemon);

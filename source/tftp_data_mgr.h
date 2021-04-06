@@ -36,7 +36,7 @@ namespace tftp
  *
  */
 
-class data_mgr: public base
+class data_mgr: public Base
 {
 protected:
   // Processing info

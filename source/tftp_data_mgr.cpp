@@ -28,7 +28,7 @@ namespace tftp
 // ----------------------------------------------------------------------------------
 
 data_mgr::data_mgr():
-    base(),
+    Base(),
     request_type_{srv_req::unknown},
     fname_{""},
     hash_{""},

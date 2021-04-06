@@ -27,11 +27,11 @@ namespace tftp
  * \brief TFTP main server class 'tftp::srv'
  *
  *  Class for one listening pair IP:PORT.
- *  Parent class tftp::base has all server settings storage.
+ *  Parent class tftp::Base has all server settings storage.
  *
  */
 
-class srv: public base
+class srv: public Base
 {
 protected:
 

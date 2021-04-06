@@ -18,7 +18,7 @@ class test_server: public tftp::srv
 public:
 };
 
-class test_helper: public tftp::base
+class test_helper: public tftp::Base
 {
 public:
   static size_t indicator_value_;

@@ -40,7 +40,7 @@ namespace tftp
  * - begin_unique() for settings write operations
  */
 
-class base
+class Base
 {
 protected:
   settings settings_;  ///< Shared pointer for settings storage
@@ -134,20 +134,20 @@ public:
    *
    *  Use some default settings
    */
-  base();
+  Base();
 
   /** Copy constructor
    *
    */
-  base(base & src);
+  Base(Base & src);
 
   /** Move constructor
    */
-  base(base && src);
+  Base(Base && src);
 
   /** Destructor
    */
-  virtual ~base();
+  virtual ~Base();
 
   /** \brief Local used logger method
    *
@@ -376,7 +376,7 @@ public:
 //=================================================================================================================================
 
 template<typename T>
-auto base::get_buf_item_raw(buffer_t & buf, const buffer_size_t offset) const
+auto Base::get_buf_item_raw(buffer_t & buf, const buffer_size_t offset) const
   -> std::enable_if_t<std::is_integral_v<T>, T &>
 {
   if((offset + sizeof(T)) > buf.size()) std::invalid_argument("Offset "+std::to_string(offset)+" is over buffer size");
@@ -387,7 +387,7 @@ auto base::get_buf_item_raw(buffer_t & buf, const buffer_size_t offset) const
 // ----------------------------------------------------------------------------------
 
 template<typename T>
-auto base::get_buf_item_ntoh(buffer_t & buf, const buffer_size_t offset) const
+auto Base::get_buf_item_ntoh(buffer_t & buf, const buffer_size_t offset) const
   -> std::enable_if_t<std::is_integral_v<T>, T>
 {
   T value_n{get_buf_item_raw<T>(buf, offset)};
@@ -399,7 +399,7 @@ auto base::get_buf_item_ntoh(buffer_t & buf, const buffer_size_t offset) const
 // ----------------------------------------------------------------------------------
 
 template<typename T>
-auto base::set_buf_item_raw(buffer_t & buf, const buffer_size_t offset, const T & value)
+auto Base::set_buf_item_raw(buffer_t & buf, const buffer_size_t offset, const T & value)
   -> std::enable_if_t<std::is_integral_v<T>, buffer_size_t>
 {
   buffer_size_t ret_size = sizeof(T);
@@ -415,7 +415,7 @@ auto base::set_buf_item_raw(buffer_t & buf, const buffer_size_t offset, const T 
 // ----------------------------------------------------------------------------------
 
 template<typename T>
-auto base::set_buf_item_hton(buffer_t & buf, const buffer_size_t offset, const T value)
+auto Base::set_buf_item_hton(buffer_t & buf, const buffer_size_t offset, const T value)
   -> std::enable_if_t<std::is_integral_v<T>, buffer_size_t>
 {
   T value_n{value};
@@ -427,7 +427,7 @@ auto base::set_buf_item_hton(buffer_t & buf, const buffer_size_t offset, const T
 // ----------------------------------------------------------------------------------
 
 template<typename ... Ts>
-void base::set_search_dir(Ts && ... args)
+void Base::set_search_dir(Ts && ... args)
 {
   auto lk = begin_unique(); // write lock
 
@@ -439,7 +439,7 @@ void base::set_search_dir(Ts && ... args)
 // ----------------------------------------------------------------------------------
 
 template<typename T>
-auto base::set_buf_cont_str(buffer_t & buf, const buffer_size_t offset, const T & cntnr, bool check_zero_end)
+auto Base::set_buf_cont_str(buffer_t & buf, const buffer_size_t offset, const T & cntnr, bool check_zero_end)
   -> std::enable_if_t<is_container_v<T>, buffer_size_t>
 {
   auto zero_it = (check_zero_end ? std::find(cntnr.cbegin(), cntnr.cend(), 0) : cntnr.cend());

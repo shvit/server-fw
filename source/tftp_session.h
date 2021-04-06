@@ -39,7 +39,7 @@ namespace tftp
  *
  */
 
-class session: public base
+class session: public Base
 {
 protected:
   srv_req            request_type_;    ///< Server request

@@ -32,7 +32,7 @@ namespace tftp
 // ----------------------------------------------------------------------------------
 
 session::session():
-    base(),
+    Base(),
     request_type_{srv_req::unknown},
     filename_{""},
     transfer_mode_{transfer_mode::unknown},
