@@ -2,7 +2,7 @@
 #include <netinet/in.h>
 
 #include "../tftp_common.h"
-#include "../tftp_session.h"
+#include "../tftpSession.h"
 #include "test.h"     
 
 using namespace unit_tests;

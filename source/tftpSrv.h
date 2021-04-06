@@ -18,7 +18,7 @@
 #include <list>
 #include <string>
 
-#include "tftp_session.h"
+#include "tftpSession.h"
 
 namespace tftp
 {
