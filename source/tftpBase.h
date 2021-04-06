@@ -18,6 +18,7 @@
 #include <shared_mutex>
 
 #include "tftp_common.h"
+#include "tftpSettings.h"
 
 namespace tftp
 {
