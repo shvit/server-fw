@@ -20,7 +20,7 @@
 #include <sys/stat.h>
 #include <dlfcn.h>
 
-#include "tftp_data_mgr.h"
+#include "tftpDataMgr.h"
 
 namespace tftp
 {

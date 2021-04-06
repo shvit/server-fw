@@ -5,7 +5,7 @@
 
 //#include <openssl/md5.h>
 
-#include "../tftp_data_mgr.h"
+#include "../tftpDataMgr.h"
 #include "test.h"     
 
 UNIT_TEST_SUITE_BEGIN(tftp_data_mgr)
