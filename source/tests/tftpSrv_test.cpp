@@ -227,11 +227,11 @@ size_t test_helper::indicator_couner_ = 0;          // block counter dots printe
 size_t test_helper::indicator_block_ = 10*1000*1000; // rate dots print (every N bytes)
 size_t test_helper::indicator_value_ = 0;           // processed bytes counter
 
-[[maybe_unused]]
-auto logger_tst = [](const int level, std::string_view message)
-  {
-      std::cout << "{" << tftp::to_string_lvl(level) << "} " << message << std::endl;
-  };
+//[[maybe_unused]]
+//auto logger_tst = [](const int level, std::string_view message)
+//  {
+      //std::cout << "{" << tftp::to_string_lvl(level) << "} " << message << std::endl;
+  //};
 
 //=================================================================================================================================
 

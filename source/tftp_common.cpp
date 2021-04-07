@@ -51,10 +51,27 @@ auto to_string(const TransfMode val) -> std::string_view
   }
 }
 
+auto to_string(const LogLvl val) -> std::string_view
+{
+  switch(val)
+  {
+    CASE_OPER_TO_STR_VIEW(emerg);
+    CASE_OPER_TO_STR_VIEW(alert);
+    CASE_OPER_TO_STR_VIEW(crit);
+    CASE_OPER_TO_STR_VIEW(err);
+    CASE_OPER_TO_STR_VIEW(warning);
+    CASE_OPER_TO_STR_VIEW(notice);
+    CASE_OPER_TO_STR_VIEW(info);
+    CASE_OPER_TO_STR_VIEW(debug);
+    default:
+      throw std::runtime_error("Unknown value");
+  }
+}
+
 #undef CASE_OPER_TO_STR_VIEW
 
 //------------------------------------------------------------------------------
-
+/*
 auto to_string_lvl(const int val) -> std::string_view
 {
   switch(val)
@@ -70,7 +87,7 @@ auto to_string_lvl(const int val) -> std::string_view
     default:          return "UNKNOWN";
   }
 }
-
+*/
 //------------------------------------------------------------------------------
 
 std::string sockaddr_to_str(

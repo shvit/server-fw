@@ -26,7 +26,7 @@
 namespace tftp
 {
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 /**
  * \brief TFTP session class 'tftp::Session'
@@ -121,7 +121,8 @@ protected:
   /** \brief Construct data block
    *
    *  Construct tftp packet payload as data block
-   *  Fill buffer and set buf_size_tx_; if can't do it then construct error block
+   *  Fill buffer and set buf_size_tx_;
+   *  if can't do it then construct error block
    */
   void construct_data();
 
@@ -172,7 +173,9 @@ protected:
    *  \param [in] e_cod Error code
    *  \param [in] e_msg Error message
    */
-  void set_error_if_first(const uint16_t e_cod, std::string_view e_msg);
+  void set_error_if_first(
+      const uint16_t e_cod,
+      std::string_view e_msg);
 
   /** \brief Check was error or not
    *
@@ -255,7 +258,7 @@ public:
   friend class Srv;
 };
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 } // namespace tftp
 

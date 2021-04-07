@@ -28,11 +28,11 @@ int main(int argc, char* argv[])
   int exit_code = fake_exit_code;
 
   [[maybe_unused]]
-  auto logger = [](const int level, std::string_view message)
+  auto logger = [](const tftp::LogLvl level, std::string_view message)
     {
-      if(level <= LOG_DEBUG)
+      if((int)level <= LOG_DEBUG)
       {
-        std::cout << "<" << tftp::to_string_lvl(level) << "> " << message << std::endl; // << std::flush();
+        std::cout << "<" << tftp::to_string(level) << "> " << message << std::endl; // << std::flush();
       }
     };
 
@@ -61,7 +61,7 @@ int main(int argc, char* argv[])
           close(STDIN_FILENO);
           close(STDOUT_FILENO);
           close(STDERR_FILENO);
-          server.log(LOG_INFO, "Run as daemon");
+          server.log(tftp::LogLvl::info, "Run as daemon");
         }
         else
         { // app finalize code

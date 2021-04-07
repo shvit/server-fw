@@ -27,6 +27,8 @@
 namespace tftp
 {
 
+// -----------------------------------------------------------------------------
+
 /** \brief Data maange class
  *
  * Class with file stream operations.
@@ -150,7 +152,9 @@ public:
    *  \param [in] e_cod Error code
    *  \param [in] e_msg Error message
    */
-  void set_error_if_first(const uint16_t e_cod, std::string_view e_msg) const;
+  void set_error_if_first(
+      const uint16_t e_cod,
+      std::string_view e_msg) const;
 
   /** \brief Check directory exist
    *
@@ -162,6 +166,8 @@ public:
 
   friend class Session;
 };
+
+// -----------------------------------------------------------------------------
 
 } // namespace tftp
 

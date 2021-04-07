@@ -93,12 +93,28 @@ enum class TransfMode: uint16_t
 
 // -----------------------------------------------------------------------------
 
+/** \brief Logging level (for logging messages)
+ */
+enum class LogLvl: int
+{
+  emerg   = 0, // LOG_EMERG 0   // system is unusable
+  alert   = 1, // LOG_ALERT 1   // action must be taken immediately
+  crit    = 2, // LOG_CRIT  2   // critical conditions
+  err     = 3, // LOG_ERR   3   // error conditions
+  warning = 4, // LOG_WARNING 4 // warning conditions
+  notice  = 5, // LOG_NOTICE  5 // normal but significant condition
+  info    = 6, // LOG_INFO  6   // informational
+  debug   = 7, // LOG_DEBUG 7   // debug-level messages
+};
+
+// -----------------------------------------------------------------------------
+
 /** \bief Callabck for custom logging message from server
  *
  *  \param [in] Logging level
  *  \param [in] Message text
  */
-using fLogMsg = std::function<void(const int, std::string_view)>;
+using fLogMsg = std::function<void(const LogLvl, std::string_view)>;
 
 // -----------------------------------------------------------------------------
 
@@ -151,7 +167,10 @@ std::string_view to_string(const SrvReq);       ///< Conversion 'SrvReq' to text
 
 std::string_view to_string(const TransfMode); ///< Conversion 'TransfMode' to text
 
-std::string_view to_string_lvl(const int);       ///< Conversion debug level to text
+std::string_view to_string(const LogLvl);       ///< Conversion debug level to text
+
+
+//std::string_view to_string_lvl(const int);       ///< Conversion debug level to text
 
 // -----------------------------------------------------------------------------
 
@@ -170,14 +189,21 @@ std::string sockaddr_to_str(
 
 /// Preprocessor defines for simple logging
 #define THIS_CLASS_METHOD() curr_type<std::remove_pointer_t<decltype(this)>>().append("::").append(__func__).append("()")
-#define LOG(LEVEL,MSG) log(LEVEL, THIS_CLASS_METHOD() + " " + MSG);
+
+#define LOG(LEVEL,MSG) log(LogLvl::LEVEL, THIS_CLASS_METHOD() + " " + MSG);
+
+#define L_DBG(MSG) LOG(debug,   MSG);
+#define L_INF(MSG) LOG(info,    MSG);
+#define L_NTC(MSG) LOG(notice,  MSG);
+#define L_WRN(MSG) LOG(warning, MSG);
+#define L_ERR(MSG) LOG(err,     MSG);
 
 /// Preprocessor defines for runtime error (if bug snuck)
 #define ERROR_CLASS_METHOD__RUNTIME(msg) \
     {\
       std::string full_msg{curr_type<std::remove_pointer_t<decltype(this)>>()};\
       full_msg.append("::").append(__PRETTY_FUNCTION__).append(": ").append(msg);\
-      this->log(LOG_ERR, full_msg);\
+      this->log((LogLvl)LOG_ERR, full_msg);\
       throw std::runtime_error(full_msg);\
     };
 

@@ -32,11 +32,11 @@ public:
 
 };
 
-[[maybe_unused]]
-auto logger = [](const int level, std::string_view message)
-  {
-      std::cout << "{" << tftp::to_string_lvl(level) << "} " << message << std::endl; // << std::flush();
-  };
+//[[maybe_unused]]
+//auto logger = [](const int level, std::string_view message)
+//  {
+//      std::cout << "{" << tftp::to_string_lvl(level) << "} " << message << std::endl; // << std::flush();
+//  };
 
 //=================================================================================================================================
 

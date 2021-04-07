@@ -25,7 +25,7 @@
 namespace tftp
 {
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 Srv::Srv():
     Base(),
@@ -36,13 +36,13 @@ Srv::Srv():
 {
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 Srv::~Srv()
 {
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 bool Srv::socket_open()
 {
@@ -55,11 +55,15 @@ bool Srv::socket_open()
   if (socket_< 0)
   {
     Buf err_msg_buf(1024, 0);
-    LOG(LOG_ERR, "socket() error: "+std::string{strerror_r(errno, err_msg_buf.data(), err_msg_buf.size())});
+
+    L_ERR("socket() error: "+
+            std::string{strerror_r(errno,
+                                   err_msg_buf.data(),
+                                   err_msg_buf.size())});
     return false;
   };
 
-  int               bind_result;
+  int bind_result;
   {
     struct sockaddr * sock_addr;
     socklen_t         sock_size;
@@ -77,7 +81,8 @@ bool Srv::socket_open()
         sock_size = sizeof(decltype(local_base_as_inet6()));
         break;
       default:
-        LOG(LOG_ERR, "Wrong network family id_"+std::to_string(local_base_as_inet().sin_family));
+        L_ERR("Wrong network family id_"+
+                std::to_string(local_base_as_inet().sin_family));
         return false;
     }
 
@@ -87,7 +92,10 @@ bool Srv::socket_open()
   if(bind_result)
   {
     Buf err_msg_buf(1024, 0);
-    LOG(LOG_ERR, "bind() error: "+std::string{strerror_r(errno, err_msg_buf.data(), err_msg_buf.size())});
+    L_ERR("bind() error: "+
+            std::string{strerror_r(errno,
+                                   err_msg_buf.data(),
+                                   err_msg_buf.size())});
     socket_close();
     return false;
   };
@@ -105,7 +113,7 @@ void Srv::socket_close()
 
 bool Srv::init()
 {
-  LOG(LOG_INFO, "Server initialise started");
+  L_INF("Server initialise started");
 
   bool ret = true;
 
@@ -113,9 +121,9 @@ bool Srv::init()
 
   ret = socket_open();
 
-  if(ret) LOG(LOG_INFO, "Server listening "+get_local_base_str());
+  if(ret) L_INF("Server listening "+get_local_base_str());
 
-  LOG(LOG_INFO, "Server initialise is "+(ret ? "SUCCESSFUL" : "FAIL"));
+  L_INF("Server initialise is "+(ret ? "SUCCESSFUL" : "FAIL"));
   return ret;
 }
 
@@ -146,7 +154,10 @@ void Srv::main_loop()
 
     if(bsize > 0)
     {
-      LOG(LOG_INFO, "Receive request (data size "+std::to_string(bsize)+" bytes) from "+sockaddr_to_str(client_addr.cbegin(), client_addr.cbegin()+client_addr_size));
+      L_INF("Receive request (data size "+std::to_string(bsize)+
+              " bytes) from "+
+              sockaddr_to_str(client_addr.cbegin(),
+                              client_addr.cbegin()+client_addr_size));
 
       auto new_session = sessions_.emplace(sessions_.end());
 

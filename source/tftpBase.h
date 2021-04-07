@@ -167,10 +167,10 @@ public:
   /** \brief Local used logger method
    *
    *  Use mutex shared mode
-   *  \param [in] lvl Level of message (0-7)
+   *  \param [in] lvl Level of message
    *  \param [in] msg Text message
    */
-  void log(int lvl, std::string_view msg) const;
+  void log(LogLvl lvl, std::string_view msg) const;
 
   /** \brief Set: second custom logger
    *

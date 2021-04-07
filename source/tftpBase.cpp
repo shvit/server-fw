@@ -94,6 +94,27 @@ auto Base::begin_unique() const -> std::unique_lock<std::shared_mutex>
 
 // ----------------------------------------------------------------------------------
 
+void Base::log(LogLvl lvl, std::string_view msg) const
+{
+  //pid_t curr_tid=syscall(SYS_gettid);
+
+  auto lk = begin_shared(); // read lock
+
+  if((int)lvl <= settings_->use_syslog)
+  {
+    syslog((int)lvl,
+           "[%d] %s %s",
+           (int)syscall(SYS_gettid),
+           to_string(lvl).data(),
+           msg.data());
+  }
+
+  if(settings_->log_) settings_->log_(lvl, msg);
+}
+
+
+
+/*
 void Base::log(int lvl, std::string_view msg) const
 {
   pid_t curr_tid=syscall(SYS_gettid);
@@ -104,7 +125,7 @@ void Base::log(int lvl, std::string_view msg) const
 
   if(settings_->log_) settings_->log_(lvl, msg);
 }
-
+*/
 // ----------------------------------------------------------------------------------
 
 void Base::set_logger(fLogMsg new_logger)
