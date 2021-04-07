@@ -18,7 +18,7 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 
-#include "tftp_common.h"
+#include "tftpCommon.h"
 #include "tftpSrv.h"
 
 int main(int argc, char* argv[])

@@ -20,7 +20,7 @@
 #include <iostream>
 #include <string>
 
-#include "tftp_common.h"
+#include "tftpCommon.h"
 #include "tftpBase.h"
 
 

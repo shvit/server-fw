@@ -24,7 +24,6 @@
 #include <memory>
 
 #include "tftpSession.h"
-//#include "error_gen.h"
 
 namespace tftp
 {

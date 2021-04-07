@@ -16,7 +16,7 @@
 #define SOURCE_TFTPSETTINGS_H_
 
 
-#include "tftp_common.h"
+#include "tftpCommon.h"
 
 
 namespace tftp

@@ -3,7 +3,7 @@
 //#include <vector>
 #include <iostream>
 
-#include "../tftp_common.h"
+#include "../tftpCommon.h"
 #include "../tftpBase.h"
 #include "test.h"     
 

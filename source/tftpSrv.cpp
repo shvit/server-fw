@@ -20,7 +20,7 @@
 #include <unistd.h>
 
 #include "tftpSrv.h"
-#include "tftp_common.h"
+#include "tftpCommon.h"
 
 namespace tftp
 {

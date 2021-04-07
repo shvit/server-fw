@@ -1,7 +1,7 @@
 #include <iostream>
 #include <netinet/in.h>
 
-#include "../tftp_common.h"
+#include "../tftpCommon.h"
 #include "../tftpSession.h"
 #include "test.h"     
 

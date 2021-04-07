@@ -20,7 +20,7 @@
 #include <string>
 #include <thread>
 
-#include "tftp_common.h"
+#include "tftpCommon.h"
 #include "tftpDataMgr.h"
 
 namespace tftp

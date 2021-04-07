@@ -17,7 +17,7 @@
 #include <string_view>
 #include <arpa/inet.h>
 
-#include "tftp_common.h"
+#include "tftpCommon.h"
 
 namespace tftp
 {
