@@ -8,6 +8,8 @@ DIR_LOG=log
 DIR_INC=include
 DOC="$(APP).pdf"
 
+APP_FILE:=$(DIR_OBJ)/$(APP)
+
 # all modules w/o app
 MOD=$(patsubst $(APP),,$(patsubst $(DIR_SRC)/%.cpp,%,$(wildcard $(DIR_SRC)/*.cpp)))
 
@@ -15,7 +17,7 @@ BASE_CFLAGS := $(CFLAGS) -Wall -fPIC -std=c++17 -pthread -pedantic
 CFLAGS = $(BASE_CFLAGS) -g -O0
 LDFLAGS += -lstdc++ -lpthread -ldl
 
-all: $(APP) $(TST)
+all: $(APP_FILE) $(TST)
 
 check: $(TST)
 	@#echo "Execute tests:"
@@ -30,7 +32,7 @@ release: clean
 
 release: CFLAGS = $(BASE_CFLAGS) -O3
 
-release: $(APP)
+release: $(APP_FILE)
 
 # Unit-test modules
 $(DIR_OBJ)/$(DIR_TST)/%_test.o: $(DIR_SRC)/$(DIR_TST)/%_test.cpp $(DIR_SRC)/%.cpp $(DIR_SRC)/%.h  $(DIR_SRC)/$(DIR_TST)/test.h | directories
@@ -49,7 +51,7 @@ $(DIR_OBJ)/%.o: $(DIR_SRC)/%.cpp $(DIR_SRC)/%.h $(wildcard $(DIR_SRC)/$(DIR_TST)
 	@$(CXX) -c $(CFLAGS) $(DEFS) $< -o $@
 
 # Main app
-$(APP): $(addprefix $(DIR_OBJ)/, $(addsuffix .o,$(MOD) $(APP)))
+$(APP_FILE): $(addprefix $(DIR_OBJ)/, $(addsuffix .o,$(MOD) $(APP)))
 	@echo "Linking '$@'"
 	@$(CXX) $^ -o $@  $(LDFLAGS)
 
@@ -74,13 +76,19 @@ $(DOC): $(addprefix $(DIR_SRC)/, $(addsuffix .h,$(MOD))) Doxyfile | directories
 
 doc: $(DOC)
 
+install: release
+	@sudo $(DIR_SRC)/install.sh allauto
+	
+uninstall:
+	@sudo $(DIR_SRC)/install.sh remove
+
 clean:
 	@rm -rf $(DIR_OBJ)
-	@rm -f $(APP)
+	@rm -f $(APP_FILE)
 	@rm -f $(TST)
 	@rm -f $(DOC)
 	@rm -rf latex
 	@rm -rf $(DIR_LOG)
 	@rm -rf test_directory_*
 
-.PHONY: all clean directories show doc check release
+.PHONY: all clean directories show doc check release install uninstall

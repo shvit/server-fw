@@ -596,7 +596,7 @@ void Base::out_help(std::ostream & stream, std::string_view app) const
 void Base::out_id(std::ostream & stream) const
 {
   stream << "Simple tftp firmware server 'server_fw' licensed GPL-3.0" << std::endl;
-  stream << "(c) 2019 Vitaliy.V.Shirinkin, e-mail: vitaliy.shirinkin@gmail.com" << std::endl;
+  stream << "(c) 2019-2021 Vitaliy.V.Shirinkin, e-mail: vitaliy.shirinkin@gmail.com" << std::endl;
 }
 
 // -----------------------------------------------------------------------------

@@ -30,14 +30,13 @@ int main(int argc, char* argv[])
 
   int exit_code = fake_exit_code;
 
-  [[maybe_unused]]
-  auto logger = [](const tftp::LogLvl level, std::string_view message)
-    {
-      if((int)level <= LOG_DEBUG)
-      {
-        std::cout << "<" << tftp::to_string(level) << "> " << message << std::endl; // << std::flush();
-      }
-    };
+  //auto logger = [](const tftp::LogLvl level, std::string_view message)
+  //  {
+  //    if((int)level <= LOG_DEBUG)
+  //    {
+  //      std::cout << "<" << tftp::to_string(level) << "> " << message << std::endl; // << std::flush();
+  //    }
+  //  };
 
   openlog("server_fw", LOG_NDELAY, LOG_DAEMON); // LOG_PID
 
@@ -51,7 +50,7 @@ int main(int argc, char* argv[])
 
       if(pid<0)
       {
-        syslog(LOG_ERR, "Daemon start failed (fork error)");
+        server.log(tftp::LogLvl::err, "Daemon start failed (fork error)");
         return EXIT_FAILURE;
       }
       else
@@ -60,7 +59,10 @@ int main(int argc, char* argv[])
         { // daemon code
           umask(0664);
           setsid();
-          chdir("/");
+          if(auto ret=chdir("/"); ret != 0)
+          {
+            server.log(tftp::LogLvl::err, "Failed use chdir(\"/\")");
+          }
           close(STDIN_FILENO);
           close(STDOUT_FILENO);
           close(STDERR_FILENO);
@@ -88,7 +90,6 @@ int main(int argc, char* argv[])
     else
     {
       server.out_id(std::cout);
-      //server.set_logger(logger);
     }
 
     if(exit_code == fake_exit_code)
