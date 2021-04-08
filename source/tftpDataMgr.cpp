@@ -12,9 +12,7 @@
  *  \version 0.1
  */
 
-#include <algorithm>
 #include <dirent.h>
-#include <functional>
 #include <linux/limits.h>
 #include <regex>
 #include <sys/stat.h>

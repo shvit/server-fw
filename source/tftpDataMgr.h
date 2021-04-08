@@ -16,9 +16,6 @@
 #define SOURCE_TFTP_DATA_MGR_H_
 
 #include <fstream>
-#include <functional>
-#include <iostream>
-#include <string>
 
 #include "tftpCommon.h"
 #include "tftpBase.h"

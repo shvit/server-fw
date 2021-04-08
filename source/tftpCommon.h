@@ -15,18 +15,10 @@
 #ifndef SOURCE_TFTP_COMMON_H_
 #define SOURCE_TFTP_COMMON_H_
 
-#include <cassert>
 #include <cxxabi.h> // for current class/type name
 #include <functional>
-#include <ostream>
-#include <string>
-#include <syslog.h>
 #include <vector>
-#include <netinet/in.h>
-#include <unistd.h>
-#include <iostream>
 #include <memory>
-#include <iomanip>
 
 
 namespace tftp
@@ -35,10 +27,10 @@ namespace tftp
 // -----------------------------------------------------------------------------
 
 // constants
-constexpr const in_port_t  default_tftp_port       = 69;
-constexpr const int        default_tftp_syslog_lvl = 6;
-constexpr const uint16_t   default_fb_dialect      = 3;
-constexpr std::string_view default_fb_lib_name     = "libfbclient.so";
+constexpr uint16_t    default_tftp_port        = 69;
+constexpr int         default_tftp_syslog_lvl  = 6;
+constexpr uint16_t    default_fb_dialect       = 3;
+constexpr std::string_view default_fb_lib_name = "libfbclient.so";
 
 // -----------------------------------------------------------------------------
 
@@ -163,14 +155,64 @@ auto curr_type() -> std::string
 
 // -----------------------------------------------------------------------------
 
-std::string_view to_string(const SrvReq);       ///< Conversion 'SrvReq' to text
+#define CASE_OPER_TO_STR_VIEW(NAME) \
+    case std::decay_t<decltype(val)>::NAME: return #NAME;
 
-std::string_view to_string(const TransfMode); ///< Conversion 'TransfMode' to text
+/** \brief Convert value of 'Request Type' to text string
+ *
+ *  \param [in] val Source argument
+ *  \return String
+ */
+constexpr auto to_string(const SrvReq & val) -> std::string_view
+{
+  switch(val)
+  {
+    CASE_OPER_TO_STR_VIEW(unknown);
+    CASE_OPER_TO_STR_VIEW(read);
+    CASE_OPER_TO_STR_VIEW(write);
+    default: return "UNK_SRV_REQ";
+  }
+}
 
-std::string_view to_string(const LogLvl);       ///< Conversion debug level to text
+/** \brief Convert value of 'Transfer Mode' to text string
+ *
+ *  \param [in] val Source argument
+ *  \return String
+ */
+constexpr auto to_string(const TransfMode & val) -> std::string_view
+{
+  switch(val)
+  {
+    CASE_OPER_TO_STR_VIEW(unknown);
+    CASE_OPER_TO_STR_VIEW(netascii);
+    CASE_OPER_TO_STR_VIEW(octet);
+    CASE_OPER_TO_STR_VIEW(binary);
+    default: return "UNK_TRANSF_MODE";
+  }
+}
 
+/** \brief Convert value of 'TLogging Level' to text string
+ *
+ *  \param [in] val Source argument
+ *  \return String
+ */
+constexpr auto to_string(const LogLvl & val) -> std::string_view
+{
+  switch(val)
+  {
+    CASE_OPER_TO_STR_VIEW(emerg);
+    CASE_OPER_TO_STR_VIEW(alert);
+    CASE_OPER_TO_STR_VIEW(crit);
+    CASE_OPER_TO_STR_VIEW(err);
+    CASE_OPER_TO_STR_VIEW(warning);
+    CASE_OPER_TO_STR_VIEW(notice);
+    CASE_OPER_TO_STR_VIEW(info);
+    CASE_OPER_TO_STR_VIEW(debug);
+    default: return "UNK_LOG_LVL";
+  }
+}
 
-//std::string_view to_string_lvl(const int);       ///< Conversion debug level to text
+#undef CASE_OPER_TO_STR_VIEW
 
 // -----------------------------------------------------------------------------
 
@@ -203,7 +245,7 @@ std::string sockaddr_to_str(
     {\
       std::string full_msg{curr_type<std::remove_pointer_t<decltype(this)>>()};\
       full_msg.append("::").append(__PRETTY_FUNCTION__).append(": ").append(msg);\
-      this->log((LogLvl)LOG_ERR, full_msg);\
+      this->log(LogLvl::err, full_msg);\
       throw std::runtime_error(full_msg);\
     };
 

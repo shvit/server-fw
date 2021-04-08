@@ -18,6 +18,9 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 
+#include <iostream>
+#include <unistd.h>
+
 #include "tftpCommon.h"
 #include "tftpSrv.h"
 

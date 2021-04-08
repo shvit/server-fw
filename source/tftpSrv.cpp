@@ -12,12 +12,9 @@
  *  \version 0.1
  */
 
-#include <errno.h>
-#include <functional>
-#include <syslog.h>
 #include <string.h>
-#include <thread>
 #include <unistd.h>
+#include <netinet/in.h>
 
 #include "tftpSrv.h"
 #include "tftpCommon.h"

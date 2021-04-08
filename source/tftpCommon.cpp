@@ -12,9 +12,7 @@
  *  \version 0.1
  */
 
-#include <iostream>
 #include <string>
-#include <string_view>
 #include <arpa/inet.h>
 
 #include "tftpCommon.h"
@@ -24,9 +22,10 @@ namespace tftp
 
 //------------------------------------------------------------------------------
 
-#define CASE_OPER_TO_STR_VIEW(NAME) case decltype(val)::NAME: return #NAME;
-
-auto to_string(const SrvReq val) -> std::string_view
+#define CASE_OPER_TO_STR_VIEW(NAME) \
+    case std::decay_t<decltype(val)>::NAME: return #NAME;
+/*
+auto to_string(const SrvReq & val) -> std::string_view
 {
   switch(val)
   {
@@ -38,7 +37,7 @@ auto to_string(const SrvReq val) -> std::string_view
   }
 }
 
-auto to_string(const TransfMode val) -> std::string_view
+auto to_string(const TransfMode & val) -> std::string_view
 {
   switch(val)
   {
@@ -51,7 +50,7 @@ auto to_string(const TransfMode val) -> std::string_view
   }
 }
 
-auto to_string(const LogLvl val) -> std::string_view
+auto to_string(const LogLvl & val) -> std::string_view
 {
   switch(val)
   {
@@ -67,27 +66,9 @@ auto to_string(const LogLvl val) -> std::string_view
       throw std::runtime_error("Unknown value");
   }
 }
-
+*/
 #undef CASE_OPER_TO_STR_VIEW
 
-//------------------------------------------------------------------------------
-/*
-auto to_string_lvl(const int val) -> std::string_view
-{
-  switch(val)
-  {
-    case LOG_ALERT:   return "ALERT";
-    case LOG_CRIT:    return "CRIT";
-    case LOG_DEBUG:   return "DEBUG";
-    case LOG_EMERG:   return "EMERG";
-    case LOG_ERR:     return "ERROR";
-    case LOG_INFO:    return "INFO";
-    case LOG_NOTICE:  return "NOTOCE";
-    case LOG_WARNING: return "WARNING";
-    default:          return "UNKNOWN";
-  }
-}
-*/
 //------------------------------------------------------------------------------
 
 std::string sockaddr_to_str(
@@ -112,8 +93,10 @@ std::string sockaddr_to_str(
           & ((sockaddr_in *) & *addr_begin)->sin_addr,
           txt.data(),
           txt.size());
+
       return std::string{txt.data()}+":"+
              std::to_string(be16toh(((struct sockaddr_in *) & *addr_begin)->sin_port));
+
     case AF_INET6:
       if((size_t)addr_dist < sizeof(sockaddr_in6)) return "";
 
@@ -122,8 +105,10 @@ std::string sockaddr_to_str(
           & ((sockaddr_in6 *) & *addr_begin)->sin6_addr,
           txt.data(),
           txt.size());
+
       return "[" + std::string{txt.data()}+"]:"+
              std::to_string(be16toh(((struct sockaddr_in6 *) & *addr_begin)->sin6_port));
+
     default:
       return "";
   }

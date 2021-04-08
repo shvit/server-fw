@@ -14,12 +14,11 @@
 
 #include <fstream>
 #include <regex>
-#include <sys/types.h> // gettid()
 #include <unistd.h>
 #include <sys/syscall.h>
 #include <arpa/inet.h>
 #include <getopt.h>
-
+#include <syslog.h>
 
 #include "tftpBase.h"
 

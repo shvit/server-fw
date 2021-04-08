@@ -1,10 +1,3 @@
-//#include <type_traits>
-//#include <utility>
-//#include <vector>
-#include <iostream>
-
-//#include <openssl/md5.h>
-
 #include "../tftpDataMgr.h"
 #include "test.h"     
 

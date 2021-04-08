@@ -1,9 +1,4 @@
-#include <iostream>
-//#include <ostream>
-#include <sys/socket.h>
 #include <netinet/in.h> // sockaddr
-#include <type_traits>
-
 
 #include "../tftpCommon.h"
 #include "../tftpSrv.h"

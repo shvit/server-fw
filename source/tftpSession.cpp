@@ -13,15 +13,9 @@
  *  \version 0.1
  */
 
-#include <cassert>
-#include <errno.h>
-#include <functional>
 #include <regex>
-#include <string.h>
-#include <sys/socket.h>
 #include <netinet/in.h> // sockaddr_in6
-#include <ctime>
-#include <memory>
+#include <unistd.h>
 
 #include "tftpSession.h"
 

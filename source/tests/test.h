@@ -10,11 +10,8 @@
 #define SOURCE_TESTS_TEST_H_
 
 #include <boost/test/unit_test.hpp>
-#include <cstdlib>  // size_t
 #include <iostream>
-#include <string>
 #include <openssl/md5.h>
-
 
 namespace unit_tests
 {

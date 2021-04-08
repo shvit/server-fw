@@ -14,12 +14,7 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TFTP_TESTS
 
-#include <boost/test/unit_test.hpp>
-#include <cstdlib>
 #include <iomanip>
-#include <iostream>
-#include <openssl/md5.h>
-
 #include "test.h"
 
 namespace unit_tests{
