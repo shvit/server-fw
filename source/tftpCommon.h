@@ -89,14 +89,14 @@ enum class TransfMode: uint16_t
  */
 enum class LogLvl: int
 {
-  emerg   = 0, // LOG_EMERG 0   // system is unusable
-  alert   = 1, // LOG_ALERT 1   // action must be taken immediately
-  crit    = 2, // LOG_CRIT  2   // critical conditions
-  err     = 3, // LOG_ERR   3   // error conditions
-  warning = 4, // LOG_WARNING 4 // warning conditions
-  notice  = 5, // LOG_NOTICE  5 // normal but significant condition
-  info    = 6, // LOG_INFO  6   // informational
-  debug   = 7, // LOG_DEBUG 7   // debug-level messages
+  emerg   = 0, // LOG_EMERG   // system is unusable
+  alert   = 1, // LOG_ALERT   // action must be taken immediately
+  crit    = 2, // LOG_CRIT    // critical conditions
+  err     = 3, // LOG_ERR     // error conditions
+  warning = 4, // LOG_WARNING // warning conditions
+  notice  = 5, // LOG_NOTICE  // normal but significant condition
+  info    = 6, // LOG_INFO    // informational
+  debug   = 7, // LOG_DEBUG   // debug-level messages
 };
 
 // -----------------------------------------------------------------------------
@@ -117,21 +117,30 @@ template<typename T, typename _ = void>
 struct is_container : std::false_type {};
 
 template<typename T>
-struct is_container<
-        T,
-        std::conditional_t<
-            false,
-            is_container_helper<
-                typename T::value_type,
-                typename std::enable_if_t<std::is_trivially_copyable_v<typename T::value_type> &&
-                                          !std::is_pointer_v<typename T::value_type>,
-                                          void>,
-                decltype(std::declval<T>().cbegin()),
-                decltype(std::declval<T>().cend())
-                >,
-            void
-            >
-        > : public std::true_type {};
+struct is_container
+<
+  T,
+  std::conditional_t
+  <
+    false,
+    is_container_helper
+    <
+      typename T::value_type,
+      typename std::enable_if_t
+      <
+        std::is_trivially_copyable_v
+        <
+          typename T::value_type> &&
+          !std::is_pointer_v<typename T::value_type
+        >,
+        void
+      >,
+      decltype(std::declval<T>().cbegin()),
+      decltype(std::declval<T>().cend())
+    >,
+    void
+  >
+>: public std::true_type {};
 
 template<class T>
 constexpr bool is_container_v = is_container<T>::value;
@@ -229,25 +238,81 @@ std::string sockaddr_to_str(
 
 // -----------------------------------------------------------------------------
 
-/// Preprocessor defines for simple logging
-#define THIS_CLASS_METHOD() curr_type<std::remove_pointer_t<decltype(this)>>().append("::").append(__func__).append("()")
+/** \brief Context (current function) with given messagess
+ *
+ *  Warning! Use only inside methods with base class tftp::Base
+ *
+ *  \param [in] MSG Text context with append message
+ */
+#define CURR_MSG(MSG) \
+  curr_type<std::remove_pointer_t<decltype(this)>>()+"::"+__func__+"() "+MSG
 
-#define LOG(LEVEL,MSG) log(LogLvl::LEVEL, THIS_CLASS_METHOD() + " " + MSG);
+/** \brief Logging with given level and full message
+ *
+ *  Notify: Logging without adding context!
+ *  Warning! Use only inside methods with base class tftp::Base
+ *  \param [in] LEVEL Logging messages level (from type LogLvl)
+ *  \param [in] MSG Text message
+ */
+#define LOG_FMSG(LEVEL,FMSG) log(LogLvl::LEVEL,FMSG)
 
-#define L_DBG(MSG) LOG(debug,   MSG);
-#define L_INF(MSG) LOG(info,    MSG);
-#define L_NTC(MSG) LOG(notice,  MSG);
-#define L_WRN(MSG) LOG(warning, MSG);
-#define L_ERR(MSG) LOG(err,     MSG);
+/** \brief Logging with context
+ *
+ *  Warning! Use only inside methods with base class tftp::Base
+ *  \param [in] LEVEL Logging messages level (from type LogLvl)
+ *  \param [in] MSG Text message
+ */
+#define LOG(LEVEL,MSG) LOG_FMSG(LEVEL,CURR_MSG(MSG))
 
-/// Preprocessor defines for runtime error (if bug snuck)
-#define ERROR_CLASS_METHOD__RUNTIME(msg) \
+/** \brief Logging with context as LOG_DEBUG message
+ *
+ *  Warning! Use only inside methods with base class tftp::Base
+ *  \param [in] MSG Text message
+ */
+#define L_DBG(MSG) LOG(debug,   MSG)
+
+/** \brief Logging with context as LOG_INFO message
+ *
+ *  Warning! Use only inside methods with base class tftp::Base
+ *  \param [in] MSG Text message
+ */
+#define L_INF(MSG) LOG(info,    MSG)
+
+/** \brief Logging with context as LOG_NOTICEg message
+ *
+ *  Warning! Use only inside methods with base class tftp::Base
+ *  \param [in] MSG Text message
+ */
+#define L_NTC(MSG) LOG(notice,  MSG)
+
+/** \brief Logging with context as LOG_WARNING message
+ *
+ *  Warning! Use only inside methods with base class tftp::Base
+ *  \param [in] MSG Text message
+ */
+#define L_WRN(MSG) LOG(warning, MSG)
+
+/** \brief Logging with context as LOG_ERR message
+ *
+ *  Warning! Use only inside methods with base class tftp::Base
+ *  \param [in] MSG Text message
+ */
+#define L_ERR(MSG) LOG(err,     MSG)
+
+/** \brief Logging with context and throw std::runtime_error
+ *
+ *  Used when error detected
+ *  Warning! Use only inside methods with base class tftp::Base
+ *  \param [in] MSG Text message
+ */
+#define ERROR_THROW_RUNTIME(MSG) \
     {\
-      std::string full_msg{curr_type<std::remove_pointer_t<decltype(this)>>()};\
-      full_msg.append("::").append(__PRETTY_FUNCTION__).append(": ").append(msg);\
-      this->log(LogLvl::err, full_msg);\
+      std::string full_msg{CURR_MSG(MSG)};\
+      LOG_FMSG(err, full_msg);\
       throw std::runtime_error(full_msg);\
     };
+
+// -----------------------------------------------------------------------------
 
 } // namespace tftp
 

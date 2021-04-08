@@ -29,7 +29,6 @@ namespace tftp
 
 // -----------------------------------------------------------------------------
 
-
 Base::Base():
     settings_{Settings::create()}
 {
@@ -65,10 +64,14 @@ Base::Base():
 
 }
 
+// -----------------------------------------------------------------------------
+
 Base::Base(Base & src):
     settings_{src.settings_}
 {
 }
+
+// -----------------------------------------------------------------------------
 
 Base::Base(Base && src):
     settings_{std::move(src.settings_)}
@@ -79,24 +82,24 @@ Base::~Base()
 {
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 auto Base::begin_shared() const -> std::shared_lock<std::shared_mutex>
 {
   return std::shared_lock{mutex_};
 }
 
+// -----------------------------------------------------------------------------
+
 auto Base::begin_unique() const -> std::unique_lock<std::shared_mutex>
 {
   return std::unique_lock{mutex_};
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 void Base::log(LogLvl lvl, std::string_view msg) const
 {
-  //pid_t curr_tid=syscall(SYS_gettid);
-
   auto lk = begin_shared(); // read lock
 
   if((int)lvl <= settings_->use_syslog)
@@ -111,21 +114,7 @@ void Base::log(LogLvl lvl, std::string_view msg) const
   if(settings_->log_) settings_->log_(lvl, msg);
 }
 
-
-
-/*
-void Base::log(int lvl, std::string_view msg) const
-{
-  pid_t curr_tid=syscall(SYS_gettid);
-
-  auto lk = begin_shared(); // read lock
-
-  if(lvl <= settings_->use_syslog) syslog(lvl, "[%d] %s %s", curr_tid, to_string_lvl(lvl).data(), msg.data());
-
-  if(settings_->log_) settings_->log_(lvl, msg);
-}
-*/
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 void Base::set_logger(fLogMsg new_logger)
 {
@@ -134,7 +123,7 @@ void Base::set_logger(fLogMsg new_logger)
   settings_->log_ = new_logger;
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 void Base::set_syslog_level(const int lvl)
 {
@@ -150,7 +139,7 @@ auto Base::get_syslog_level() const -> int
   return settings_->use_syslog;
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 void Base::set_root_dir(std::string_view root_dir)
 {
@@ -159,14 +148,17 @@ void Base::set_root_dir(std::string_view root_dir)
   settings_->root_dir.assign(root_dir);
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 auto Base::get_root_dir() const -> std::string
 {
   auto lk = begin_shared(); // read lock
 
   if(settings_->root_dir.size())
   {
-    bool fin_slash = settings_->root_dir.size() && (*--settings_->root_dir.end() == '/');
+    bool fin_slash =
+        settings_->root_dir.size() &&
+        (*--settings_->root_dir.end() == '/');
+
     return settings_->root_dir + (fin_slash ? "" : "/");
   }
   else
@@ -175,7 +167,7 @@ auto Base::get_root_dir() const -> std::string
   }
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 void Base::set_lib_dir(std::string_view dir)
 {
@@ -184,17 +176,20 @@ void Base::set_lib_dir(std::string_view dir)
   settings_->lib_dir.assign(dir);
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 auto Base::get_lib_dir() const -> std::string
 {
   auto lk = begin_shared(); // read lock
 
-  bool fin_slash = settings_->lib_dir.size() && (*--settings_->lib_dir.end() == '/');
+  bool fin_slash =
+      settings_->lib_dir.size() &&
+      (*--settings_->lib_dir.end() == '/');
+
   return settings_->lib_dir + (fin_slash ? "" : "/");
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 void Base::set_lib_name_fb(std::string_view fb_name)
 {
@@ -203,7 +198,7 @@ void Base::set_lib_name_fb(std::string_view fb_name)
   settings_->lib_name.assign(fb_name);
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 auto Base::get_lib_name_fb() const -> std::string
 {
@@ -212,40 +207,40 @@ auto Base::get_lib_name_fb() const -> std::string
   return std::string{settings_->lib_name};
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
-void Base::set_connection_db  (std::string_view val) { auto lk = begin_unique(); settings_->db  .assign(val); }
-void Base::set_connection_user(std::string_view val) { auto lk = begin_unique(); settings_->user.assign(val); }
-void Base::set_connection_pass(std::string_view val) { auto lk = begin_unique(); settings_->pass.assign(val); }
-void Base::set_connection_role(std::string_view val) { auto lk = begin_unique(); settings_->role.assign(val); }
-void Base::set_connection_dialect(uint16_t      val) { auto lk = begin_unique(); settings_->dialect = val; }
+void Base::set_connection_db  (std::string_view val)
+{ auto lk = begin_unique(); settings_->db  .assign(val); }
 
-// ----------------------------------------------------------------------------------
+void Base::set_connection_user(std::string_view val)
+{ auto lk = begin_unique(); settings_->user.assign(val); }
 
-void Base::set_connection(std::string_view db,
-                         std::string_view user,
-                         std::string_view pass,
-                         std::string_view role,
-                         uint16_t         dialect)
+void Base::set_connection_pass(std::string_view val)
+{ auto lk = begin_unique(); settings_->pass.assign(val); }
+
+void Base::set_connection_role(std::string_view val)
+{ auto lk = begin_unique(); settings_->role.assign(val); }
+
+void Base::set_connection_dialect(uint16_t      val)
+{ auto lk = begin_unique(); settings_->dialect = val; }
+
+// -----------------------------------------------------------------------------
+
+void Base::set_connection(
+    std::string_view db,
+    std::string_view user,
+    std::string_view pass,
+    std::string_view role,
+    uint16_t         dialect)
 {
   set_connection_db  (db);
   set_connection_user(user);
   set_connection_pass(pass);
   set_connection_role(role);
   set_connection_dialect(dialect);
-
-  //auto lk = begin_unique(); // write lock
-
-  //settings_->db  .assign(db  );
-  //settings_->user.assign(user);
-  //settings_->pass.assign(pass);
-  //settings_->role.assign(role);
-  //settings_->dialect = dialect;
-
-
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 auto Base::get_connection() const
   -> std::tuple<std::string,
@@ -263,7 +258,7 @@ auto Base::get_connection() const
           settings_->dialect};
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 auto Base::local_base_as_inet() -> struct sockaddr_in &
 {
   if(settings_->local_base_.empty())
@@ -273,13 +268,16 @@ auto Base::local_base_as_inet() -> struct sockaddr_in &
   else
   {
     if(settings_->local_base_.size() < sizeof(struct sockaddr_in))
-      ERROR_CLASS_METHOD__RUNTIME("Small size settings_->local_base_ ("+std::to_string(settings_->local_base_.size())+" bytes less struct sockaddr_in)");
+      ERROR_THROW_RUNTIME(
+          "Small size settings_->local_base_ ("+
+          std::to_string(settings_->local_base_.size())+
+          " bytes less struct sockaddr_in)");
   }
 
   return *((struct sockaddr_in *) settings_->local_base_.data());
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 auto Base::local_base_as_inet6() -> struct sockaddr_in6 &
 {
@@ -290,13 +288,16 @@ auto Base::local_base_as_inet6() -> struct sockaddr_in6 &
   else
   {
     if(settings_->local_base_.size() < sizeof(struct sockaddr_in6))
-      ERROR_CLASS_METHOD__RUNTIME("Small size settings_->local_base_ ("+std::to_string(settings_->local_base_.size())+" bytes less struct sockaddr_in6)");
+      ERROR_THROW_RUNTIME(
+          "Small size settings_->local_base_ ("+
+          std::to_string(settings_->local_base_.size())+
+          " bytes less struct sockaddr_in6)");
   }
 
   return *((struct sockaddr_in6 *) settings_->local_base_.data());
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 void Base::set_local_base_inet(struct in_addr * addr, uint16_t port)
 {
@@ -309,7 +310,7 @@ void Base::set_local_base_inet(struct in_addr * addr, uint16_t port)
   local_base_as_inet().sin_port   = htobe16(port);
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 void Base::set_local_base_inet6(struct in6_addr * addr, uint16_t port)
 {
@@ -322,16 +323,18 @@ void Base::set_local_base_inet6(struct in6_addr * addr, uint16_t port)
   local_base_as_inet6().sin6_port  = htobe16(port);
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 auto Base::get_local_base_str() const -> std::string
 {
   auto lk = begin_shared(); // read lock
 
-  return sockaddr_to_str(settings_->local_base_.cbegin(), settings_->local_base_.cend());
+  return sockaddr_to_str(
+      settings_->local_base_.cbegin(),
+      settings_->local_base_.cend());
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 void Base::set_is_daemon(bool value)
 {
@@ -340,7 +343,7 @@ void Base::set_is_daemon(bool value)
   settings_->is_daemon = value;
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 bool Base::get_is_daemon() const
 {
@@ -349,7 +352,7 @@ bool Base::get_is_daemon() const
   return settings_->is_daemon;
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 void Base::set_search_dir_append(std::string_view new_dir)
 {
@@ -364,7 +367,7 @@ void Base::set_search_dir_append(std::string_view new_dir)
   if(need_append) settings_->backup_dirs.emplace_back(new_dir);
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 auto Base::get_serach_dir() const -> std::vector<std::string>
 {
@@ -380,7 +383,7 @@ auto Base::get_serach_dir() const -> std::vector<std::string>
   return ret;
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 void Base::set_local_base(std::string_view addr)
 {
@@ -411,14 +414,26 @@ void Base::set_local_base(std::string_view addr)
 
     // port
     local_base_as_inet().sin_port = htobe16(default_tftp_port);
-    if(std::string port_s{sm4[5].str()}; port_s.size()) local_base_as_inet().sin_port = str_to_port_be(port_s);
+    if(std::string port_s{sm4[5].str()}; port_s.size())
+    {
+      local_base_as_inet().sin_port = str_to_port_be(port_s);
+    }
     else
-    if(std::string port_s{sm4[4].str()}; port_s.size()) local_base_as_inet().sin_port = str_to_port_be(port_s);
+    if(std::string port_s{sm4[4].str()}; port_s.size())
+    {
+      local_base_as_inet().sin_port = str_to_port_be(port_s);
+    }
 
     // addr
-    if(std::string addr_s{sm4[3].str()}; addr_s.size()) inet_pton(AF_INET, addr_s.c_str(), & local_base_as_inet().sin_addr);
+    if(std::string addr_s{sm4[3].str()}; addr_s.size())
+    {
+      inet_pton(AF_INET, addr_s.c_str(), & local_base_as_inet().sin_addr);
+    }
     else
-    if(std::string addr_s{sm4[1].str()}; addr_s.size()) inet_pton(AF_INET, addr_s.c_str(), & local_base_as_inet().sin_addr);
+    if(std::string addr_s{sm4[1].str()}; addr_s.size())
+    {
+      inet_pton(AF_INET, addr_s.c_str(), & local_base_as_inet().sin_addr);
+    }
   }
   else
   if(is_ipv6)
@@ -428,12 +443,21 @@ void Base::set_local_base(std::string_view addr)
 
     // port
     local_base_as_inet6().sin6_port = htobe16(default_tftp_port);
-    if(std::string port_s{sm6[2].str()}; port_s.size()) local_base_as_inet6().sin6_port = str_to_port_be(port_s);
+    if(std::string port_s{sm6[2].str()}; port_s.size())
+    {
+      local_base_as_inet6().sin6_port = str_to_port_be(port_s);
+    }
 
     // addr
-    if(std::string addr_s{sm6[3].str()}; addr_s.size()) inet_pton(AF_INET6, addr_s.c_str(), & local_base_as_inet6().sin6_addr);
+    if(std::string addr_s{sm6[3].str()}; addr_s.size())
+    {
+      inet_pton(AF_INET6, addr_s.c_str(), & local_base_as_inet6().sin6_addr);
+    }
     else
-    if(std::string addr_s{sm6[1].str()}; addr_s.size()) inet_pton(AF_INET6, addr_s.c_str(), & local_base_as_inet6().sin6_addr);
+    if(std::string addr_s{sm6[1].str()}; addr_s.size())
+    {
+      inet_pton(AF_INET6, addr_s.c_str(), & local_base_as_inet6().sin6_addr);
+    }
   }
   else
   {
@@ -441,7 +465,7 @@ void Base::set_local_base(std::string_view addr)
   }
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 bool Base::load_options(int argc, char* argv[])
 {
@@ -538,7 +562,7 @@ bool Base::load_options(int argc, char* argv[])
   return ret;
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 void Base::out_help(std::ostream & stream, std::string_view app) const
 {
@@ -567,7 +591,7 @@ void Base::out_help(std::ostream & stream, std::string_view app) const
   stream << "  --daemon Run as daemon" << std::endl;
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 void Base::out_id(std::ostream & stream) const
 {
@@ -575,6 +599,6 @@ void Base::out_id(std::ostream & stream) const
   stream << "(c) 2019 Vitaliy.V.Shirinkin, e-mail: vitaliy.shirinkin@gmail.com" << std::endl;
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 } // namespace tftp
