@@ -2,81 +2,81 @@ APP=server_fw
 TST=test
 
 DIR_SRC=source
-DIR_OBJ=obj
+DIR_OBJ=bin
 DIR_TST=tests
-DIR_LOG=log
-DIR_INC=include
-DOC="$(APP).pdf"
+DIR_DOC=doc
+DIR_LOG=$(DIR_DOC)/log
 
 APP_FILE:=$(DIR_OBJ)/$(APP)
+TST_FILE="$(DIR_OBJ)/$(TST)"
+DOC_FILE="$(DIR_DOC)/$(APP).pdf"
 
-# all modules w/o app
-MOD=$(patsubst $(APP),,$(patsubst $(DIR_SRC)/%.cpp,%,$(wildcard $(DIR_SRC)/*.cpp)))
+OBJ_APP=$(patsubst $(DIR_SRC)/%.cpp,$(DIR_OBJ)/%.o,$(wildcard $(DIR_SRC)/*.cpp))
+OBJ_TST=$(patsubst $(DIR_SRC)/$(DIR_TST)/%.cpp,$(DIR_OBJ)/$(DIR_TST)/%.o,$(wildcard $(DIR_SRC)/$(DIR_TST)/*.cpp))
 
-BASE_CFLAGS := $(CFLAGS) -Wall -fPIC -std=c++17 -pthread -pedantic
+DEPS:=$(OBJ_APP:.o=.d) $(OBJ_TST:.o=.d)
+
+BASE_CFLAGS := $(CFLAGS) -Wall -fPIC -std=c++17 -pthread -pedantic -MMD 
 CFLAGS = $(BASE_CFLAGS) -g -O0
 LDFLAGS += -lstdc++ -lpthread -ldl
 
-all: $(APP_FILE) $(TST)
+all: $(APP_FILE)
 
-check: $(TST)
-	@#echo "Execute tests:"
-	@./test
+-include $(DEPS)
 
-directories:
+check: $(TST_FILE)
+	@./$(TST_FILE)
+
+directories_obj:
 	@mkdir -p $(DIR_OBJ)
-	@mkdir -p $(DIR_OBJ)/$(DIR_TST)
-	@mkdir -p $(DIR_LOG)
 
-release: clean
+directories_obj_tst: directories_obj
+	@mkdir -p $(DIR_OBJ)/$(DIR_TST)
+
+directories_doc:
+	@mkdir -p $(DIR_DOC)
+	@mkdir -p $(DIR_LOG)
 
 release: CFLAGS = $(BASE_CFLAGS) -O3
 
 release: $(APP_FILE)
+	@echo "Strip file '$<'"
+	@strip $(APP_FILE)
 
-# Unit-test modules
-$(DIR_OBJ)/$(DIR_TST)/%_test.o: $(DIR_SRC)/$(DIR_TST)/%_test.cpp $(DIR_SRC)/%.cpp $(DIR_SRC)/%.h  $(DIR_SRC)/$(DIR_TST)/test.h | directories
-	@echo "Compile tests '$(patsubst $(DIR_OBJ)/%_test.o,%,$@)'"
-	@$(CXX) -c $(CFLAGS) $(DEFS) -Wno-self-assign-overloaded -Wno-self-move $< -o $@
+$(DIR_OBJ)/%.o: $(DIR_SRC)/%.cpp | directories_obj
+	@echo "Compile module $@"
+	@$(CXX) -c $(CFLAGS) $< -o $@
 
-$(DIR_OBJ)/tftp_server.o: $(DIR_SRC)/tftp_common.* $(DIR_SRC)/tftp_session.* $(DIR_SRC)/tftp_data_mgr.*
+$(DIR_OBJ)/$(DIR_TST)/%.o: $(DIR_SRC)/$(DIR_TST)/%.cpp | directories_obj_tst
+	@echo "Compile tests module $@"
+	@$(CXX) -c $(CFLAGS) -Wno-self-assign-overloaded -Wno-self-move $< -o $@
 
-$(DIR_OBJ)/tftp_session.o: $(DIR_SRC)/tftp_common.* $(DIR_SRC)/tftp_data_mgr.*
-
-$(DIR_OBJ)/tftp_data_mgr.o: $(DIR_SRC)/tftp_common.*
-
-# Modules
-$(DIR_OBJ)/%.o: $(DIR_SRC)/%.cpp $(DIR_SRC)/%.h $(wildcard $(DIR_SRC)/$(DIR_TST)/%_test.cpp) | directories
-	@echo "Compile module '$(patsubst $(DIR_OBJ)/%.o,%,$@)'"
-	@$(CXX) -c $(CFLAGS) $(DEFS) $< -o $@
-
-# Main app
-$(APP_FILE): $(addprefix $(DIR_OBJ)/, $(addsuffix .o,$(MOD) $(APP)))
-	@echo "Linking '$@'"
+$(APP_FILE): $(OBJ_APP)
+	@echo "Linking $@"
 	@$(CXX) $^ -o $@  $(LDFLAGS)
 
-# Unit-tests app
-$(TST): $(addprefix $(DIR_OBJ)/, $(addsuffix .o,$(MOD))) $(addsuffix _test.o,$(addprefix  $(DIR_OBJ)/$(DIR_TST)/,$(patsubst $(DIR_SRC)/$(DIR_TST)/%_test.cpp,%,$(wildcard $(DIR_SRC)/$(DIR_TST)/*_test.cpp)))) $(DIR_OBJ)/$(DIR_TST)/$(TST).o # $(DIR_OBJ)/$(DIR_TST)/$(TST)
+$(TST_FILE): $(patsubst $(DIR_OBJ)/$(APP).o,,$(OBJ_APP)) $(OBJ_TST)
 	@echo "Linking '$@'"
 	@$(CXX) $^ -lboost_unit_test_framework -lcrypto -o $@  $(LDFLAGS)
-	@#echo "---------- Executing unit-tests '$@' ----------"
-	@#$@  #--log_level=test_suite
-	@#echo "-----------------------------------------------------"
 
 show:
-	@echo "Modules:" $(MOD)
-	@echo "Modules have tests:" $(patsubst $(DIR_SRC)/$(DIR_TST)/%_test.cpp,%,$(wildcard $(DIR_SRC)/$(DIR_TST)/*_test.cpp))
+	@echo "Obj app:"
+	@echo "$(strip $(OBJ_APP))"|sed 's/ /\n/g'|sed 's/^/  /'|sort
+	@echo "Obj tst:"
+	@echo "$(strip $(OBJ_TST))"|sed 's/ /\n/g'|sed 's/^/  /'|sort
+	@echo "Deps:"
+	@echo "$(strip $(DEPS))"|sed 's/ /\n/g'|sed 's/^/  /'|sort
 
-$(DOC): $(addprefix $(DIR_SRC)/, $(addsuffix .h,$(MOD))) Doxyfile | directories
+$(DOC_FILE): $(wildcard $(DIR_SRC)/*) Doxyfile | directories_doc
 	@echo "Documentation (1/2) prepare ..."
-	@doxygen 1> $(DIR_LOG)/doxygen.log 2> $(DIR_LOG)/doxygen.log
+	@doxygen 1> $(DIR_LOG)/doxygen.log 2>&1
 	@echo "Documentation (2/2) generate ..."
-	@cd latex;$(MAKE) all 1> ../$(DIR_LOG)/latex.log 2> ../$(DIR_LOG)/latex.log
-	@cp latex/refman.pdf ./$@
+	@$(MAKE) -C $(DIR_DOC)/latex all 1> $(DIR_LOG)/latex.log 2>&1
+	@cp $(DIR_DOC)/latex/refman.pdf ./$@
 
-doc: $(DOC)
+doc: $(DOC_FILE)
 
-install: release
+install: $(APP_FILE)
 	@sudo $(DIR_SRC)/install.sh allauto
 	
 uninstall:
@@ -84,11 +84,7 @@ uninstall:
 
 clean:
 	@rm -rf $(DIR_OBJ)
-	@rm -f $(APP_FILE)
-	@rm -f $(TST)
-	@rm -f $(DOC)
-	@rm -rf latex
-	@rm -rf $(DIR_LOG)
+	@rm -rf $(DIR_DOC)
 	@rm -rf test_directory_*
 
-.PHONY: all clean directories show doc check release install uninstall
+.PHONY: all clean directories_obj directories_obj_tst directories_doc show doc check release install uninstall
