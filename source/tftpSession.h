@@ -15,21 +15,18 @@
 #ifndef SOURCE_TFTP_SESSION_H_
 #define SOURCE_TFTP_SESSION_H_
 
-#include <algorithm>
-#include <map>
-#include <string>
 #include <thread>
 
-#include "tftp_common.h"
-#include "tftp_data_mgr.h"
+#include "tftpCommon.h"
+#include "tftpDataMgr.h"
 
 namespace tftp
 {
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 /**
- * \brief TFTP session class 'tftp::session'
+ * \brief TFTP session class 'tftp::Session'
  *
  *  Class for emulate p2p UDP/IP session when request received by server.
  *  For use class:
@@ -39,31 +36,31 @@ namespace tftp
  *
  */
 
-class session: public base
+class Session: public Base
 {
 protected:
-  srv_req            request_type_;    ///< Server request
-  std::string        filename_;        ///< Requested filename
-  transfer_mode      transfer_mode_;   ///< Transfer mode
-  buffer_t           client_;          ///< Client socket address buffer
-  int                socket_;          ///< Socket
-  option_t<uint16_t> opt_blksize_;     ///< Option 'blksize'   : {was writed, value}
-  option_t<int>      opt_timeout_;     ///< Option 'timeout'   : {was writed, value}
-  option_t<int>      opt_tsize_;       ///< Option 'tsize'     : {was writed, value}
-  uint16_t           re_tx_count_;     ///< Retransmitt count
-  buffer_t           sess_buffer_tx_;  ///< Session buffer for TX operations
-  buffer_t           sess_buffer_rx_;  ///< Session buffer for RX operations
-  size_t             stage_;           ///< Stage
-  size_t             buf_size_tx_;     ///< TX data size
-  time_t             oper_time_;       ///< Last remembered action time
-  uint16_t           oper_tx_count_;   ///< Transmit try count
-  bool               oper_wait_;       ///< Flag r/w state (mode)
-  size_t             oper_last_block_; ///< Last (finish) block number
-  bool               stop_;            ///< Break loop request (when error, etc.)
-  bool               finished_;        ///< confirm (reply) break loop request
-  data_mgr           manager_;         ///< Data manager
-  uint16_t           error_code_;      ///< First error info - code
-  std::string        error_message_;   ///< First error info - message
+  SrvReq       request_type_;    ///< Server request
+  std::string  filename_;        ///< Requested filename
+  TransfMode   transfer_mode_;   ///< Transfer mode
+  Buf          client_;          ///< Client socket address buffer
+  int          socket_;          ///< Socket
+  OptInt       opt_blksize_;     ///< Option 'blksize'
+  OptInt       opt_timeout_;     ///< Option 'timeout'
+  OptInt       opt_tsize_;       ///< Option 'tsize'
+  uint16_t     re_tx_count_;     ///< Retransmitt count
+  Buf          sess_buffer_tx_;  ///< Session buffer for TX operations
+  Buf          sess_buffer_rx_;  ///< Session buffer for RX operations
+  size_t       stage_;           ///< Stage
+  size_t       buf_size_tx_;     ///< TX data size
+  time_t       oper_time_;       ///< Last remembered action time
+  uint16_t     oper_tx_count_;   ///< Transmit try count
+  bool         oper_wait_;       ///< Flag r/w state (mode)
+  size_t       oper_last_block_; ///< Last (finish) block number
+  bool         stop_;            ///< Break loop request (when error, etc.)
+  bool         finished_;        ///< confirm (reply) break loop request
+  DataMgr     manager_;         ///< Data manager
+  uint16_t     error_code_;      ///< First error info - code
+  std::string  error_message_;   ///< First error info - message
 
   /** \brief Get uint16_t from RX buffer with offset
    *
@@ -121,7 +118,8 @@ protected:
   /** \brief Construct data block
    *
    *  Construct tftp packet payload as data block
-   *  Fill buffer and set buf_size_tx_; if can't do it then construct error block
+   *  Fill buffer and set buf_size_tx_;
+   *  if can't do it then construct error block
    */
   void construct_data();
 
@@ -172,7 +170,9 @@ protected:
    *  \param [in] e_cod Error code
    *  \param [in] e_msg Error message
    */
-  void set_error_if_first(const uint16_t e_cod, std::string_view e_msg);
+  void set_error_if_first(
+      const uint16_t e_cod,
+      std::string_view e_msg);
 
   /** \brief Check was error or not
    *
@@ -217,16 +217,16 @@ protected:
 public:
   /** \brief Constructor
    */
-  session();
+  Session();
 
   // Deny copy
-  session(const session & ) = delete;
-  session(      session & ) = delete;
-  session(      session &&) = delete;
+  Session(const Session & ) = delete;
+  Session(      Session & ) = delete;
+  Session(      Session &&) = delete;
 
   /** \brief Destructor
    */
-  virtual ~session();
+  virtual ~Session();
 
   /** \brief Session initialize
    *
@@ -237,10 +237,10 @@ public:
    *  \param [in] buf_end UDP request data packet - end buffer iterator
    *  \return True if initialize success, else - false
    */
-  bool init(const buffer_t::const_iterator addr_begin,
-            const buffer_t::const_iterator addr_end,
-            const buffer_t::const_iterator buf_begin,
-            const buffer_t::const_iterator buf_end);
+  bool init(const Buf::const_iterator addr_begin,
+            const Buf::const_iterator addr_end,
+            const Buf::const_iterator buf_begin,
+            const Buf::const_iterator buf_end);
 
   /** \brief Main session loop
    */
@@ -252,10 +252,10 @@ public:
    */
   std::thread run_thread();
 
-  friend class srv;
+  friend class Srv;
 };
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 } // namespace tftp
 

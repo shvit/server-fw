@@ -12,24 +12,22 @@
  *  \version 0.1
  */
 
-#include <algorithm>
 #include <dirent.h>
-#include <functional>
 #include <linux/limits.h>
 #include <regex>
 #include <sys/stat.h>
 #include <dlfcn.h>
 
-#include "tftp_data_mgr.h"
+#include "tftpDataMgr.h"
 
 namespace tftp
 {
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
-data_mgr::data_mgr():
-    base(),
-    request_type_{srv_req::unknown},
+DataMgr::DataMgr():
+    Base(),
+    request_type_{SrvReq::unknown},
     fname_{""},
     hash_{""},
     ifs_{nullptr},
@@ -40,42 +38,41 @@ data_mgr::data_mgr():
 {
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
-data_mgr::~data_mgr()
+DataMgr::~DataMgr()
 {
 }
 
-// ----------------------------------------------------------------------------------
-bool data_mgr::check_directory(std::string_view chk_dir) const
+// -----------------------------------------------------------------------------
+bool DataMgr::check_directory(std::string_view chk_dir) const
 {
   if(!chk_dir.size()) return false;
 
   std::string path{chk_dir};
-  //path.push_back('\0');
   struct stat sb;
   return (stat(path.c_str(), & sb) == 0) && S_ISDIR(sb.st_mode);
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
-bool data_mgr::check_root_dir()
+bool DataMgr::check_root_dir()
 {
   if(check_directory(get_root_dir()))
   {
-    LOG(LOG_DEBUG, "Root directory is fine");
+    L_DBG("Root directory is fine");
     return true;
   }
   else
   {
-    LOG(LOG_WARNING, "Wrong root directory");
+    L_WRN("Wrong root directory");
     return false;
   }
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
-bool data_mgr::check_fb()
+bool DataMgr::check_fb()
 {
   std::string fb_lib_path{get_lib_dir()+get_lib_name_fb()};
 
@@ -85,20 +82,22 @@ bool data_mgr::check_fb()
 
   if(!ret)
   {
-    LOG(LOG_DEBUG, "Not found firebird client library '"+fb_lib_path+"'");
+    L_DBG("Not found firebird client library '"+fb_lib_path+"'");
     return false;
   }
 
-  LOG(LOG_DEBUG, "Found firebird client library '"+fb_lib_path+"'");
+  L_DBG("Found firebird client library '"+fb_lib_path+"'");
 
   // TODO: check lib version
 
   auto lk = begin_shared(); // read lock
 
-  ret = (settings_->db.size() && settings_->user.size() && settings_->dialect);
+  ret = settings_->db.size() &&
+        settings_->user.size() &&
+        settings_->dialect;
   if(!ret)
   {
-    LOG(LOG_DEBUG, "No account information to access Firebird (db/user/dialect)");
+    L_DBG("No account information to access Firebird (db/user/dialect)");
     return false;
   }
 
@@ -112,15 +111,17 @@ bool data_mgr::check_fb()
   return ret;
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
-ssize_t data_mgr::rx(buffer_t::iterator buf_begin,
-                     buffer_t::iterator buf_end,
-                     const buffer_t::size_type position)
+ssize_t DataMgr::rx(
+    Buf::iterator buf_begin,
+    Buf::iterator buf_end,
+    const Buf::size_type position)
 {
-  if(request_type_ != srv_req::write)
+  if(request_type_ != SrvReq::write)
   {
-    LOG(LOG_ERR, "Need request type 'write' (really '"+std::string(to_string(request_type_))+"')");
+    L_ERR("Need request type 'write' (really '"+
+          std::string(to_string(request_type_))+"')");
     set_error_if_first(0, "Wrong request type");
     return -1;
   }
@@ -131,17 +132,18 @@ ssize_t data_mgr::rx(buffer_t::iterator buf_begin,
     {
       if(ofs_.tellp() != (ssize_t)position)
       {
-        LOG(LOG_WARNING, "Change write position "+std::to_string(ofs_.tellp())+" -> "+std::to_string(position));
+        L_WRN("Change write position "+std::to_string(ofs_.tellp())+
+              " -> "+std::to_string(position));
         ofs_.seekp(position);
       }
-      LOG(LOG_DEBUG, "Try store block (buf size "+std::to_string(buf_size)+"; position "+std::to_string(position)+")");
+      L_DBG("Try store block (buf size "+std::to_string(buf_size)+
+            "; position "+std::to_string(position)+")");
       ofs_.write(& *buf_begin, buf_size);
-      //ofs_.flush();
     }
   }
   else
   {
-    LOG(LOG_ERR, "File stream not opened");
+    L_ERR("File stream not opened");
     set_error_if_first(0, "Server write stream not opened");
     return -1;
   }
@@ -150,15 +152,17 @@ ssize_t data_mgr::rx(buffer_t::iterator buf_begin,
 
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
-ssize_t data_mgr::data_mgr::tx(buffer_t::iterator buf_begin,
-                               buffer_t::iterator buf_end,
-                               const buffer_t::size_type position)
+ssize_t DataMgr::tx(
+    Buf::iterator buf_begin,
+    Buf::iterator buf_end,
+    const Buf::size_type position)
 {
-  if(request_type_ != srv_req::read)
+  if(request_type_ != SrvReq::read)
   {
-    LOG(LOG_ERR, "Need request type 'read' (really '"+std::string(to_string(request_type_))+"')");
+    L_ERR("Need request type 'read' (really '"+
+              std::string(to_string(request_type_))+"')");
     set_error_if_first(0, "Wrong request");
     return -1;
   }
@@ -167,11 +171,13 @@ ssize_t data_mgr::data_mgr::tx(buffer_t::iterator buf_begin,
   if(ifs_ != nullptr)
   {
     auto buf_size = std::distance(buf_begin, buf_end);
-    LOG(LOG_DEBUG, "Generate block (buf size "+std::to_string(buf_size)+"; position "+std::to_string(position)+")");
+    L_DBG("Generate block (buf size "+std::to_string(buf_size)+
+          "; position "+std::to_string(position)+")");
 
     if(ifs_->tellg() != (ssize_t)position)
     {
-      LOG(LOG_WARNING, "Change read position "+std::to_string(ifs_->tellg())+" -> "+std::to_string(position));
+      L_WRN("Change read position "+std::to_string(ifs_->tellg())+
+            " -> "+std::to_string(position));
       ifs_->seekg(position);
     }
     auto ret_size = static_cast<ssize_t>(ifs_size_) - (ssize_t)position;
@@ -184,37 +190,39 @@ ssize_t data_mgr::data_mgr::tx(buffer_t::iterator buf_begin,
   }
 
   // not opened
-  LOG(LOG_ERR, "File stream not opened");
+  L_ERR("File stream not opened");
   set_error_if_first(0, "Server read stream not opened (file not found)");
   return -1;
 }
 
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
-bool data_mgr::active_fb_connection()
+bool DataMgr::active_fb_connection()
 {
   return false;
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
-bool data_mgr::active_files() const
+bool DataMgr::active_files() const
 {
-  return ((request_type_ == srv_req::read)  && ifs_) ||
-         ((request_type_ == srv_req::write) && ofs_.is_open());
+  return ((request_type_ == SrvReq::read)  && ifs_) ||
+         ((request_type_ == SrvReq::write) && ofs_.is_open());
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
-bool data_mgr::active()
+bool DataMgr::active()
 {
   return active_fb_connection() || active_files();
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
-bool data_mgr::init(srv_req request_type, std::string_view req_fname)
+bool DataMgr::init(
+    SrvReq request_type,
+    std::string_view req_fname)
 {
   request_type_ = request_type;
   fname_.assign(req_fname);
@@ -231,17 +239,19 @@ bool data_mgr::init(srv_req request_type, std::string_view req_fname)
 
     switch(request_type_)
     {
-      case srv_req::read:
+      case SrvReq::read:
         switch(ifs_mode_ = is_md5())
         {
           case 0: //fname_ = get_root_dir() + fname_;
           case 1:
             ifs_ = new std::ifstream;
-            static_cast<std::ifstream *>(ifs_)->open(fname_, std::ios_base::in | std::ios::binary | std::ios::ate);
+            static_cast<std::ifstream *>(ifs_)->
+                open(fname_,
+                     std::ios_base::in | std::ios::binary | std::ios::ate);
 
-            if(!static_cast<std::ifstream *>(ifs_)->is_open()) // if not opened
+            if(!static_cast<std::ifstream *>(ifs_)->is_open())// if not opened
             {
-              LOG(LOG_ERR, "File not opened '" + fname_ + "'");
+              L_ERR("File not opened '" + fname_ + "'");
               set_error_if_first(0, "File not opened");
               close();
               return false;
@@ -251,7 +261,7 @@ bool data_mgr::init(srv_req request_type, std::string_view req_fname)
             break;
           case 2: // *.md5 file
             {
-              ifs_ = new std::istringstream{hash_+"  fake_filename\n"};
+              ifs_ = new std::istringstream{hash_+" fake_filename\n"};
               ifs_size_ = hash_.size() + 16;
             }
             break;
@@ -259,31 +269,32 @@ bool data_mgr::init(srv_req request_type, std::string_view req_fname)
             break;
         }
         break;
-      case srv_req::write:
+      case SrvReq::write:
 	      fname_ = get_root_dir() + fname_;
         ofs_.open(fname_, std::ios_base::out | std::ios::binary);
         if(!ofs_.is_open()) // if not opened
         {
-          LOG(LOG_ERR, "File not opened '" + fname_ + "'");
+          L_ERR("File not opened '" + fname_ + "'");
           set_error_if_first(0, "File not opened");
           return false;
         }
         break;
       default:
-        LOG(LOG_WARNING, "Wrong request type '" + std::string(to_string(request_type_)) + "'");
+        L_WRN("Wrong request type '" +
+              std::string(to_string(request_type_)) + "'");
         return false;
     }
     return true;
   }
 
-  LOG(LOG_ERR, "No access to data storage (directory,firebird)");
+  L_ERR("No access to data storage (directory,firebird)");
   set_error_if_first(0, "No access to data storage (directory, firebird)");
   return false;
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
-void data_mgr::close()
+void DataMgr::close()
 {
  // TODO: close connection
 
@@ -307,9 +318,9 @@ void data_mgr::close()
 
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
-int data_mgr::is_md5()
+int DataMgr::is_md5()
 {
   std::regex regex_md5_pure("([a-f0-9]{32})");
   std::regex regex_md5_file("([a-f0-9]{32})([.][mM][dD][5])");
@@ -325,7 +336,7 @@ int data_mgr::is_md5()
      (sm.suffix().str().size()==0))
   {
     hash_ = sm[1].str();
-    LOG(LOG_INFO, "Match file as *.md5 sum");
+    L_INF("Match file as *.md5 sum");
     ret=2;
   }
   else
@@ -337,18 +348,15 @@ int data_mgr::is_md5()
      (sm.suffix().str().size()==0))
   {
     hash_ = sm[1].str();
-    LOG(LOG_INFO, "Match file as pure md5 request");
+    L_INF("Match file as pure md5 request");
     ret=1;
 
-    //if(!recursive_search_by_md5(get_root_dir()))
-    //{
     auto lk = begin_shared(); // read lock (recursive!)
 
     for(size_t iter=0; iter < settings_->backup_dirs.size(); ++iter)
     {
       if(recursive_search_by_md5(settings_->backup_dirs[iter])) break;
     }
-    //}
   }
   else
   // 3 Simple try search file - nothing do
@@ -358,24 +366,39 @@ int data_mgr::is_md5()
   return ret;
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
-bool data_mgr::recursive_search_by_md5(const std::string & path)
+bool DataMgr::recursive_search_by_md5(const std::string & path)
 {
   bool ret = false;
   if (auto dir = opendir(path.c_str()))
   {
     while (auto f = readdir(dir))
     {
-      if(f->d_name[0] == '.' && f->d_name[1] == '\0')                        continue; // self dir
-      if(f->d_name[0] == '.' && f->d_name[1] == '.' && f->d_name[2] == '\0') continue; // up dir
+      if((f->d_name[0] == '.') &&
+         (f->d_name[1] == '\0'))  // self dir
+      {
+        continue;
+      }
+      if((f->d_name[0] == '.') &&
+         (f->d_name[1] == '.') &&
+         (f->d_name[2] == '\0')) // up dir
+      {
+        continue;
+      }
 
       std::string curr_name{std::string(f->d_name)};
       std::string full_name{path};
-      if(full_name.size() && (full_name[full_name.size()-1] != '/')) full_name.append("/");
+      if(full_name.size() && (full_name[full_name.size()-1] != '/'))
+      {
+        full_name.append("/");
+      }
       full_name.append(curr_name);
 
-      if(f->d_type == DT_DIR) ret = recursive_search_by_md5(full_name);
+      if(f->d_type == DT_DIR)
+      {
+        ret = recursive_search_by_md5(full_name);
+      }
       if(f->d_type == DT_REG)
       {
         std::regex regex_md5_file("(.[mM][dD]5)");
@@ -386,7 +409,8 @@ bool data_mgr::recursive_search_by_md5(const std::string & path)
           std::ifstream file_md5;
           file_md5.open(full_name, std::ios_base::in);
 
-          for (buffer_t arr(1024,0); file_md5.getline(arr.data(), arr.size(), '\n'); )
+          for(Buf arr(1024,0);
+              file_md5.getline(arr.data(), arr.size(), '\n'); )
           {
             std::string line{arr.data()};
             std::regex regex_md5_sum("([a-f0-9]{32})");
@@ -396,10 +420,13 @@ bool data_mgr::recursive_search_by_md5(const std::string & path)
               if(sm_sum[1].str() == hash_)
               {
                 fname_ = path;
-                if(fname_.size() && (fname_[fname_.size()-1] != '/')) fname_.append("/");
+                if(fname_.size() && (fname_[fname_.size()-1] != '/'))
+                {
+                  fname_.append("/");
+                }
                 fname_.append(sm_file.prefix().str());
                 ret = true;
-                LOG(LOG_INFO, "Found file '"+fname_+"'");
+                L_INF("Found file '"+fname_+"'");
               }
             }
             break; // fuck long files
@@ -415,13 +442,15 @@ bool data_mgr::recursive_search_by_md5(const std::string & path)
   return ret;
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
-void data_mgr::set_error_if_first(const uint16_t e_cod, std::string_view e_msg) const
+void DataMgr::set_error_if_first(
+    const uint16_t e_cod,
+    std::string_view e_msg) const
 {
   if(set_error_) set_error_(e_cod, e_msg);
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 } // namespace tftp

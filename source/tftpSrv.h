@@ -16,30 +16,31 @@
 #define SOURCE_TFTP_SERVER_H_
 
 #include <list>
-#include <string>
 
-#include "tftp_session.h"
+#include "tftpSession.h"
 
 namespace tftp
 {
 
+// -----------------------------------------------------------------------------
+
 /**
- * \brief TFTP main server class 'tftp::srv'
+ * \brief TFTP main server class 'tftp::Srv'
  *
  *  Class for one listening pair IP:PORT.
- *  Parent class tftp::base has all server settings storage.
+ *  Parent class tftp::Base has all server settings storage.
  *
  */
 
-class srv: public base
+class Srv: public Base
 {
 protected:
 
   /// List of running sessions
-  std::list<std::tuple<session, std::thread>> sessions_;
+  std::list<std::tuple<Session, std::thread>> sessions_;
 
   int      socket_; ///< Socket of listener
-  buffer_t buffer_; ///< Income buffer for tftp request
+  Buf buffer_; ///< Income buffer for tftp request
 
   bool stop_; ///< Flag "need stop"
 
@@ -51,10 +52,10 @@ protected:
 
 public:
   /// Constructor
-  srv();
+  Srv();
 
   /// Destructor
-  virtual ~srv();
+  virtual ~Srv();
 
   /// Initalise server method
   bool init();
@@ -66,7 +67,7 @@ public:
 
 };
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 } // namespace tftp
 

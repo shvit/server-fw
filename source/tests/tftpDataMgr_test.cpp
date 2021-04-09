@@ -1,34 +1,26 @@
-//#include <type_traits>
-//#include <utility>
-//#include <vector>
-#include <iostream>
-
-//#include <openssl/md5.h>
-
-#include "../tftp_data_mgr.h"
+#include "../tftpDataMgr.h"
 #include "test.h"     
 
 UNIT_TEST_SUITE_BEGIN(tftp_data_mgr)
 
 using namespace unit_tests;
 
-class test_data_mgr: public tftp::data_mgr
+class test_data_mgr: public tftp::DataMgr
 {
 public:
-  // get protected property
-  auto & prop_fname() { return fname_; };
-  tftp::settings get_settings() { return settings_; };
 
-  // forward protected methods
-  bool check_root_dir() { return tftp::data_mgr::check_root_dir(); };
-  bool active_files() { return tftp::data_mgr::active_files(); };
-  bool active() { return tftp::data_mgr::active(); };
-  auto is_md5() { return tftp::data_mgr::is_md5(); };
-  bool recursive_search_by_md5(const std::string & path) { return tftp::data_mgr::recursive_search_by_md5(path); };
+  using tftp::DataMgr::fname_;
+  using tftp::DataMgr::settings_;
+
+  using tftp::DataMgr::check_root_dir;
+  using tftp::DataMgr::active_files;
+  using tftp::DataMgr::active;
+  using tftp::DataMgr::is_md5;
+  using tftp::DataMgr::recursive_search_by_md5;
 
 };
 
-//=================================================================================================================================
+//------------------------------------------------------------------------------
 
 UNIT_TEST_CASE_BEGIN(is_md5_check, "check is_md5()")
 
@@ -52,17 +44,19 @@ const struct
 
   START_ITER("is_md5() check on data set");
   {
-    for(size_t struct_iter=0; struct_iter < sizeof(tst1_item)/sizeof(tst1_item[0]); ++struct_iter)
+    for(size_t struct_iter=0;
+        struct_iter < sizeof(tst1_item)/sizeof(tst1_item[0]);
+        ++struct_iter)
     {
       test_data_mgr dm;
-      dm.prop_fname().assign(tst1_item[struct_iter].name);
+      dm.fname_.assign(tst1_item[struct_iter].name);
       TEST_CHECK_TRUE(dm.is_md5() == tst1_item[struct_iter].mode_md5);
     }
   }
 
 UNIT_TEST_CASE_END
 
-//---------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 UNIT_TEST_CASE_BEGIN(main, "rx_tx")
 
@@ -92,7 +86,9 @@ UNIT_TEST_CASE_BEGIN(main, "rx_tx")
       bool init_res;
 
       // 1 - file with data create
-      TEST_CHECK_TRUE(init_res = dm.init(tftp::srv_req::write, curr_file_name));
+      TEST_CHECK_TRUE(init_res = dm.init(
+          tftp::SrvReq::write,
+          curr_file_name));
 
       if(init_res)
       {
@@ -106,7 +102,11 @@ UNIT_TEST_CASE_BEGIN(main, "rx_tx")
 
           fill_buffer(buff.data(), left_size, stage*block, iter);
 
-          success_file_rx = success_file_rx && (dm.rx(buff.begin(), buff.begin()+left_size, stage*block) == 0);
+          success_file_rx =
+              success_file_rx &&
+              (dm.rx(buff.begin(),
+                     buff.begin()+left_size,
+                     stage*block) == 0);
         }
         TEST_CHECK_TRUE(success_file_rx);
 
@@ -119,20 +119,25 @@ UNIT_TEST_CASE_BEGIN(main, "rx_tx")
       }
 
       // 2 - file md5 create
-      TEST_CHECK_TRUE(init_res = dm.init(tftp::srv_req::write, curr_file_name+".md5"));
+      TEST_CHECK_TRUE(init_res = dm.init(
+          tftp::SrvReq::write,
+          curr_file_name+".md5"));
 
       if(init_res)
       {
         std::vector<char> buff_data(file_sizes[iter], 0);
         fill_buffer(buff_data.data(), file_sizes[iter], 0, iter);
-        MD5((unsigned char*) buff_data.data(), file_sizes[iter], (unsigned char *) & file_md5[iter][0]); //  hash.data()
+        MD5((unsigned char*) buff_data.data(),
+            file_sizes[iter],
+            (unsigned char *) & file_md5[iter][0]); //  hash.data()
 
         std::string md5_file{md5_as_str(& file_md5[iter][0])};
         md5_file.append(" ").append(curr_file_name);
 
-        TEST_CHECK_TRUE(dm.rx(static_cast<tftp::buffer_t::iterator>(& *md5_file.begin()),
-                              static_cast<tftp::buffer_t::iterator>(& *md5_file.end()),
-                              0) == 0);
+        TEST_CHECK_TRUE(dm.rx(
+            static_cast<tftp::Buf::iterator>(& *md5_file.begin()),
+            static_cast<tftp::Buf::iterator>(& *md5_file.end()),
+            0) == 0);
 
         TEST_CHECK_TRUE(dm.active_files());
         TEST_CHECK_TRUE(dm.active());
@@ -147,11 +152,12 @@ UNIT_TEST_CASE_BEGIN(main, "rx_tx")
       test_data_mgr dm_find;
       dm_find.set_root_dir(tmp_dir);
       dm_find.set_search_dir(tmp_dir);
-      TEST_CHECK_TRUE(init_res = dm_find.init(tftp::srv_req::read, hash));
+      TEST_CHECK_TRUE(init_res = dm_find.init(tftp::SrvReq::read, hash));
 
       if(init_res)
       {
-        TEST_CHECK_TRUE(dm_find.prop_fname() == dm_find.get_root_dir()+curr_file_name);
+        TEST_CHECK_TRUE(dm_find.fname_ ==
+            dm_find.get_root_dir()+curr_file_name);
       }
 
     }
@@ -175,7 +181,7 @@ UNIT_TEST_CASE_BEGIN(main, "rx_tx")
       TEST_CHECK_FALSE(dm.active());
 
       bool init_res;
-      TEST_CHECK_TRUE(init_res = dm.init(tftp::srv_req::read, curr_file_name));
+      TEST_CHECK_TRUE(init_res = dm.init(tftp::SrvReq::read, curr_file_name));
 
       if(init_res)
       {
@@ -190,11 +196,15 @@ UNIT_TEST_CASE_BEGIN(main, "rx_tx")
 
           fill_buffer(buff_ethalon.data(), left_size, stage * block, iter);
 
-          success_tx = success_tx && (dm.tx(buff_checked.begin(), buff_checked.begin()+left_size, stage * block) == (ssize_t)left_size);
+          success_tx = success_tx && (
+              dm.tx(buff_checked.begin(),
+                    buff_checked.begin()+left_size,
+                    stage * block) == (ssize_t)left_size);
 
           for(size_t chk_pos = 0; chk_pos < left_size; ++chk_pos)
           {
-            success_tx = success_tx && (buff_ethalon[chk_pos] == buff_checked[chk_pos]);
+            success_tx = success_tx &&
+                (buff_ethalon[chk_pos] == buff_checked[chk_pos]);
           }
         }
 
@@ -210,7 +220,6 @@ UNIT_TEST_CASE_BEGIN(main, "rx_tx")
 
 UNIT_TEST_CASE_END
 
-//---------------------------------------------------------------------------------------------------------------------------------
-
+//------------------------------------------------------------------------------
 
 UNIT_TEST_SUITE_END

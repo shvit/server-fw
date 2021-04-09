@@ -18,8 +18,11 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 
-#include "tftp_common.h"
-#include "tftp_server.h"
+#include <iostream>
+#include <unistd.h>
+
+#include "tftpCommon.h"
+#include "tftpSrv.h"
 
 int main(int argc, char* argv[])
 {
@@ -27,18 +30,17 @@ int main(int argc, char* argv[])
 
   int exit_code = fake_exit_code;
 
-  [[maybe_unused]]
-  auto logger = [](const int level, std::string_view message)
-    {
-      if(level <= LOG_DEBUG)
-      {
-        std::cout << "<" << tftp::to_string_lvl(level) << "> " << message << std::endl; // << std::flush();
-      }
-    };
+  //auto logger = [](const tftp::LogLvl level, std::string_view message)
+  //  {
+  //    if((int)level <= LOG_DEBUG)
+  //    {
+  //      std::cout << "<" << tftp::to_string(level) << "> " << message << std::endl; // << std::flush();
+  //    }
+  //  };
 
   openlog("server_fw", LOG_NDELAY, LOG_DAEMON); // LOG_PID
 
-  tftp::srv server;
+  tftp::Srv server;
 
   if(server.load_options(argc, argv))
   {
@@ -48,7 +50,7 @@ int main(int argc, char* argv[])
 
       if(pid<0)
       {
-        syslog(LOG_ERR, "Daemon start failed (fork error)");
+        server.log(tftp::LogLvl::err, "Daemon start failed (fork error)");
         return EXIT_FAILURE;
       }
       else
@@ -57,11 +59,14 @@ int main(int argc, char* argv[])
         { // daemon code
           umask(0664);
           setsid();
-          chdir("/");
+          if(auto ret=chdir("/"); ret != 0)
+          {
+            server.log(tftp::LogLvl::err, "Failed use chdir(\"/\")");
+          }
           close(STDIN_FILENO);
           close(STDOUT_FILENO);
           close(STDERR_FILENO);
-          server.log(LOG_INFO, "Run as daemon");
+          server.log(tftp::LogLvl::info, "Run as daemon");
         }
         else
         { // app finalize code
@@ -85,7 +90,6 @@ int main(int argc, char* argv[])
     else
     {
       server.out_id(std::cout);
-      //server.set_logger(logger);
     }
 
     if(exit_code == fake_exit_code)

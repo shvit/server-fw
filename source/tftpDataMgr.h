@@ -16,14 +16,15 @@
 #define SOURCE_TFTP_DATA_MGR_H_
 
 #include <fstream>
-#include <functional>
-#include <iostream>
-#include <string>
 
-#include "tftp_common.h"
+#include "tftpCommon.h"
+#include "tftpBase.h"
+
 
 namespace tftp
 {
+
+// -----------------------------------------------------------------------------
 
 /** \brief Data maange class
  *
@@ -34,11 +35,11 @@ namespace tftp
  *
  */
 
-class data_mgr: public base
+class DataMgr: public Base
 {
 protected:
   // Processing info
-  srv_req     request_type_; ///< Request type
+  SrvReq     request_type_; ///< Request type
   std::string fname_;        ///< Processed file name
   std::string hash_;         ///< Hash of file (md5)
 
@@ -99,11 +100,11 @@ public:
 
   /**  Constructor
    */
-  data_mgr();
+  DataMgr();
 
   /** Destructor
    */
-  virtual ~data_mgr();
+  virtual ~DataMgr();
 
   /** Check active (opened streams or Firebird connection)
    */
@@ -114,7 +115,7 @@ public:
    *  \param [in] fname Requested file name
    *  \return True if initialize success, else - false
    */
-  bool init(srv_req request_type, std::string_view fname);
+  bool init(SrvReq request_type, std::string_view fname);
 
   /** \brief Pull data from network (receive)
    *
@@ -123,9 +124,9 @@ public:
    *  \param [in] position Position received block
    *  \return 0 on success, -1 on error
    */
-  ssize_t rx(buffer_t::iterator buf_begin,
-             buffer_t::iterator buf_end,
-             const buffer_t::size_type position);
+  ssize_t rx(Buf::iterator buf_begin,
+             Buf::iterator buf_end,
+             const Buf::size_type position);
 
   /** \brief Push data to network (transmit)
    *
@@ -134,9 +135,9 @@ public:
    *  \param [in] position Position transmitted block
    *  \return Processed size, -1 on error
    */
-  ssize_t tx(buffer_t::iterator buf_begin,
-             buffer_t::iterator buf_end,
-             const buffer_t::size_type position);
+  ssize_t tx(Buf::iterator buf_begin,
+             Buf::iterator buf_end,
+             const Buf::size_type position);
 
   /**  Close all opened steams
    */
@@ -148,7 +149,9 @@ public:
    *  \param [in] e_cod Error code
    *  \param [in] e_msg Error message
    */
-  void set_error_if_first(const uint16_t e_cod, std::string_view e_msg) const;
+  void set_error_if_first(
+      const uint16_t e_cod,
+      std::string_view e_msg) const;
 
   /** \brief Check directory exist
    *
@@ -158,8 +161,10 @@ public:
    */
   bool check_directory(std::string_view chk_dir) const;
 
-  friend class session;
+  friend class Session;
 };
+
+// -----------------------------------------------------------------------------
 
 } // namespace tftp
 

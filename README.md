@@ -2,9 +2,9 @@
 
 ## Intro
 
-This TFTP firmware server wonderful used in embedded firmware development.
-When you have many firmware shapshots for complex testing (regression, functional, etc).
-You don't operate file names of firmware, no, only md5 sums.
+This TFTP firmware server wonderful used in embedded firmware development.<br>
+When you have many firmware shapshots for complex testing (regression, functional, etc).<br>
+You don't operate file names or directories of firmware, no, now only its md5 sums.
 
 ## Futures
 
@@ -18,12 +18,24 @@ You don't operate file names of firmware, no, only md5 sums.
 
 ## Requirements
 
-* Clang 8
-* C++17
-* Ubuntu 18.04 LTE
-* OpenSSL library (sudo apt-get install libssl-dev)
+* Ubuntu 18.04 LTE (newer not tested)
+<p>
+Other GNU Linux distros not tested, sorry
+</p>
+* Clang or GCC as last stable version (using C++17)
+<p>
+For install clang:
+</p>
+<pre>
+sudo apt-get update
+sudo apt-get install llvm clang clang-tools
+</pre>
+* OpenSSL library
+<pre>
+sudo apt-get install libssl-dev
+</pre>
 
-Other not tested, sorry
+
 
 ## How build and use
 1. Get sources 
@@ -40,19 +52,29 @@ make release
 <pre>
 sudo netstat -lup|grep "69\|tftp"
 </pre>
-4. Install firmware server
+4. Install firmware tftp server
 <p>
 <pre>
-sudo ./install.sh allauto
+make install
 </pre>
-By default, make root server directory _/mnt/tftp_ and one search directory _/mnt/backup_
+By default, make root server directory  _/mnt/tftp_  and one search directory _/mnt/backup_
+<pre>
+mkdir /mnt/tftp
+mkdir /mnt/backup
+</pre>
 </p>
-5. Copy firmware files to directory _/mnt/tftp_ or _/mnt/backup_ and make *.md5 files
+5. Copy firmware files to directory  _/mnt/tftp_  or  _/mnt/backup_  and make *.md5 files
 <p>
-File in search directory (_/mnt/backup_) can place in separate nested directory or with unique file names<br>
-For each _file_ in search directory make *.md5 file:
+File in search directory  _/mnt/backup_  can place in separate nested directory or with unique file names<br>
+For each  _file_  in search directory make *.md5 file:
 <pre>
 md5sum file > file.md5
+</pre>
+</p>
+<p>
+6. Uninstall firmware tftp server
+<pre>
+make uninstall
 </pre>
 </p>
 
@@ -61,3 +83,7 @@ Profit!
 ## License
 
 GNU general public license version 3
+
+## Author
+Vitaliy Shirinkin, Russia, 2019-2021<br>
+e-mail: vitaliy.shirinkin@gmail.com

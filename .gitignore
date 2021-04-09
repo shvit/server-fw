@@ -1,10 +1,6 @@
 .cproject
 .project
 .settings/
-latex/
-log/
-obj/
+bin/
+doc/
 test_directory_*
-server_fw
-server_fw.pdf
-test

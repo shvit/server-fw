@@ -5,12 +5,16 @@ DEF_FILE="/etc/default/$NAME"
 LOG_FILE="/etc/rsyslog.d/$NAME.conf"
 APP_DIR="/mnt/tftp"
 SRCH_DIR="/mnt/backup"
-DAEMON_FILE="/usr/sbin/$NAME"
-DAEMON_INIT="/etc/init.d/$NAME"
+BIN_DIR="obj"
+SRC_DIR="source"
+DAEMON_FILE_SRC="$BIN_DIR/$NAME"
+DAEMON_FILE_DST="/usr/sbin/$NAME"
+DAEMON_INIT_SRC="$SRC_DIR/daemon.init"
+DAEMON_INIT_DST="/etc/init.d/$NAME"
 
 do_make_inst_def(){
-  if [ ! -f "$NAME" ]; then
-    echo "[ERROR] No $NAME binary found (need make?)"
+  if [ ! -f "$DAEMON_FILE_SRC" ]; then
+    echo "[ERROR] No '$DAEMON_FILE_SRC' binary found (need make?)"
     exit 1
   fi
   if [ ! -d "$APP_DIR" ]; then
@@ -28,13 +32,13 @@ do_make_inst_def(){
   echo "[INSTALL] Killing all $NAME instances"
   sudo killall -s SIGHUP -q "$NAME" > /dev/null 2>&1
   sleep 1
-  echo "[INSTALL] Copying daemon file $DAEMON_FILE"
-  sudo cp "$NAME" "$DAEMON_FILE"
-  sudo chmod +x "$DAEMON_FILE"
+  echo "[INSTALL] Copying daemon file $DAEMON_FILE_DST"
+  sudo cp "$BIN_DIR/$NAME" "$DAEMON_FILE_DST"
+  sudo chmod +x "$DAEMON_FILE_DST"
   
-  echo "[INSTALL] Copying daemon init script $DAEMON_INIT"
-  sudo cp "$NAME.init" "$DAEMON_INIT"
-  sudo chmod +x "$DAEMON_INIT"
+  echo "[INSTALL] Copying daemon init script $DAEMON_INIT_DST"
+  sudo cp "$DAEMON_INIT_SRC" "$DAEMON_INIT_DST"
+  sudo chmod +x "$DAEMON_INIT_DST"
 
   if [ ! -f "$LOG_FILE" ]; then
     echo "[INSTALL] Creating $NAME rsyslog config file"
@@ -48,7 +52,7 @@ do_make_inst_def(){
 
   if [ ! -f "$DEF_FILE" ]; then
     echo "[INSTALL] Creating daemon config file"
-    echo "START_DAEMON=true" > "$DEF_FILE"
+    echo "START_DAEMON" > "$DEF_FILE"
     echo "IP=0.0.0.0:69" >> "$DEF_FILE"
     echo "SYSLOG=6" >> "$DEF_FILE"
     echo "ROOT_DIR=/mnt/tftp" >> "$DEF_FILE"
@@ -68,7 +72,7 @@ do_make_autoservice(){
 do_remove_autostart(){
   sudo service server_fw stop
   sleep 1
-  sudo update-rc.d -f "$DAEMON_INIT" remove
+  sudo update-rc.d -f "$DAEMON_INIT_DST" remove
   echo "[INFO] Systemd $NAME autostart disabled"
 }
 
@@ -76,12 +80,12 @@ do_uninstall(){
   sudo killall -s SIGHUP -q "$NAME" > /dev/null 2>&1
   sleep 1
   do_remove_autostart
-  [ -f "$DAEMON_INIT" ] && echo "[UNINSTALL] Remove file $DAEMON_INIT"  && sudo rm -f  "$DAEMON_INIT"
+  [ -f "$DAEMON_INIT_DST" ] && echo "[UNINSTALL] Remove file $DAEMON_INIT_DST"  && sudo rm -f  "$DAEMON_INIT_DST"
   [ -f "$LOG_FILE"    ] && echo "[UNINSTALL] Remove file $LOG_FILE"     && sudo rm -f  "$LOG_FILE"
   [ -f "$DEF_FILE"    ] && echo "[UNINSTALL] Remove file $DEF_FILE"     && sudo rm -f  "$DEF_FILE"
   sudo service rsyslog restart
   sleep 1
-  [ -f "$DAEMON_FILE" ] && echo "[UNINSTALL] Remove file $DAEMON_FILE"  && sudo rm -f  "$DAEMON_FILE"
+  [ -f "$DAEMON_FILE_DST" ] && echo "[UNINSTALL] Remove file $DAEMON_FILE_DST"  && sudo rm -f  "$DAEMON_FILE_DST"
 }
 
 if [ ! $(id -u) -eq 0 ]; then
