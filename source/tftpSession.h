@@ -44,9 +44,9 @@ protected:
   TransfMode   transfer_mode_;   ///< Transfer mode
   Buf          client_;          ///< Client socket address buffer
   int          socket_;          ///< Socket
-  OptInt       opt_blksize_;     ///< Option 'blksize'   : {was writed, value}
-  OptInt       opt_timeout_;     ///< Option 'timeout'   : {was writed, value}
-  OptInt       opt_tsize_;       ///< Option 'tsize'     : {was writed, value}
+  OptInt       opt_blksize_;     ///< Option 'blksize'
+  OptInt       opt_timeout_;     ///< Option 'timeout'
+  OptInt       opt_tsize_;       ///< Option 'tsize'
   uint16_t     re_tx_count_;     ///< Retransmitt count
   Buf          sess_buffer_tx_;  ///< Session buffer for TX operations
   Buf          sess_buffer_rx_;  ///< Session buffer for RX operations

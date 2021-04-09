@@ -502,61 +502,71 @@ bool Base::load_options(int argc, char* argv[])
     if(opt == -1) break; // end parsing
     switch(opt)
     {
-      case 'l':
-        if(optarg != nullptr)
+    case 'l':
+      if(optarg) set_local_base(optarg);
+      break;
+    case 's':
+    case 'S':
+      {
+        if(optarg)
         {
-          set_local_base(optarg);
-        }
-        break;
-      case 's':
-      case 'S':
-        {
-          auto lvl = LOG_INFO;
-          if(optarg)
+          try
           {
-            try
-            {
-              lvl = LOG_PRI(std::stoi(optarg));
-            }
-            catch (...) {};
-          }
-          set_syslog_level(lvl);
+            int lvl = LOG_PRI(std::stoi(optarg));
+            set_syslog_level(lvl);
+          } catch (...) { };
         }
+      }
+      break;
+    case 'h':
+    case 'H':
+    case '?':
+      ret = false; // Help message cout
+      break;
+    case 0:
+
+      switch(longIndex)
+      {
+      case 4: // --lib-dir
+        if(optarg) set_lib_dir(optarg);
         break;
-      case 'h':
-      case 'H':
-      case '?':
-        ret = false; // Help message cout
+      case 5: // --lib-name
+        if(optarg) set_lib_name_fb(optarg);
         break;
-      case 0:
-        // --lib-dir
-        if((longIndex ==  4) && optarg!=nullptr) { set_lib_dir(optarg); break; }
-        // --lib-name
-        if((longIndex ==  5) && optarg!=nullptr) { set_lib_name_fb(optarg); break; }
-        // --root-dir
-        if((longIndex ==  6) && optarg!=nullptr) { set_root_dir(optarg); break; }
-        // --search
-        if((longIndex ==  7) && optarg!=nullptr) { set_search_dir_append(optarg); break; }
-        // --fb-db
-        if((longIndex ==  8) && optarg!=nullptr) { set_connection_db(optarg); break; }
-        // --fb-user
-        if((longIndex ==  9) && optarg!=nullptr) { set_connection_user(optarg); break; }
-        // --fb-pass
-        if((longIndex == 10) && optarg!=nullptr) { set_connection_pass(optarg);break;  }
-        // --fb-role
-        if((longIndex == 11) && optarg!=nullptr) { set_connection_role(optarg); break; }
-        // --fb-dialect
-        if((longIndex == 12) && optarg!=nullptr)
+      case 6: // --root-dir
+        if(optarg) set_root_dir(optarg);
+        break;
+      case 7: // --search
+        if(optarg) set_search_dir_append(optarg);
+        break;
+      case 8: // --fb-db
+        if(optarg) set_connection_db(optarg);
+        break;
+      case 9: // --fb-user
+        if(optarg) set_connection_user(optarg);
+        break;
+      case 10: // --fb-pass
+        if(optarg) set_connection_pass(optarg);
+        break;
+      case 11: // --fb-role
+        if(optarg) set_connection_role(optarg);
+        break;
+      case 12: // --fb-dialect
+        if(optarg)
         {
-          uint16_t dial=default_fb_dialect;
-          try { dial = (std::stoul(optarg) & 0xFFFFU); } catch (...) {};
-          set_connection_dialect(dial);
-          break;
+          try
+          {
+            uint16_t dial = (std::stoul(optarg) & 0xFFFFU);
+            set_connection_dialect(dial);
+          } catch (...) { };
         }
-        // --daemon
-        if( longIndex == 13) { set_is_daemon(true); }
         break;
-    }
+      case 13: // --daemon
+        set_is_daemon(true);
+        break;
+      } // case
+      break;
+    } // case
   }
 
   return ret;
@@ -568,35 +578,35 @@ void Base::out_help(std::ostream & stream, std::string_view app) const
 {
   out_id(stream);
 
-  stream << "Some features:" << std::endl;
-  stream << "  - Recursive search requested files by md5 sum in search directory" << std::endl;
-  stream << "  - Use Firebird SQL server as file storage (optional requirement)" << std::endl;
-  stream << "Usage: " << app << " [<option1> [<option1 argument>]] [<option2> [<option2 argument>]] ... " << std::endl;
-  stream << "Possible options:" << std::endl;
-  stream << "  {-h|-H|-?|--help} Show help message" << std::endl;
-  stream << "  {-l|-L|--ip|--listen} {<IPv4>|[<IPv6>]}[:port] Listening address and port" << std::endl;
-  stream << "    (default 0.0.0.0:" << default_tftp_port << ")" << std::endl;
-  stream << "    Sample IPv4: 192.168.0.1:69" << std::endl;
-  stream << "    Sample IPv6: [::1]:69" << std::endl;
-  stream << "  {-s|-S|--syslog} <0...7> SYSLOG level flooding (default " << default_tftp_syslog_lvl << ")" << std::endl;
-  stream << "  --lib-dir <directory> System library directory" << std::endl;
-  stream << "  --lib-name <name> Firebird library filename (default " << default_fb_lib_name << ")" << std::endl;
-  stream << "  --root-dir <directory> Server root directory" << std::endl;
-  stream << "  --search <directory> Directory for recursive search by md5 sum (may be much)" << std::endl;
-  stream << "  --fb-db <database> Firebird access database name" << std::endl;
-  stream << "  --fb-user <username> Firebird access user name" << std::endl;
-  stream << "  --fb-pass <password> Firebird access password" << std::endl;
-  stream << "  --fb-role <role> Firebird access role" << std::endl;
-  stream << "  --fb-dialect <1...3> Firebird server dialect (default " << default_fb_dialect << ")" << std::endl;
-  stream << "  --daemon Run as daemon" << std::endl;
+  stream << "Some features:" << std::endl
+  << "  - Recursive search requested files by md5 sum in search directory" << std::endl
+  << "  - Use Firebird SQL server as file storage (optional requirement)" << std::endl
+  << "Usage: " << app << " [<option1> [<option1 argument>]] [<option2> [<option2 argument>]] ... " << std::endl
+  << "Possible options:" << std::endl
+  << "  {-h|-H|-?|--help} Show help message" << std::endl
+  << "  {-l|-L|--ip|--listen} {<IPv4>|[<IPv6>]}[:port] Listening address and port" << std::endl
+  << "    (default 0.0.0.0:" << default_tftp_port << ")" << std::endl
+  << "    Sample IPv4: 192.168.0.1:69" << std::endl
+  << "    Sample IPv6: [::1]:69" << std::endl
+  << "  {-s|-S|--syslog} <0...7> SYSLOG level flooding (default " << default_tftp_syslog_lvl << ")" << std::endl
+  << "  --lib-dir <directory> System library directory" << std::endl
+  << "  --lib-name <name> Firebird library filename (default " << default_fb_lib_name << ")" << std::endl
+  << "  --root-dir <directory> Server root directory" << std::endl
+  << "  --search <directory> Directory for recursive search by md5 sum (may be much)" << std::endl
+  << "  --fb-db <database> Firebird access database name" << std::endl
+  << "  --fb-user <username> Firebird access user name" << std::endl
+  << "  --fb-pass <password> Firebird access password" << std::endl
+  << "  --fb-role <role> Firebird access role" << std::endl
+  << "  --fb-dialect <1...3> Firebird server dialect (default " << default_fb_dialect << ")" << std::endl
+  << "  --daemon Run as daemon" << std::endl;
 }
 
 // -----------------------------------------------------------------------------
 
 void Base::out_id(std::ostream & stream) const
 {
-  stream << "Simple tftp firmware server 'server_fw' licensed GPL-3.0" << std::endl;
-  stream << "(c) 2019-2021 Vitaliy.V.Shirinkin, e-mail: vitaliy.shirinkin@gmail.com" << std::endl;
+  stream << "Simple tftp firmware server 'server_fw' licensed GPL-3.0" << std::endl
+  << "(c) 2019-2021 Vitaliy.V.Shirinkin, e-mail: vitaliy.shirinkin@gmail.com" << std::endl;
 }
 
 // -----------------------------------------------------------------------------

@@ -46,7 +46,7 @@ class Base
 protected:
   pSettings settings_;  ///< Shared pointer for settings storage
 
-  mutable std::shared_mutex mutex_; ///< Read/write mutex for settings threading access
+  mutable std::shared_mutex mutex_; ///< RW mutex for threading access
 
   /** \brief Create shared locker for settings_
    *
@@ -86,7 +86,7 @@ protected:
       const Buf::size_type offset) const
           -> std::enable_if_t<std::is_integral_v<T>, T &>;
 
-  /** \brief Get value from buffer and convert from network byte order to host byte order
+  /** \brief Get value from buffer and convert network -> host byte order
    *
    *  \param [in] buf Operational buffer
    *  \param [in] offset Buffer offset (position) in bytes
@@ -111,7 +111,7 @@ protected:
       const T & value)
           -> std::enable_if_t<std::is_integral_v<T>, Buf::size_type>;
 
-  /** \brief Set (write) raw value to buffer and convert from host byte order to network byte order
+  /** \brief Set raw value to buffer and convert host -> network byte order
    *
    *  \param [in,out] buf Operational buffer
    *  \param [in] offset Buffer offset (position) in bytes
@@ -388,7 +388,7 @@ public:
   void out_id(std::ostream & stream) const;
 };
 
-//=================================================================================================================================
+//==============================================================================
 
 template<typename T>
 auto Base::get_buf_item_raw(
@@ -396,12 +396,16 @@ auto Base::get_buf_item_raw(
     const Buf::size_type offset) const
         -> std::enable_if_t<std::is_integral_v<T>, T &>
 {
-  if((offset + sizeof(T)) > buf.size()) std::invalid_argument("Offset "+std::to_string(offset)+" is over buffer size");
+  if((offset + sizeof(T)) > buf.size())
+  {
+    std::invalid_argument("Offset "+std::to_string(offset)+
+                          " is over buffer size");
+  }
 
   return *((T *) (buf.data() + offset));
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 template<typename T>
 auto Base::get_buf_item_ntoh(
@@ -415,7 +419,7 @@ auto Base::get_buf_item_ntoh(
   return value_n;
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 template<typename T>
 auto Base::set_buf_item_raw(
@@ -425,7 +429,11 @@ auto Base::set_buf_item_raw(
         -> std::enable_if_t<std::is_integral_v<T>, Buf::size_type>
 {
   Buf::size_type ret_size = sizeof(T);
-  if((offset + ret_size) > buf.size()) std::invalid_argument("Offset "+std::to_string(offset)+" is over buffer size");
+  if((offset + ret_size) > buf.size())
+  {
+    std::invalid_argument("Offset "+std::to_string(offset)+
+                          " is over buffer size");
+  }
 
   std::copy(((char *) & value),
             ((char *) & value) + sizeof(T),
@@ -434,7 +442,7 @@ auto Base::set_buf_item_raw(
   return ret_size;
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 template<typename T>
 auto Base::set_buf_item_hton(
@@ -449,7 +457,7 @@ auto Base::set_buf_item_hton(
   return set_buf_item_raw<T>(buf, offset, value_n);
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 template<typename ... Ts>
 void Base::set_search_dir(Ts && ... args)
@@ -461,7 +469,7 @@ void Base::set_search_dir(Ts && ... args)
   (settings_->backup_dirs.emplace_back(args), ...);
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 template<typename T>
 auto Base::set_buf_cont_str(
@@ -470,12 +478,19 @@ auto Base::set_buf_cont_str(
     const T & cntnr, bool check_zero_end)
         -> std::enable_if_t<is_container_v<T>, Buf::size_type>
 {
-  auto zero_it = (check_zero_end ? std::find(cntnr.cbegin(), cntnr.cend(), 0) : cntnr.cend());
+  auto zero_it = (check_zero_end ?
+      std::find(cntnr.cbegin(), cntnr.cend(), 0) : cntnr.cend());
   Buf::size_type new_size = std::distance(cntnr.cbegin(), zero_it);
 
   if(new_size)
   {
-    if((offset + new_size + (check_zero_end?1:0)) > buf.size()) throw std::invalid_argument("Offset "+std::to_string(offset)+" and new item size "+std::to_string(new_size)+" is over buffer size");
+    if((offset + new_size + (check_zero_end?1:0)) > buf.size())
+    {
+      throw std::invalid_argument(
+          "Offset "+std::to_string(offset)+
+          " and new item size "+std::to_string(new_size)+
+          " is over buffer size");
+    }
 
     std::copy(cntnr.cbegin(), zero_it, buf.begin() + offset);
     if(check_zero_end) buf[offset+new_size++] = 0; // zero end
@@ -484,7 +499,7 @@ auto Base::set_buf_cont_str(
   return new_size;
 }
 
-// ----------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 } // namespace tftp
 

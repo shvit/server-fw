@@ -30,15 +30,15 @@ Settings::Settings():
   is_daemon{false},
   local_base_{},
   lib_dir{},
-  lib_name{},
+  lib_name{default_fb_lib_name},
   root_dir{},
   backup_dirs{},
   db{},
   user{},
   pass{},
   role{},
-  dialect{},
-  use_syslog{},
+  dialect{default_fb_dialect},
+  use_syslog{default_tftp_syslog_lvl},
   log_{nullptr}
 {
 }

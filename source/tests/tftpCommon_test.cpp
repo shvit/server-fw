@@ -10,53 +10,27 @@ UNIT_TEST_SUITE_BEGIN(tftp_common)
 class tst_Base: public tftp::Base
 {
 public:
-  tftp::pSettings get_settings() { return settings_; };
 
-  decltype(auto) tst_local_base_as_inet () { return local_base_as_inet (); };
-  decltype(auto) tst_local_base_as_inet6() { return local_base_as_inet6(); };
+  using tftp::Base::settings_;
 
-  template<typename T, typename ... Ts>
-  decltype(auto) get_buf_item_raw(Ts && ... args) { return Base::get_buf_item_raw<T>(std::forward<Ts>(args) ...); }
-
-  template<typename T, typename ... Ts>
-  decltype(auto) get_buf_item_ntoh(Ts && ... args) { return Base::get_buf_item_ntoh<T>(std::forward<Ts>(args) ...); }
-
-  template<typename ... Ts>
-  decltype(auto) set_buf_item_raw(Ts && ... args) { return Base::set_buf_item_raw(std::forward<Ts>(args) ...); }
-
-  template<typename ... Ts>
-  decltype(auto) set_buf_item_hton(Ts && ... args) { return Base::set_buf_item_hton(std::forward<Ts>(args) ...); }
-
-  template<typename ... Ts>
-  decltype(auto) set_buf_cont_str(Ts && ... args) { return Base::set_buf_cont_str(std::forward<Ts>(args) ...); }
-
-  //template<typename T>
-  //auto get_buf_item_raw(tftp::Buf & buf, const tftp::buffer_size_t offset) const
-    //-> std::enable_if_t<std::is_integral_v<T>, T &> { return base::get_buf_item_raw<T>(buf, offset); };
-
-  //template<typename T>
-  //auto get_buf_item_ntoh(tftp::Buf & buf, const tftp::buffer_size_t offset) const
-    //-> std::enable_if_t<std::is_integral_v<T>, T> { return base::get_buf_item_ntoh<T>(buf, offset); };
-
-  //template<typename T>
-  //auto set_buf_item_raw(tftp::Buf & buf, const tftp::buffer_size_t offset, const T value)
-    //-> std::enable_if_t<std::is_integral_v<T>, void> { base::set_buf_item_raw<T>(buf, offset, value); };
-
-  //template<typename T>
-  //auto set_buf_item_hton(tftp::Buf & buf, const tftp::buffer_size_t offset, const T value)
-    //-> std::enable_if_t<std::is_integral_v<T>, void> { base::set_buf_item_hton<T>(buf, offset, value); };
-
-
+  using tftp::Base::local_base_as_inet;
+  using tftp::Base::local_base_as_inet6;
+  using tftp::Base::get_buf_item_raw;
+  using tftp::Base::get_buf_item_ntoh;
+  using tftp::Base::set_buf_item_raw;
+  using tftp::Base::set_buf_item_hton;
+  using tftp::Base::set_buf_cont_str;
 
 };
 
-//---------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 UNIT_TEST_CASE_BEGIN(buffer_operations, "Class 'tftp::Base' - buffer operations")
   tst_Base b;
 
-  tftp::Buf a1{0x00U, 0x01U, 0x02U, 0x03U, 0x04U, 0x05U, 0x06U, 0x07U,
-                    0x08U, 0x09U, 0x0aU, 0x0bU, 0x0cU, 0x0dU, 0x0eU, 0x0fU};
+  tftp::Buf a1{
+    0x00U, 0x01U, 0x02U, 0x03U, 0x04U, 0x05U, 0x06U, 0x07U,
+    0x08U, 0x09U, 0x0aU, 0x0bU, 0x0cU, 0x0dU, 0x0eU, 0x0fU};
 
   // 2 bytes
   TEST_CHECK_TRUE(b.get_buf_item_raw <uint16_t>(a1, 0) == 0x0100U);
@@ -155,101 +129,109 @@ UNIT_TEST_CASE_BEGIN(base_load_options, "Class 'tftp::Base' - options")
   {
     tst_Base b;
     // is daemon
-    TEST_CHECK_FALSE(b.get_settings()->is_daemon);
+    TEST_CHECK_FALSE(b.settings_->is_daemon);
     TEST_CHECK_FALSE(b.get_is_daemon());
     // syslog level
-    TEST_CHECK_TRUE(b.get_settings()->use_syslog == 6);
+    TEST_CHECK_TRUE(b.settings_->use_syslog == 6);
     TEST_CHECK_TRUE(b.get_syslog_level() == 6);
     // addr
-    TEST_CHECK_TRUE(((struct sockaddr_in *) b.get_settings()->local_base_.data())->sin_family == 2);
-    TEST_CHECK_TRUE(be16toh(((struct sockaddr_in *) b.get_settings()->local_base_.data())->sin_port) == 69);
-    TEST_CHECK_TRUE(((struct sockaddr_in *) b.get_settings()->local_base_.data())->sin_addr.s_addr == 0);
-    TEST_CHECK_TRUE(b.tst_local_base_as_inet().sin_family == 2);
-    TEST_CHECK_TRUE(be16toh(b.tst_local_base_as_inet().sin_port) == 69);
-    TEST_CHECK_TRUE(b.tst_local_base_as_inet().sin_addr.s_addr == 0);
+    TEST_CHECK_TRUE(((struct sockaddr_in *) b.settings_->local_base_.data())->sin_family == 2);
+    TEST_CHECK_TRUE(be16toh(((struct sockaddr_in *) b.settings_->local_base_.data())->sin_port) == 69);
+    TEST_CHECK_TRUE(((struct sockaddr_in *) b.settings_->local_base_.data())->sin_addr.s_addr == 0);
+    TEST_CHECK_TRUE(b.local_base_as_inet().sin_family == 2);
+    TEST_CHECK_TRUE(be16toh(b.local_base_as_inet().sin_port) == 69);
+    TEST_CHECK_TRUE(b.local_base_as_inet().sin_addr.s_addr == 0);
     TEST_CHECK_TRUE(b.get_local_base_str() == "0.0.0.0:69");
-    TEST_CHECK_TRUE(& ((struct sockaddr_in *) b.get_settings()->local_base_.data())->sin_addr.s_addr == & b.tst_local_base_as_inet().sin_addr.s_addr);
+    TEST_CHECK_TRUE(& ((struct sockaddr_in *) b.settings_->local_base_.data())->sin_addr.s_addr == & b.local_base_as_inet().sin_addr.s_addr);
 
     // sys lib dir
-    TEST_CHECK_TRUE(b.get_settings()->lib_dir == "/usr/lib/x86_64-linux-gnu/");
+    TEST_CHECK_TRUE(b.settings_->lib_dir == "/usr/lib/x86_64-linux-gnu/");
     TEST_CHECK_TRUE(b.get_lib_dir() == "/usr/lib/x86_64-linux-gnu/");
-    TEST_CHECK_TRUE(b.get_lib_dir().data() != b.get_settings()->lib_dir.data());
+    TEST_CHECK_TRUE(b.get_lib_dir().data() != b.settings_->lib_dir.data());
     // fb lib name
-    TEST_CHECK_TRUE(b.get_settings()->lib_name == "libfbclient.so");
+    TEST_CHECK_TRUE(b.settings_->lib_name == "libfbclient.so");
     TEST_CHECK_TRUE(b.get_lib_name_fb() == "libfbclient.so");
-    TEST_CHECK_TRUE(b.get_lib_name_fb().data() != b.get_settings()->lib_name.data());
+    TEST_CHECK_TRUE(b.get_lib_name_fb().data() != b.settings_->lib_name.data());
     // root dir
-    TEST_CHECK_TRUE(b.get_settings()->root_dir == "");
+    TEST_CHECK_TRUE(b.settings_->root_dir == "");
     TEST_CHECK_TRUE(b.get_root_dir() == "");
-    TEST_CHECK_TRUE(b.get_root_dir().data() != b.get_settings()->root_dir.data());
+    TEST_CHECK_TRUE(b.get_root_dir().data() != b.settings_->root_dir.data());
     // search dirs
-    TEST_CHECK_TRUE(b.get_settings()->backup_dirs.size() == 0);
+    TEST_CHECK_TRUE(b.settings_->backup_dirs.size() == 0);
     // fb account
-    TEST_CHECK_TRUE(b.get_settings()->db == "");
-    TEST_CHECK_TRUE(b.get_settings()->user == "");
-    TEST_CHECK_TRUE(b.get_settings()->pass == "");
-    TEST_CHECK_TRUE(b.get_settings()->role == "");
-    TEST_CHECK_TRUE(b.get_settings()->dialect == 3);
+    TEST_CHECK_TRUE(b.settings_->db == "");
+    TEST_CHECK_TRUE(b.settings_->user == "");
+    TEST_CHECK_TRUE(b.settings_->pass == "");
+    TEST_CHECK_TRUE(b.settings_->role == "");
+    TEST_CHECK_TRUE(b.settings_->dialect == 3);
     auto [db1,u1,p1,r1,d1] = b.get_connection();
     TEST_CHECK_TRUE(db1 == "");
     TEST_CHECK_TRUE(u1 == "");
     TEST_CHECK_TRUE(p1 == "");
     TEST_CHECK_TRUE(r1 == "");
     TEST_CHECK_TRUE(d1 == 3);
-    TEST_CHECK_TRUE(db1.data() != b.get_settings()->db.data());
-    TEST_CHECK_TRUE(u1.data()  != b.get_settings()->user.data());
-    TEST_CHECK_TRUE(p1.data()  != b.get_settings()->pass.data());
-    TEST_CHECK_TRUE(r1.data()  != b.get_settings()->role.data());
+    TEST_CHECK_TRUE(db1.data() != b.settings_->db.data());
+    TEST_CHECK_TRUE(u1.data()  != b.settings_->user.data());
+    TEST_CHECK_TRUE(p1.data()  != b.settings_->pass.data());
+    TEST_CHECK_TRUE(r1.data()  != b.settings_->role.data());
   }
-
-
 
   // 2
   START_ITER("load options");
   {
     const char * tst_args[]=
-      {
-          "./server_fw", "--daemon", "--syslog", "7",
-          "--ip", "1.1.1.1:7777",
-          "--root-dir", "/mnt/tftp", "--search", "/mnt/tst1", "--search", "/mnt/tst2", "--search", "/mnt/tst3",
-          "--fb-db", "tester.fdb", "--fb-user", "SYSDBA", "--fb-pass", "masterkey", "--fb-role", "none", "--fb-dialect", "3",
-          "--lib-dir", "/tmp/libs", "--lib-name", "fbclient"
-      };
+    {
+      "./server_fw",
+      "--daemon",
+      "--syslog", "7",
+      "--ip", "1.1.1.1:7777",
+      "--root-dir", "/mnt/tftp",
+      "--search", "/mnt/tst1",
+      "--search", "/mnt/tst2",
+      "--search", "/mnt/tst3",
+      "--fb-db", "tester.fdb",
+      "--fb-user", "SYSDBA",
+      "--fb-pass", "masterkey",
+      "--fb-role", "none",
+      "--fb-dialect", "3",
+      "--lib-dir", "/tmp/libs",
+      "--lib-name", "fbclient"
+    };
 
     tst_Base b;
     b.load_options(sizeof(tst_args)/sizeof(tst_args[0]), const_cast<char **>(tst_args));
     // is daemon
-    TEST_CHECK_TRUE(b.get_settings()->is_daemon);
+    TEST_CHECK_TRUE(b.settings_->is_daemon);
     TEST_CHECK_TRUE(b.get_is_daemon());
     // syslog level
-    TEST_CHECK_TRUE(b.get_settings()->use_syslog == 7);
+    TEST_CHECK_TRUE(b.settings_->use_syslog == 7);
     TEST_CHECK_TRUE(b.get_syslog_level() == 7);
     // addr
-    TEST_CHECK_TRUE(((struct sockaddr_in *) b.get_settings()->local_base_.data())->sin_family == 2);
-    TEST_CHECK_TRUE(be16toh(((struct sockaddr_in *) b.get_settings()->local_base_.data())->sin_port) == 7777);
-    TEST_CHECK_TRUE(((struct sockaddr_in *) b.get_settings()->local_base_.data())->sin_addr.s_addr == 16843009);
-    TEST_CHECK_TRUE(b.tst_local_base_as_inet().sin_family == 2);
-    TEST_CHECK_TRUE(be16toh(b.tst_local_base_as_inet().sin_port) == 7777);
-    TEST_CHECK_TRUE(b.tst_local_base_as_inet().sin_addr.s_addr == 16843009);
+    TEST_CHECK_TRUE(((struct sockaddr_in *) b.settings_->local_base_.data())->sin_family == 2);
+    TEST_CHECK_TRUE(be16toh(((struct sockaddr_in *) b.settings_->local_base_.data())->sin_port) == 7777);
+    TEST_CHECK_TRUE(((struct sockaddr_in *) b.settings_->local_base_.data())->sin_addr.s_addr == 16843009);
+    TEST_CHECK_TRUE(b.local_base_as_inet().sin_family == 2);
+    TEST_CHECK_TRUE(be16toh(b.local_base_as_inet().sin_port) == 7777);
+    TEST_CHECK_TRUE(b.local_base_as_inet().sin_addr.s_addr == 16843009);
     TEST_CHECK_TRUE(b.get_local_base_str() == "1.1.1.1:7777");
-    TEST_CHECK_TRUE(& ((struct sockaddr_in *) b.get_settings()->local_base_.data())->sin_addr.s_addr == & b.tst_local_base_as_inet().sin_addr.s_addr);
+    TEST_CHECK_TRUE(& ((struct sockaddr_in *) b.settings_->local_base_.data())->sin_addr.s_addr == & b.local_base_as_inet().sin_addr.s_addr);
     // sys lib dir
-    TEST_CHECK_TRUE(b.get_settings()->lib_dir == "/tmp/libs");
+    TEST_CHECK_TRUE(b.settings_->lib_dir == "/tmp/libs");
     TEST_CHECK_TRUE(b.get_lib_dir() == "/tmp/libs/");
-    TEST_CHECK_TRUE(b.get_lib_dir().data() != b.get_settings()->lib_dir.data());
+    TEST_CHECK_TRUE(b.get_lib_dir().data() != b.settings_->lib_dir.data());
     // fb lib name
-    TEST_CHECK_TRUE(b.get_settings()->lib_name == "fbclient");
+    TEST_CHECK_TRUE(b.settings_->lib_name == "fbclient");
     TEST_CHECK_TRUE(b.get_lib_name_fb() == "fbclient");
-    TEST_CHECK_TRUE(b.get_lib_name_fb().data() != b.get_settings()->lib_name.data());
+    TEST_CHECK_TRUE(b.get_lib_name_fb().data() != b.settings_->lib_name.data());
     // root dir
-    TEST_CHECK_TRUE(b.get_settings()->root_dir == "/mnt/tftp");
+    TEST_CHECK_TRUE(b.settings_->root_dir == "/mnt/tftp");
     TEST_CHECK_TRUE(b.get_root_dir() == "/mnt/tftp/");
-    TEST_CHECK_TRUE(b.get_root_dir().data() != b.get_settings()->root_dir.data());
+    TEST_CHECK_TRUE(b.get_root_dir().data() != b.settings_->root_dir.data());
     // search dirs
-    TEST_CHECK_TRUE(b.get_settings()->backup_dirs.size() == 3);
-    TEST_CHECK_TRUE(b.get_settings()->backup_dirs[0] == "/mnt/tst1");
-    TEST_CHECK_TRUE(b.get_settings()->backup_dirs[1] == "/mnt/tst2");
-    TEST_CHECK_TRUE(b.get_settings()->backup_dirs[2] == "/mnt/tst3");
+    TEST_CHECK_TRUE(b.settings_->backup_dirs.size() == 3);
+    TEST_CHECK_TRUE(b.settings_->backup_dirs[0] == "/mnt/tst1");
+    TEST_CHECK_TRUE(b.settings_->backup_dirs[1] == "/mnt/tst2");
+    TEST_CHECK_TRUE(b.settings_->backup_dirs[2] == "/mnt/tst3");
     {
       auto lst = b.get_serach_dir();
       for(size_t iter=0; iter < lst.size(); ++iter)
@@ -258,11 +240,11 @@ UNIT_TEST_CASE_BEGIN(base_load_options, "Class 'tftp::Base' - options")
       }
     }
     // fb account
-    TEST_CHECK_TRUE(b.get_settings()->db == "tester.fdb");
-    TEST_CHECK_TRUE(b.get_settings()->user == "SYSDBA");
-    TEST_CHECK_TRUE(b.get_settings()->pass == "masterkey");
-    TEST_CHECK_TRUE(b.get_settings()->role == "none");
-    TEST_CHECK_TRUE(b.get_settings()->dialect == 3);
+    TEST_CHECK_TRUE(b.settings_->db == "tester.fdb");
+    TEST_CHECK_TRUE(b.settings_->user == "SYSDBA");
+    TEST_CHECK_TRUE(b.settings_->pass == "masterkey");
+    TEST_CHECK_TRUE(b.settings_->role == "none");
+    TEST_CHECK_TRUE(b.settings_->dialect == 3);
     {
       auto [db1,u1,p1,r1,d1] = b.get_connection();
       TEST_CHECK_TRUE(db1 == "tester.fdb");
@@ -270,10 +252,10 @@ UNIT_TEST_CASE_BEGIN(base_load_options, "Class 'tftp::Base' - options")
       TEST_CHECK_TRUE(p1 == "masterkey");
       TEST_CHECK_TRUE(r1 == "none");
       TEST_CHECK_TRUE(d1 == 3);
-      TEST_CHECK_TRUE(db1.data() != b.get_settings()->db.data());
-      TEST_CHECK_TRUE(u1.data()  != b.get_settings()->user.data());
-      TEST_CHECK_TRUE(p1.data()  != b.get_settings()->pass.data());
-      TEST_CHECK_TRUE(r1.data()  != b.get_settings()->role.data());
+      TEST_CHECK_TRUE(db1.data() != b.settings_->db.data());
+      TEST_CHECK_TRUE(u1.data()  != b.settings_->user.data());
+      TEST_CHECK_TRUE(p1.data()  != b.settings_->pass.data());
+      TEST_CHECK_TRUE(r1.data()  != b.settings_->role.data());
     }
 
     // 3
@@ -288,47 +270,47 @@ UNIT_TEST_CASE_BEGIN(base_load_options, "Class 'tftp::Base' - options")
     struct in_addr a{0x02020202U};
     b.set_local_base_inet(& a, 8888);
     // is daemon
-    TEST_CHECK_FALSE(b.get_settings()->is_daemon);
+    TEST_CHECK_FALSE(b.settings_->is_daemon);
     TEST_CHECK_FALSE(b.get_is_daemon());
     // syslog level
-    TEST_CHECK_TRUE(b.get_settings()->use_syslog == 5);
+    TEST_CHECK_TRUE(b.settings_->use_syslog == 5);
     TEST_CHECK_TRUE(b.get_syslog_level() == 5);
     // addr
-    TEST_CHECK_TRUE(((struct sockaddr_in *) b.get_settings()->local_base_.data())->sin_family == 2);
-    TEST_CHECK_TRUE(be16toh(((struct sockaddr_in *) b.get_settings()->local_base_.data())->sin_port) == 8888);
-    TEST_CHECK_TRUE(((struct sockaddr_in *) b.get_settings()->local_base_.data())->sin_addr.s_addr == 0x02020202U);
-    TEST_CHECK_TRUE(b.tst_local_base_as_inet().sin_family == 2);
-    TEST_CHECK_TRUE(be16toh(b.tst_local_base_as_inet().sin_port) == 8888);
-    TEST_CHECK_TRUE(b.tst_local_base_as_inet().sin_addr.s_addr == 0x02020202U);
+    TEST_CHECK_TRUE(((struct sockaddr_in *) b.settings_->local_base_.data())->sin_family == 2);
+    TEST_CHECK_TRUE(be16toh(((struct sockaddr_in *) b.settings_->local_base_.data())->sin_port) == 8888);
+    TEST_CHECK_TRUE(((struct sockaddr_in *) b.settings_->local_base_.data())->sin_addr.s_addr == 0x02020202U);
+    TEST_CHECK_TRUE(b.local_base_as_inet().sin_family == 2);
+    TEST_CHECK_TRUE(be16toh(b.local_base_as_inet().sin_port) == 8888);
+    TEST_CHECK_TRUE(b.local_base_as_inet().sin_addr.s_addr == 0x02020202U);
     TEST_CHECK_TRUE(b.get_local_base_str() == "2.2.2.2:8888");
-    TEST_CHECK_TRUE(& ((struct sockaddr_in *) b.get_settings()->local_base_.data())->sin_addr.s_addr == & b.tst_local_base_as_inet().sin_addr.s_addr);
+    TEST_CHECK_TRUE(& ((struct sockaddr_in *) b.settings_->local_base_.data())->sin_addr.s_addr == & b.local_base_as_inet().sin_addr.s_addr);
     // sys lib dir
-    TEST_CHECK_TRUE(b.get_settings()->lib_dir == "/bubin/libs");
+    TEST_CHECK_TRUE(b.settings_->lib_dir == "/bubin/libs");
     TEST_CHECK_TRUE(b.get_lib_dir() == "/bubin/libs/");
-    TEST_CHECK_TRUE(b.get_lib_dir().data() != b.get_settings()->lib_dir.data());
+    TEST_CHECK_TRUE(b.get_lib_dir().data() != b.settings_->lib_dir.data());
     // fb lib name
-    TEST_CHECK_TRUE(b.get_settings()->lib_name == "ib_client");
+    TEST_CHECK_TRUE(b.settings_->lib_name == "ib_client");
     TEST_CHECK_TRUE(b.get_lib_name_fb() == "ib_client");
-    TEST_CHECK_TRUE(b.get_lib_name_fb().data() != b.get_settings()->lib_name.data());
+    TEST_CHECK_TRUE(b.get_lib_name_fb().data() != b.settings_->lib_name.data());
     // root dir
-    TEST_CHECK_TRUE(b.get_settings()->root_dir == "/tmp/qwerty");
+    TEST_CHECK_TRUE(b.settings_->root_dir == "/tmp/qwerty");
     TEST_CHECK_TRUE(b.get_root_dir() == "/tmp/qwerty/");
-    TEST_CHECK_TRUE(b.get_root_dir().data() != b.get_settings()->root_dir.data());
+    TEST_CHECK_TRUE(b.get_root_dir().data() != b.settings_->root_dir.data());
     // search dirs
-    TEST_CHECK_TRUE(b.get_settings()->backup_dirs.size() == 2);
-    TEST_CHECK_TRUE(b.get_settings()->backup_dirs[0] == "/var/ququ/dir1");
-    TEST_CHECK_TRUE(b.get_settings()->backup_dirs[1] == "/var/ququ/dir2");
+    TEST_CHECK_TRUE(b.settings_->backup_dirs.size() == 2);
+    TEST_CHECK_TRUE(b.settings_->backup_dirs[0] == "/var/ququ/dir1");
+    TEST_CHECK_TRUE(b.settings_->backup_dirs[1] == "/var/ququ/dir2");
     b.set_search_dir();
-    TEST_CHECK_TRUE(b.get_settings()->backup_dirs.size() == 0);
+    TEST_CHECK_TRUE(b.settings_->backup_dirs.size() == 0);
     b.set_search_dir_append("/root/d1");
     b.set_search_dir_append("/root/d2");
-    TEST_CHECK_TRUE(b.get_settings()->backup_dirs.size() == 2);
+    TEST_CHECK_TRUE(b.settings_->backup_dirs.size() == 2);
     // fb account
-    TEST_CHECK_TRUE(b.get_settings()->db == "qq.gdb");
-    TEST_CHECK_TRUE(b.get_settings()->user == "admin");
-    TEST_CHECK_TRUE(b.get_settings()->pass == "passss");
-    TEST_CHECK_TRUE(b.get_settings()->role == "no_role");
-    TEST_CHECK_TRUE(b.get_settings()->dialect == 2);
+    TEST_CHECK_TRUE(b.settings_->db == "qq.gdb");
+    TEST_CHECK_TRUE(b.settings_->user == "admin");
+    TEST_CHECK_TRUE(b.settings_->pass == "passss");
+    TEST_CHECK_TRUE(b.settings_->role == "no_role");
+    TEST_CHECK_TRUE(b.settings_->dialect == 2);
     {
       auto [b1,u1,p1,r1,d1] = b.get_connection();
       TEST_CHECK_TRUE(b1 == "qq.gdb");
@@ -336,10 +318,10 @@ UNIT_TEST_CASE_BEGIN(base_load_options, "Class 'tftp::Base' - options")
       TEST_CHECK_TRUE(p1 == "passss");
       TEST_CHECK_TRUE(r1 == "no_role");
       TEST_CHECK_TRUE(d1 == 2);
-      TEST_CHECK_TRUE(b1.data() != b.get_settings()->db.data());
-      TEST_CHECK_TRUE(u1.data() != b.get_settings()->user.data());
-      TEST_CHECK_TRUE(p1.data() != b.get_settings()->pass.data());
-      TEST_CHECK_TRUE(r1.data() != b.get_settings()->role.data());
+      TEST_CHECK_TRUE(b1.data() != b.settings_->db.data());
+      TEST_CHECK_TRUE(u1.data() != b.settings_->user.data());
+      TEST_CHECK_TRUE(p1.data() != b.settings_->pass.data());
+      TEST_CHECK_TRUE(r1.data() != b.settings_->role.data());
     }
 
     // 4
@@ -382,6 +364,6 @@ UNIT_TEST_CASE_BEGIN(base_load_options, "Class 'tftp::Base' - options")
   //
 UNIT_TEST_CASE_END
 
-//---------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 UNIT_TEST_SUITE_END

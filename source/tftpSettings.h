@@ -28,7 +28,8 @@ namespace tftp
  * \brief Settings storage class
  *
  *  Class for store server settings.
- *  Can't simple construct, create only from Settings::create() as shared pointer
+ *  Can't simple construct
+ *  Create only from Settings::create() as shared pointer
  */
 
 class Settings: public std::enable_shared_from_this<Settings>
@@ -51,12 +52,12 @@ public:
   Buf local_base_; ///< Listening server address:port (sockaddr_in*)
 
   // fb lib settings
-  std::string lib_dir;  ///< System library directory (Ubuntu 18.04: /usr/lib/x86_64-linux-gnu/)
-  std::string lib_name; ///< Firebird library filename (libfbclient.so)
+  std::string lib_dir;  ///< System library directory
+  std::string lib_name; ///< Firebird library filename
 
   // storage directory
-  std::string root_dir;                 ///< Root directory of simple TFTP server
-  std::vector<std::string> backup_dirs; ///< Search directories of simple TFTP server
+  std::string root_dir;                 ///< Root directory of TFTP server
+  std::vector<std::string> backup_dirs; ///< Search directories
 
   // storage firebird
   std::string db;      ///< Database of firebird
