@@ -19,6 +19,7 @@
 
 #include "tftpCommon.h"
 #include "tftpDataMgr.h"
+#include "tftpSmBuf.h"
 
 namespace tftp
 {
@@ -48,8 +49,8 @@ protected:
   OptInt       opt_timeout_;     ///< Option 'timeout'
   OptInt       opt_tsize_;       ///< Option 'tsize'
   uint16_t     re_tx_count_;     ///< Retransmitt count
-  Buf          sess_buffer_tx_;  ///< Session buffer for TX operations
-  Buf          sess_buffer_rx_;  ///< Session buffer for RX operations
+  SmBuf        sess_buffer_tx_;  ///< Session buffer for TX operations
+  SmBuf        sess_buffer_rx_;  ///< Session buffer for RX operations
   size_t       stage_;           ///< Stage
   size_t       buf_size_tx_;     ///< TX data size
   time_t       oper_time_;       ///< Last remembered action time
@@ -223,6 +224,8 @@ public:
   Session(const Session & ) = delete;
   Session(      Session & ) = delete;
   Session(      Session &&) = delete;
+
+  auto operator=(Session && val) -> Session &;
 
   /** \brief Destructor
    */

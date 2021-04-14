@@ -78,6 +78,14 @@ Base::Base(Base && src):
 {
 }
 
+Base & Base::operator=(Base && src)
+{
+  settings_ = std::move(src.settings_);
+
+  return *this;
+}
+
+
 Base::~Base()
 {
 }

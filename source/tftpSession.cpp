@@ -59,6 +59,39 @@ Session::~Session()
 
 // -----------------------------------------------------------------------------
 
+auto Session::operator=(Session && val) -> Session &
+{
+  if(this != & val)
+  {
+    request_type_  = val.request_type_;
+    filename_      = val.filename_;
+    transfer_mode_ = val.transfer_mode_;
+    std::swap(client_, val.client_);
+    socket_        = val.socket_;
+    opt_blksize_   = val.opt_blksize_;
+    opt_timeout_   = val.opt_timeout_;
+    opt_tsize_     = val.opt_tsize_;
+    re_tx_count_   = val.re_tx_count_;
+    std::swap(sess_buffer_tx_, val.sess_buffer_tx_);
+    std::swap(sess_buffer_rx_, val.sess_buffer_rx_);
+    stage_         = val.stage_;
+    buf_size_tx_   = val.buf_size_tx_;
+    oper_time_     = val.oper_time_;
+    oper_tx_count_ = val.oper_tx_count_;
+    oper_wait_     = val.oper_wait_;
+    oper_last_block_ = val.oper_last_block_;
+    stop_            = val.stop_;
+    finished_        = val.finished_;
+    manager_         = std::move(val.manager_);
+    error_code_      = val.error_code_;
+    std::swap(error_message_, val.error_message_);
+  }
+
+  return *this;
+}
+
+// -----------------------------------------------------------------------------
+
 auto Session::get_buf_rx_u16_ntoh(const size_t offset)
 {
   return get_buf_item_ntoh<uint16_t>(

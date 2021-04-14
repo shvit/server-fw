@@ -18,6 +18,7 @@
 
 #include "tftpSrv.h"
 #include "tftpCommon.h"
+#include "tftpSmBuf.h"
 
 namespace tftp
 {
@@ -28,7 +29,7 @@ Srv::Srv():
     Base(),
     sessions_{},
     socket_{0},
-    buffer_(2048, 0),
+    buffer_(0x10000, 0),
     stop_{false}
 {
 }
@@ -43,12 +44,15 @@ Srv::~Srv()
 
 bool Srv::socket_open()
 {
+  // Get inet family
+  int family;
   {
     auto lk = begin_shared();
-
-    socket_ = socket(local_base_as_inet().sin_family, SOCK_DGRAM, 0);
+    family = local_base_as_inet().sin_family;
   }
 
+  // Open socket
+  socket_ = socket(family, SOCK_DGRAM, 0);
   if (socket_< 0)
   {
     Buf err_msg_buf(1024, 0);
@@ -60,14 +64,14 @@ bool Srv::socket_open()
     return false;
   };
 
+  // Bind
+  struct sockaddr * sock_addr;
+  socklen_t         sock_size;
   int bind_result;
   {
-    struct sockaddr * sock_addr;
-    socklen_t         sock_size;
-
     auto lk = begin_shared();
 
-    switch(local_base_as_inet().sin_family)
+    switch(family)
     {
       case AF_INET:
         sock_addr =  (struct sockaddr *) & local_base_as_inet();
@@ -78,8 +82,7 @@ bool Srv::socket_open()
         sock_size = sizeof(decltype(local_base_as_inet6()));
         break;
       default:
-        L_ERR("Wrong network family id_"+
-                std::to_string(local_base_as_inet().sin_family));
+        L_ERR("Wrong network family id_"+std::to_string(family));
         return false;
     }
 
@@ -137,7 +140,7 @@ void Srv::main_loop()
   // prepare
   stop_ = false;
   Buf  client_addr(sizeof(struct sockaddr_in6), 0); // max known buffer size
-  socklen_t client_addr_size = client_addr.size();
+  unsigned int client_addr_size = client_addr.size();
 
   // main server loop
   while (!stop_)
@@ -149,9 +152,9 @@ void Srv::main_loop()
                          (struct sockaddr *) client_addr.data(),
                          & client_addr_size);
 
-    if(bsize > 0)
+    if(bsize >= 9) // minimal size = 2+1+1+4+1
     {
-      L_INF("Receive request (data size "+std::to_string(bsize)+
+      L_INF("Receive initial pkt (data size "+std::to_string(bsize)+
               " bytes) from "+
               sockaddr_to_str(client_addr.cbegin(),
                               client_addr.cbegin()+client_addr_size));
@@ -171,6 +174,14 @@ void Srv::main_loop()
                buffer_.cbegin() + bsize);
 
       std::get<1>(* new_session) = sss.run_thread();
+    }
+    else
+    if(bsize > 0)
+    {
+      L_WRN("Receive fake initial pkt (data size "+std::to_string(bsize)+
+              " bytes) from "+
+              sockaddr_to_str(client_addr.cbegin(),
+                              client_addr.cbegin()+client_addr_size));
     }
 
     // check finished

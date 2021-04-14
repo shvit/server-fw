@@ -164,6 +164,9 @@ public:
    */
   virtual ~Base();
 
+
+  Base & operator=(Base && src);
+
   /** \brief Local used logger method
    *
    *  Use mutex shared mode
