@@ -192,6 +192,54 @@ void Session::socket_close()
 // -----------------------------------------------------------------------------
 
 bool Session::init(
+    const SmBuf  & remote_addr,
+    const size_t & remote_addr_size,
+    const SmBuf  & pkt_data,
+    const size_t & pkt_data_size)
+{
+  L_INF("Session initialize started");
+
+  bool ret=true;
+
+  // Init client remote addr
+  client_.clear();
+  if((ret = ret && remote_addr_size >= sizeof(struct sockaddr_in)))
+  {
+    client_.assign(remote_addr.cbegin(),
+                   remote_addr.cbegin()+remote_addr_size);
+  }
+  else
+  {
+    L_WRN("Wrong remote addr size ("+
+          std::to_string(remote_addr_size)+")");
+  }
+
+  // Init request type
+  request_type_ = SrvReq::unknown;
+  if(auto rq_type = pkt_data.get_ntoh<int16_t>(0U);
+     (ret = ret && ((rq_type == (int16_t)SrvReq::read) ||
+                    (rq_type == (int16_t)SrvReq::write))))
+  {
+    request_type_ = (SrvReq) rq_type;
+    L_INF("Recognize request type '"+
+          std::string{to_string(request_type_)}+"'");
+  }
+  else
+  {
+    L_WRN("Wrong request type ("+std::to_string(rq_type)+")");
+  }
+
+
+
+
+
+
+  L_INF("Session initialise is "+(ret ? "SUCCESSFUL" : "FAIL"));
+
+  return ret;
+}
+
+bool Session::init(
     const Buf::const_iterator addr_begin,
     const Buf::const_iterator addr_end,
     const Buf::const_iterator buf_begin,

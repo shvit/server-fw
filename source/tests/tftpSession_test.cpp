@@ -80,4 +80,54 @@ UNIT_TEST_CASE_END
 
 //------------------------------------------------------------------------------
 
+UNIT_TEST_CASE_BEGIN(sess_init, "check init()")
+
+  START_ITER("init");
+  {
+    tftp::SmBuf b_addr(sizeof(struct sockaddr_in), 0);
+
+    b_addr.set_hton(0U, (int16_t) AF_INET);
+    b_addr.set_hton(2U, (int16_t) 0x0506);
+    b_addr.set_hton(4U, (int32_t) 0x01020304);
+
+    tftp::SmBuf b_pkt
+    {
+      0,3, // fake type
+      'f','i','l','e','n','a','m','e','.','t','x','t',0,
+      'o','c','t','e','t',0,
+      'b','l','k','s','i','z','e',0,'1','0','2','4',0,
+      't','i','m','e','o','u','t',0,'1','0',0,
+      't','s','i','z','e',0,'2','0','0','0','1','2','3',0
+    };
+
+    test_session s1;
+
+    TEST_CHECK_FALSE(s1.init(b_addr, b_addr.size(), b_pkt, b_pkt.size()));
+    TEST_CHECK_TRUE(s1.request_type_ == tftp::SrvReq::unknown);
+
+    b_pkt.set_hton<int16_t>(0, 2);
+    TEST_CHECK_TRUE (s1.init(b_addr, b_addr.size(), b_pkt, b_pkt.size()));
+
+    TEST_CHECK_TRUE(s1.request_type_ == tftp::SrvReq::write);
+    TEST_CHECK_TRUE((s1.client_.size()==b_addr.size()) &&
+                    std::equal(s1.client_.cbegin(),
+                               s1.client_.cend(),
+                               b_addr.cbegin()));
+    //TEST_CHECK_TRUE(s1.transfer_mode_ == tftp::TransfMode::octet);
+    //TEST_CHECK_TRUE(std::get<0>(s1.opt_blksize_));
+    //TEST_CHECK_TRUE(std::get<1>(s1.opt_blksize_) == 1024U);
+    //TEST_CHECK_TRUE(std::get<0>(s1.opt_timeout_));
+    //TEST_CHECK_TRUE(std::get<1>(s1.opt_timeout_) == 10);
+    //TEST_CHECK_TRUE(std::get<0>(s1.opt_tsize_));
+    //TEST_CHECK_TRUE(std::get<1>(s1.opt_tsize_) == 2000123);
+    //TEST_CHECK_TRUE(s1.filename_ == "filename.txt");
+
+    //TEST_CHECK_FALSE(s1.was_error());
+    //s1.set_error_if_first(909U, "Test error");
+    //TEST_CHECK_TRUE(s1.was_error());
+  }
+UNIT_TEST_CASE_END
+
+//------------------------------------------------------------------------------
+
 UNIT_TEST_SUITE_END

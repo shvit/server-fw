@@ -43,7 +43,7 @@ protected:
   SrvReq       request_type_;    ///< Server request
   std::string  filename_;        ///< Requested filename
   TransfMode   transfer_mode_;   ///< Transfer mode
-  Buf          client_;          ///< Client socket address buffer
+  SmBuf        client_;          ///< Client socket address buffer
   int          socket_;          ///< Socket
   OptInt       opt_blksize_;     ///< Option 'blksize'
   OptInt       opt_timeout_;     ///< Option 'timeout'
@@ -59,7 +59,7 @@ protected:
   size_t       oper_last_block_; ///< Last (finish) block number
   bool         stop_;            ///< Break loop request (when error, etc.)
   bool         finished_;        ///< confirm (reply) break loop request
-  DataMgr     manager_;         ///< Data manager
+  DataMgr      manager_;         ///< Data manager
   uint16_t     error_code_;      ///< First error info - code
   std::string  error_message_;   ///< First error info - message
 
@@ -244,6 +244,13 @@ public:
             const Buf::const_iterator addr_end,
             const Buf::const_iterator buf_begin,
             const Buf::const_iterator buf_end);
+
+  bool init(
+      const SmBuf  & remote_addr,
+      const size_t & remote_addr_size,
+      const SmBuf  & pkt_data,
+      const size_t & pkt_data_size);
+
 
   /** \brief Main session loop
    */
