@@ -1,11 +1,14 @@
-/*
- * tftpSmBuf_test.cpp
+/**
+ * \file tftpSmBuf_test.cpp
+ * \brief Unit-tests for class SmBuf
  *
- *  Created on: 13 апр. 2021 г.
- *      Author: svv
+ *  License GPL-3.0
+ *
+ *  \date   13-apr-2021
+ *  \author Vitaliy Shirinkin, e-mail: vitaliy.shirinkin@gmail.com
+ *
+ *  \version 0.1
  */
-
-
 
 #include "test.h"
 #include "../tftpSmBuf.h"
@@ -17,14 +20,13 @@ UNIT_TEST_SUITE_BEGIN(tftp_base)
 UNIT_TEST_CASE_BEGIN(sm_buf_raw, "Check raw()")
 
   tftp::SmBuf b(16,0);
+  const tftp::SmBuf & cb = b;
 
   // write buffer = 0x00,0x01,...,0x0f
   b.raw<int16_t>(0) = 0x0100;
   b.raw<int16_t>(2) = 0x0302;
   b.raw<int32_t>(4) = 0x07060504;
   b.raw<int64_t>(8) = 0x0f0e0d0c0b0a0908;
-
-  const tftp::SmBuf & cb = b;
 
   // Check types
   TEST_CHECK_TRUE((std::is_same_v<decltype( b.raw <int8_t >(0)), int8_t & >));
@@ -73,18 +75,18 @@ UNIT_TEST_CASE_END
 
 //------------------------------------------------------------------------------
 
-UNIT_TEST_CASE_BEGIN(sm_buf_get_ntoh, "Check get_ntoh()")
+UNIT_TEST_CASE_BEGIN(sm_buf_get_set, "Check methods: set/get ntoh/raw")
 
   tftp::SmBuf b(16,0);
+  const tftp::SmBuf & cb = b;
 
   b.raw<int64_t>(0) = 0x0f0e0d0c0b0a0908;
 
-  const tftp::SmBuf & cb = b;
-
-  TEST_CHECK_TRUE(b.get_ntoh< int16_t>(0) == ( int16_t)0x0809);
-  TEST_CHECK_TRUE(b.get_ntoh< int16_t>(1) == ( int16_t)0x090a);
-  TEST_CHECK_TRUE(b.get_ntoh< int16_t>(2) == ( int16_t)0x0a0b);
-  TEST_CHECK_TRUE(b.get_ntoh< int16_t>(3) == ( int16_t)0x0b0c);
+  // ntoh
+  TEST_CHECK_TRUE( b.get_ntoh< int16_t>(0) == ( int16_t)0x0809);
+  TEST_CHECK_TRUE( b.get_ntoh< int16_t>(1) == ( int16_t)0x090a);
+  TEST_CHECK_TRUE(cb.get_ntoh< int16_t>(2) == ( int16_t)0x0a0b);
+  TEST_CHECK_TRUE(cb.get_ntoh< int16_t>(3) == ( int16_t)0x0b0c);
 
   TEST_CHECK_TRUE(cb.get_ntoh< int32_t>(4) == ( int32_t)0x0c0d0e0f);
   TEST_CHECK_TRUE(cb.get_ntoh< int64_t>(0) == ( int64_t)0x08090a0b0c0d0e0f);
@@ -93,6 +95,45 @@ UNIT_TEST_CASE_BEGIN(sm_buf_get_ntoh, "Check get_ntoh()")
   TEST_CHECK_TRUE(b.get_ntoh< int16_t>(0) == ( int16_t)0x1234);
   b.set_hton(2, (int16_t)0x5678);
   TEST_CHECK_TRUE(b.get_ntoh< int32_t>(0) == ( int32_t)0x12345678);
+  b.set_hton(4, (int32_t)0x90abcdef);
+  TEST_CHECK_TRUE(cb.get_ntoh< int64_t>(0) == ( int64_t)0x1234567890abcdef);
+
+  // raw
+  TEST_CHECK_TRUE(b.set_raw(0, (int64_t) 0x0f0e0d0c0b0a0908) == (ssize_t)sizeof(int64_t));
+
+  TEST_CHECK_TRUE(cb.get_raw< int16_t>(0) == ( int16_t)0x0908);
+  TEST_CHECK_TRUE(cb.get_raw< int16_t>(1) == ( int16_t)0x0a09);
+  TEST_CHECK_TRUE(cb.get_raw< int16_t>(2) == ( int16_t)0x0b0a);
+  TEST_CHECK_TRUE(cb.get_raw< int16_t>(3) == ( int16_t)0x0c0b);
+
+  // check exception
+  CHK_EXCEPTION__INV_ARG(cb.get_ntoh <int8_t >(16));
+  CHK_EXCEPTION__INV_ARG(cb.get_raw <int16_t>(15));
+  CHK_EXCEPTION__INV_ARG( b.set_hton(16, (int8_t)1));
+  CHK_EXCEPTION__INV_ARG( b.set_raw(15, (int16_t)1));
+
+  //
+UNIT_TEST_CASE_END
+
+//------------------------------------------------------------------------------
+
+UNIT_TEST_CASE_BEGIN(sm_buf_str, "Check methods: set/get string")
+
+  tftp::SmBuf b(32,0);
+  const tftp::SmBuf & cb = b;
+
+  TEST_CHECK_TRUE(cb.get_string(0) == "");
+  TEST_CHECK_TRUE(b.set_string(2, "12345678") == 8);
+
+  TEST_CHECK_TRUE(cb.get_string(0) == "");
+  TEST_CHECK_TRUE(cb.get_string(2) == "12345678");
+  TEST_CHECK_TRUE(cb.get_string(5) == "45678");
+
+  TEST_CHECK_TRUE(b.set_string(3, "abc", true) == 4);
+  TEST_CHECK_TRUE(cb.get_string(2) == "1abc");
+  TEST_CHECK_TRUE(cb.get_string(6) == "");
+  TEST_CHECK_TRUE(cb.get_string(7) == "678");
+
 
 //
 UNIT_TEST_CASE_END

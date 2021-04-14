@@ -1,8 +1,15 @@
-/*
- * tftpSmBuf.h
+/**
+ * \file tftpSmBuf.h
+ * \brief Smart buffer header
  *
- *  Created on: 13 апр. 2021 г.
- *      Author: svv
+ *  SmBuf class for network buffer manipulation
+ *
+ *  License GPL-3.0
+ *
+ *  \date   13-apr-2021
+ *  \author Vitaliy Shirinkin, e-mail: vitaliy.shirinkin@gmail.com
+ *
+ *  \version 0.1
  */
 
 #ifndef SOURCE_TFTPSMBUF_H_
@@ -87,13 +94,52 @@ public:
   auto set_hton(const size_t & offset, const T & val)
       -> std::enable_if_t<std::is_integral_v<T>, ssize_t>;
 
-
+  /** \brief Get value from buffer (raw, as is memory order)
+   *
+   *  \param [in] offset Buffer offset (position) in bytes
+   *  \return Value type of T
+   */
   template<typename T>
+  auto get_raw(const size_t & offset) const
+      -> std::enable_if_t<std::is_integral_v<T>, T>;
+
+
+  /** \brief Set value integer type to buffer (raw, as is memory order)
+   *
+   *  Warning: need hard control of type T
+   *  \param [in] offset Buffer offset (position) in bytes
+   *  \param [in] val Value any integer type
+   *  \return Data size passed to buffer
+   */
+  template<typename T>
+  auto set_raw(const size_t & offset, const T & val)
+      -> std::enable_if_t<std::is_integral_v<T>, ssize_t>;
+
+
+  /** \brief Get string value from buffer
+   *
+   *  If buffer has 0, then string will strip from zero poition
+   *  \param [in] offset Buffer offset (position) in bytes
+   *  \param [in] buf_len Length of string (maximum)
+   *  \return String value
+   */
+  auto get_string(
+      const size_t & offset,
+      const size_t & buf_len = 0) const -> std::string;
+
+  /** \brief Write string/container data to buffer
+   *
+   *  Can use for string with smart add zero end.
+   *  \param [in] offset Buffer offset (position) in bytes
+   *  \param [in] srt String or container data
+   *  \param [in] check_zero_end Enable/disable smart end zero
+   *  \return Data size passed to buffer
+   *
+   */
   auto set_string(
       const size_t & offset,
-      const T & str,
-      bool check_zero_end = false)
-          -> std::enable_if_t<is_container_v<T>, ssize_t>;
+      std::string_view str,
+      bool check_zero_end = false) -> ssize_t;
 
   using Buf::Buf;
 };
@@ -170,33 +216,37 @@ auto SmBuf::set_hton(const size_t & offset, const T & val)
 //------------------------------------------------------------------------------
 
 template<typename T>
-auto SmBuf::set_string(
-    const size_t & offset,
-    const T & str,
-    bool check_zero_end)
-        -> std::enable_if_t<is_container_v<T>, ssize_t>
+auto SmBuf::get_raw(const size_t & offset) const
+    -> std::enable_if_t<std::is_integral_v<T>, T>
 {
-  auto zero_it = (check_zero_end ?
-      std::find(str.cbegin(),
-                str.cend(),
-                0) : str.cend());
+  check_offset_type<T>(__PRETTY_FUNCTION__, offset);
 
-  ssize_t new_size = sizeof(T::value_type) * std::distance(
-      str.cbegin(),
-      zero_it);
+  T tmp_val;
 
-  assert(new_size >= 0); // never do it
+  std::copy((SmBuf::const_iterator)(cbegin()+offset),
+            (SmBuf::const_iterator)(cbegin()+offset+sizeof(T)),
+            (char *) & tmp_val);
 
-  check_offset_type(
-      __PRETTY_FUNCTION__,
-      offset,
-      new_size + (check_zero_end ? 1 : 0));
+  return tmp_val;
 
-  std::copy(str.cbegin(), zero_it, str.begin() + offset);
+}
 
-  if(check_zero_end) str[offset+new_size++] = 0; // zero end
 
-  return new_size;
+//------------------------------------------------------------------------------
+
+template<typename T>
+auto SmBuf::set_raw(const size_t & offset, const T & val)
+    -> std::enable_if_t<std::is_integral_v<T>, ssize_t>
+{
+  check_offset_type<T>(__PRETTY_FUNCTION__, offset);
+
+  constexpr ssize_t t_size = (ssize_t)sizeof(T);
+
+  std::copy(((char *) & val),
+            ((char *) & val) + t_size,
+            (SmBuf::iterator)(begin()+offset));
+
+  return t_size;
 }
 
 //------------------------------------------------------------------------------
