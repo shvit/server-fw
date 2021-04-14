@@ -17,6 +17,32 @@ UNIT_TEST_SUITE_BEGIN(tftp_base)
 
 //------------------------------------------------------------------------------
 
+UNIT_TEST_CASE_BEGIN(sm_buf_valid, "Check is_valid()")
+
+  tftp::SmBuf b1;
+  const tftp::SmBuf & cb1 = b1;
+
+  TEST_CHECK_FALSE(cb1.is_valid(0U, 0U));
+  TEST_CHECK_FALSE(cb1.is_valid(0U, 1U));
+  TEST_CHECK_FALSE(cb1.is_valid(1U, 0U));
+  TEST_CHECK_FALSE(cb1.is_valid(1U, 1U));
+
+  tftp::SmBuf b2(16,0);
+  const tftp::SmBuf & cb2 = b2;
+
+  TEST_CHECK_TRUE (cb2.is_valid( 0U,  0U));
+  TEST_CHECK_TRUE (cb2.is_valid( 0U, 16U));
+  TEST_CHECK_TRUE (cb2.is_valid(15U,  1U));
+  TEST_CHECK_TRUE (cb2.is_valid( 1U, 15U));
+  TEST_CHECK_FALSE(cb2.is_valid( 0U, 17U));
+  TEST_CHECK_FALSE(cb2.is_valid(16U,  0U));
+
+
+//
+UNIT_TEST_CASE_END
+
+//------------------------------------------------------------------------------
+
 UNIT_TEST_CASE_BEGIN(sm_buf_raw, "Check raw()")
 
   tftp::SmBuf b(16,0);
@@ -117,23 +143,54 @@ UNIT_TEST_CASE_END
 
 //------------------------------------------------------------------------------
 
-UNIT_TEST_CASE_BEGIN(sm_buf_str, "Check methods: set/get string")
+UNIT_TEST_CASE_BEGIN(sm_buf_str, "Check methods: set/get/eqv string")
 
   tftp::SmBuf b(32,0);
   const tftp::SmBuf & cb = b;
 
-  TEST_CHECK_TRUE(cb.get_string(0) == "");
-  TEST_CHECK_TRUE(b.set_string(2, "12345678") == 8);
+  TEST_CHECK_TRUE (cb.get_string(0) == "");
+  TEST_CHECK_TRUE (cb.eqv_string(0, ""));
+  TEST_CHECK_TRUE (cb.eqv_string(0, "", true));
+  TEST_CHECK_FALSE(cb.eqv_string(0, "1"));
+  TEST_CHECK_FALSE(cb.eqv_string(0, "1", true));
 
-  TEST_CHECK_TRUE(cb.get_string(0) == "");
-  TEST_CHECK_TRUE(cb.get_string(2) == "12345678");
-  TEST_CHECK_TRUE(cb.get_string(5) == "45678");
+  TEST_CHECK_TRUE ( b.set_string(2, "12345678") == 8);
+
+  TEST_CHECK_TRUE (cb.get_string(0) == "");
+  TEST_CHECK_TRUE (cb.eqv_string(0, ""));
+  TEST_CHECK_TRUE (cb.eqv_string(0, "", true));
+  TEST_CHECK_TRUE (cb.get_string(2) == "12345678");
+  TEST_CHECK_TRUE (cb.eqv_string(2, "12345678"));
+  TEST_CHECK_TRUE (cb.eqv_string(2, "12345678", true));
+  TEST_CHECK_TRUE (cb.eqv_string(2, "1"));
+  TEST_CHECK_TRUE (cb.eqv_string(2, "12"));
+  TEST_CHECK_TRUE (cb.eqv_string(2, "123"));
+  TEST_CHECK_TRUE (cb.eqv_string(2, "1234"));
+  TEST_CHECK_TRUE (cb.eqv_string(2, "12345"));
+  TEST_CHECK_TRUE (cb.eqv_string(2, "123456"));
+  TEST_CHECK_TRUE (cb.eqv_string(2, "1234567"));
+  TEST_CHECK_TRUE (cb.eqv_string(2, "12345678"));
+  TEST_CHECK_FALSE(cb.eqv_string(2, "1234567", true));
+  TEST_CHECK_TRUE (cb.eqv_string(2, "12345678", true));
+  TEST_CHECK_TRUE (cb.get_string(5) == "45678");
 
   TEST_CHECK_TRUE(b.set_string(3, "abc", true) == 4);
   TEST_CHECK_TRUE(cb.get_string(2) == "1abc");
   TEST_CHECK_TRUE(cb.get_string(6) == "");
   TEST_CHECK_TRUE(cb.get_string(7) == "678");
 
+  TEST_CHECK_TRUE (cb.eqv_string(7, "6"));
+  TEST_CHECK_FALSE(cb.eqv_string(7, "6", true));
+  TEST_CHECK_TRUE (cb.eqv_string(7, "67"));
+  TEST_CHECK_FALSE(cb.eqv_string(7, "67", true));
+  TEST_CHECK_TRUE (cb.eqv_string(7, "678"));
+  TEST_CHECK_TRUE (cb.eqv_string(7, "678", true));
+  TEST_CHECK_FALSE(cb.eqv_string(8, "678"));
+  TEST_CHECK_FALSE(cb.eqv_string(8, "678", true));
+  TEST_CHECK_FALSE(cb.eqv_string(30, "678"));
+  TEST_CHECK_FALSE(cb.eqv_string(30, "678", true));
+  TEST_CHECK_FALSE(cb.eqv_string(90, "678"));
+  TEST_CHECK_FALSE(cb.eqv_string(90, "678", true));
 
 //
 UNIT_TEST_CASE_END

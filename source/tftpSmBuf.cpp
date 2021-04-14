@@ -19,12 +19,22 @@ namespace tftp
 
 //------------------------------------------------------------------------------
 
+bool SmBuf::is_valid(
+    const size_t & offset,
+    const size_t & t_size) const noexcept
+{
+  return (offset < size()) &&
+         (offset + t_size) <= size();
+}
+
+//------------------------------------------------------------------------------
+
 void SmBuf::check_offset(
     std::string_view point,
     const size_t & offset,
     const size_t & t_size) const
 {
-  if((offset + t_size) > size())
+  if(!is_valid(offset, t_size))
   {
     throw std::invalid_argument(
         std::string{point}+": "+
@@ -80,6 +90,27 @@ auto SmBuf::set_string(
 }
 
 //------------------------------------------------------------------------------
+
+bool SmBuf::eqv_string(
+    const size_t & offset,
+    std::string_view str,
+    bool check_zero_end) const
+{
+  bool ret = is_valid(offset, str.size() + (check_zero_end?1:0));
+
+  if(ret)
+  {
+    ret = std::equal(cbegin()+offset,
+                     cbegin()+offset+str.size(),
+                     str.cbegin()) &&
+          (check_zero_end ? ((*this)[offset+str.size()] == 0) : true);
+  }
+
+  return ret;
+}
+
+//------------------------------------------------------------------------------
+
 
 } // namespace tftp
 

@@ -54,6 +54,24 @@ protected:
 
 public:
 
+  /** \brief Check offset and data size with buffer size
+   *
+   *  Result false if offset out of buffer (with data length is 0)
+   *  \param [in] offset Buffer offset (position) in bytes
+   *  \param [in] t_size Data size
+   *  \return True if offset and data size valid, else - false
+   */
+  bool is_valid(const size_t & offset,
+                const size_t & t_size) const noexcept;
+
+  /** \brief Check offset and data size type T with buffer size
+   *
+   *  \param [in] offset Buffer offset (position) in bytes
+   *  \return True if offset and data size valid, else - false
+   */
+  template<typename T>
+  bool is_valid(const size_t & offset) const noexcept;
+
   /** \brief Get raw value from buffer of given type
    *
    *  Warning! Repeat, offset in bytes
@@ -141,8 +159,30 @@ public:
       std::string_view str,
       bool check_zero_end = false) -> ssize_t;
 
+  /** \brief Compare string with data in buffer
+   *
+   *  \param [in] offset Buffer offset (position) in bytes
+   *  \param [in] srt String for compare data
+   *  \param [in] check_zero_end Check zero at the end of data in buffer
+   *  \return True if data string equal buffer
+   *
+   */
+  bool eqv_string(
+      const size_t & offset,
+      std::string_view str,
+      bool check_zero_end = false) const;
+
+
   using Buf::Buf;
 };
+
+//------------------------------------------------------------------------------
+
+template<typename T>
+bool SmBuf::is_valid(const size_t & offset) const noexcept
+{
+  return is_valid(offset, sizeof(T));
+}
 
 //------------------------------------------------------------------------------
 
@@ -230,7 +270,6 @@ auto SmBuf::get_raw(const size_t & offset) const
   return tmp_val;
 
 }
-
 
 //------------------------------------------------------------------------------
 
