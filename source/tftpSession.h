@@ -16,6 +16,7 @@
 #define SOURCE_TFTP_SESSION_H_
 
 #include <thread>
+#include <map>
 
 #include "tftpCommon.h"
 #include "tftpDataMgr.h"
@@ -23,6 +24,8 @@
 
 namespace tftp
 {
+
+using Options = std::map<std::string, int>;
 
 // -----------------------------------------------------------------------------
 
@@ -62,6 +65,12 @@ protected:
   DataMgr      manager_;         ///< Data manager
   uint16_t     error_code_;      ///< First error info - code
   std::string  error_message_;   ///< First error info - message
+
+  Options      opt_;
+
+  bool opt_has(std::string_view opt_name) const;
+  auto opt(std::string_view opt_name) const -> OptionInt;
+  void opt_set(std::string_view opt_name, const int & opt_val);
 
   /** \brief Get uint16_t from RX buffer with offset
    *
@@ -245,12 +254,13 @@ public:
             const Buf::const_iterator buf_begin,
             const Buf::const_iterator buf_end);
 
-  bool init(
+  bool prepare(
       const SmBuf  & remote_addr,
       const size_t & remote_addr_size,
       const SmBuf  & pkt_data,
       const size_t & pkt_data_size);
 
+  bool init();
 
   /** \brief Main session loop
    */

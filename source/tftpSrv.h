@@ -18,6 +18,7 @@
 #include <list>
 
 #include "tftpSession.h"
+#include "tftpSmBuf.h"
 
 namespace tftp
 {
@@ -40,7 +41,7 @@ protected:
   std::list<std::tuple<Session, std::thread>> sessions_;
 
   int      socket_; ///< Socket of listener
-  Buf buffer_; ///< Income buffer for tftp request
+  SmBuf buffer_; ///< Income buffer for tftp request
 
   bool stop_; ///< Flag "need stop"
 

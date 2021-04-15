@@ -139,7 +139,7 @@ void Srv::main_loop()
 {
   // prepare
   stop_ = false;
-  Buf  client_addr(sizeof(struct sockaddr_in6), 0); // max known buffer size
+  SmBuf  client_addr(sizeof(struct sockaddr_in6), 0); // max known buffer size
   unsigned int client_addr_size = client_addr.size();
 
   // main server loop
@@ -167,6 +167,15 @@ void Srv::main_loop()
         this->begin_shared();
         sss.settings_ = settings_;
       }
+
+      //bool ret =
+      sss.prepare(
+          client_addr,
+          (size_t)client_addr_size,
+          buffer_,
+          (size_t)bsize);
+
+      //ret = ret && sss.init();
 
       sss.init(client_addr.cbegin(),
                client_addr.cbegin() + client_addr_size,

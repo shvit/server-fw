@@ -19,6 +19,8 @@
 
 #include "tftpSession.h"
 
+#include <iostream>
+
 namespace tftp
 {
 
@@ -47,7 +49,9 @@ Session::Session():
     finished_{false},
     manager_{DataMgr{}},
     error_code_{0},
-    error_message_{""}
+    error_message_{""},
+
+    opt_{}
 {
 }
 
@@ -85,9 +89,37 @@ auto Session::operator=(Session && val) -> Session &
     manager_         = std::move(val.manager_);
     error_code_      = val.error_code_;
     std::swap(error_message_, val.error_message_);
+
+    std::swap(opt_, val.opt_);
   }
 
   return *this;
+}
+
+// -----------------------------------------------------------------------------
+
+auto Session::opt(std::string_view opt_name) const -> OptionInt
+{
+  OptionInt ret;
+  std::string key{opt_name};
+  do_lower(key);
+  if(auto it=opt_.find(key); it != opt_.end()) ret = it->second;
+
+  return ret;
+}
+
+bool Session::opt_has(std::string_view opt_name) const
+{
+  std::string key{opt_name};
+  do_lower(key);
+  return opt_.find(key) != opt_.end();
+}
+
+void Session::opt_set(std::string_view opt_name, const int & opt_val)
+{
+  std::string key{opt_name};
+  do_lower(key);
+  opt_[key] = opt_val;
 }
 
 // -----------------------------------------------------------------------------
@@ -113,7 +145,12 @@ void Session::set_buf_tx_u16_hton(const size_t offset, const uint16_t value)
 
 uint16_t Session::block_size() const
 {
-  return std::get<1>(opt_blksize_);
+//  return std::get<1>(opt_blksize_);
+  auto tmp_val = opt(name_blksize);
+
+  return tmp_val.has_value() ?
+      (uint16_t) tmp_val.value() :
+      (uint16_t) default_blksize;
 }
 
 // -----------------------------------------------------------------------------
@@ -191,13 +228,13 @@ void Session::socket_close()
 
 // -----------------------------------------------------------------------------
 
-bool Session::init(
+bool Session::prepare(
     const SmBuf  & remote_addr,
     const size_t & remote_addr_size,
     const SmBuf  & pkt_data,
     const size_t & pkt_data_size)
 {
-  L_INF("Session initialize started");
+  L_INF("Session prpare started");
 
   bool ret=true;
 
@@ -215,29 +252,193 @@ bool Session::init(
   }
 
   // Init request type
+  size_t curr_pos=0U;
   request_type_ = SrvReq::unknown;
-  if(auto rq_type = pkt_data.get_ntoh<int16_t>(0U);
-     (ret = ret && ((rq_type == (int16_t)SrvReq::read) ||
-                    (rq_type == (int16_t)SrvReq::write))))
+  if(ret)
   {
-    request_type_ = (SrvReq) rq_type;
-    L_INF("Recognize request type '"+
-          std::string{to_string(request_type_)}+"'");
+    if(auto rq_type = pkt_data.get_ntoh<int16_t>(curr_pos);
+       (ret = ret && ((rq_type == (int16_t)SrvReq::read) ||
+                      (rq_type == (int16_t)SrvReq::write))))
+    {
+      request_type_ = (SrvReq) rq_type;
+      L_INF("Recognize request type '"+
+            std::string{to_string(request_type_)}+"'");
+      curr_pos += 2U;
+    }
+    else
+    {
+      L_WRN("Wrong request type ("+std::to_string(rq_type)+")");
+    }
+  }
+
+  // Init filename
+  if(ret)
+  {
+    filename_ = std::move(pkt_data.get_string(
+        curr_pos,
+        pkt_data_size-curr_pos));
+    if((ret = (filename_.size() > 0U)))
+    {
+      L_INF("Recognize filename '"+filename_+"'");
+      curr_pos += filename_.size()+1U;
+    }
+    else
+    {
+      L_WRN("Wrong filename (empty!)");
+    }
+  }
+
+  // Init TFTP transfer mode
+  transfer_mode_ = TransfMode::unknown;
+  if(ret)
+  {
+    std::string curr_mod = std::move(pkt_data.get_string(
+        curr_pos,
+        pkt_data_size-curr_pos));
+    if((ret = (curr_mod.size() > 0U)))
+    {
+      do_lower(curr_mod);
+      if(curr_mod == "netascii") transfer_mode_ = TransfMode::netascii;
+      else
+      if(curr_mod == "octet") transfer_mode_ = TransfMode::octet;
+      else
+      if(curr_mod == "binary") transfer_mode_ = TransfMode::binary;
+      else
+      if(curr_mod == "mail") transfer_mode_ = TransfMode::mail;
+
+      if(transfer_mode_ != TransfMode::unknown)
+      {
+        L_INF("Recognize tranfser mode '"+curr_mod+"'");
+      }
+      else
+      {
+        L_WRN("Wrong tranfser mode '"+curr_mod+"'! ");
+      }
+      curr_pos += curr_mod.size()+1U;
+    }
+    else
+    {
+      L_WRN("Wrong transfer mode (empty!)");
+    }
+  }
+
+  // Init options
+  opt_.clear();
+  if(ret)
+  {
+    while(curr_pos < pkt_data_size)
+    {
+      std::string str_opt{pkt_data.get_string(
+          curr_pos,
+          pkt_data_size-curr_pos)};
+      do_lower(str_opt);
+      curr_pos += str_opt.size()+1U;
+      if(curr_pos >= pkt_data_size) break;
+
+      std::string str_val{pkt_data.get_string(
+          curr_pos,
+          pkt_data_size-curr_pos)};
+      curr_pos += str_val.size()+1U;
+
+      if(is_digit_str(str_val))
+      {
+        //std::cout << "[DBG] option::" << str_opt << "=" << str_val << std::endl;
+        opt_[std::move(str_opt)] = std::stoi(str_val);
+        L_INF("Recognize option '"+str_opt+"' value "+str_val);
+      }
+      else
+      {
+        L_WRN("Wrong option '"+str_opt+"'='"+str_val+"'");
+      }
+    }
+  }
+
+  // alloc session buffer
+  if(ret)
+  {
+    size_t sess_buf_size_ = (size_t)block_size() + 4U;
+
+    sess_buffer_tx_.resize(sess_buf_size_);
+    ret = (sess_buffer_tx_.size() == sess_buf_size_);
+  }
+
+
+  L_INF("Session prpare is "+(ret ? "SUCCESSFUL" : "FAIL"));
+  return ret;
+}
+
+// -----------------------------------------------------------------------------
+
+bool Session::init()
+{
+  L_INF("Session initialize started");
+
+  // Get family
+  int family;
+  {
+    auto lk = begin_shared();
+    family = local_base_as_inet().sin_family;
+  }
+
+  // Socket open
+  socket_ = socket(family, SOCK_DGRAM, 0);
+  bool ret;
+  if ((ret = (socket_>= 0)))
+  {
+    L_DBG("Socket opened successful");
   }
   else
   {
-    L_WRN("Wrong request type ("+std::to_string(rq_type)+")");
+    Buf err_msg_buf(1024, 0);
+    L_ERR("socket() error: "+
+            std::string{strerror_r(errno,
+                                   err_msg_buf.data(),
+                                   err_msg_buf.size())});
   }
 
+  // Bind socket
+  if(ret)
+  {
+    begin_shared();
+    ret = bind(
+        socket_,
+        (struct sockaddr *) settings_->local_base_.data(),
+        settings_->local_base_.size()) != -1;
+    if(ret)
+    {
+      L_DBG("Bind socket successful");
+    }
+    else
+    {
+      Buf err_msg_buf(1024, 0);
+      L_ERR("bind() error: "+
+              std::string{strerror_r(errno,
+                                     err_msg_buf.data(),
+                                     err_msg_buf.size())});
+      close(socket_);
+    }
+  }
 
+  // Data manager init
+  if(ret)
+  {
+    {
+      manager_.settings_ = settings_;
+      manager_.set_error_ = std::bind(
+          & Session::set_error_if_first,
+          this,
+          std::placeholders::_1,
+          std::placeholders::_2);
+    }
 
-
-
+    ret = manager_.init(request_type_, filename_);
+  }
 
   L_INF("Session initialise is "+(ret ? "SUCCESSFUL" : "FAIL"));
-
   return ret;
 }
+
+// -----------------------------------------------------------------------------
 
 bool Session::init(
     const Buf::const_iterator addr_begin,
