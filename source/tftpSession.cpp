@@ -1,5 +1,5 @@
 /**
- * \file tftp_session.cpp
+ * \file tftpSession.cpp
  * \brief TFTP session class
  *
  *  TFTP session class
@@ -90,14 +90,14 @@ auto Session::operator=(Session && val) -> Session &
     error_code_      = val.error_code_;
     std::swap(error_message_, val.error_message_);
 
-    std::swap(opt_, val.opt_);
+    //std::swap(opt_, val.opt_);
   }
 
   return *this;
 }
 
 // -----------------------------------------------------------------------------
-
+/*
 auto Session::opt(std::string_view opt_name) const -> OptionInt
 {
   OptionInt ret;
@@ -121,7 +121,7 @@ void Session::opt_set(std::string_view opt_name, const int & opt_val)
   do_lower(key);
   opt_[key] = opt_val;
 }
-
+*/
 // -----------------------------------------------------------------------------
 
 auto Session::get_buf_rx_u16_ntoh(const size_t offset)
@@ -145,12 +145,12 @@ void Session::set_buf_tx_u16_hton(const size_t offset, const uint16_t value)
 
 uint16_t Session::block_size() const
 {
-//  return std::get<1>(opt_blksize_);
-  auto tmp_val = opt(name_blksize);
-
-  return tmp_val.has_value() ?
-      (uint16_t) tmp_val.value() :
-      (uint16_t) default_blksize;
+  return std::get<1>(opt_blksize_);
+//  auto tmp_val = opt(name_blksize);
+//
+//  return tmp_val.has_value() ?
+//      (uint16_t) tmp_val.value() :
+//      (uint16_t) default_blksize;
 }
 
 // -----------------------------------------------------------------------------
@@ -251,6 +251,16 @@ bool Session::prepare(
           std::to_string(remote_addr_size)+")");
   }
 
+  ret = ret && opt_.buffer_parse(
+      pkt_data,
+      pkt_data_size,
+      std::bind(
+          & Base::log,
+          this,
+          std::placeholders::_1,
+          std::placeholders::_2));
+
+/*
   // Init request type
   size_t curr_pos=0U;
   request_type_ = SrvReq::unknown;
@@ -352,7 +362,7 @@ bool Session::prepare(
       }
     }
   }
-
+*/
   // alloc session buffer
   if(ret)
   {

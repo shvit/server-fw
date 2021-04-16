@@ -19,7 +19,6 @@
 #include <functional>
 #include <vector>
 #include <memory>
-#include <optional>
 #include <string>
 
 
@@ -33,12 +32,6 @@ constexpr uint16_t    default_tftp_port        = 69;
 constexpr int         default_tftp_syslog_lvl  = 6;
 constexpr uint16_t    default_fb_dialect       = 3;
 constexpr std::string_view default_fb_lib_name = "libfbclient.so";
-
-constexpr uint16_t    default_blksize = 512;
-constexpr std::string_view name_blksize      = "blksize";
-constexpr std::string_view name_timeout      = "blksize";
-constexpr std::string_view name_tsize        = "tsize";
-constexpr std::string_view name_windowsize   = "windowsize";
 
 // -----------------------------------------------------------------------------
 
@@ -55,18 +48,6 @@ class Settings;
 using pSettings = std::shared_ptr<Settings>;
 
 using Buf = std::vector<char>;
-
-/** \bief Optional class storage with default value
- *
- *  Info: std::optional<T> does't have default value
- */
-template<typename T>
-using Opt = std::tuple<bool, T>;
-
-using OptInt = Opt<int>;
-
-/// New generation
-using OptionInt = std::optional<int>;
 
 // -----------------------------------------------------------------------------
 

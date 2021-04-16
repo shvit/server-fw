@@ -19,8 +19,8 @@ public:
   using tftp::Session::opt_blksize_;
   using tftp::Session::opt_timeout_;
   using tftp::Session::opt_tsize_;
-  using tftp::Session::opt_;
-  using tftp::Session::opt;
+  //using tftp::Session::opt_;
+  //using tftp::Session::opt;
 
   using tftp::Session::was_error;
   using tftp::Session::set_error_if_first;
@@ -81,7 +81,7 @@ UNIT_TEST_CASE_BEGIN(session, "check session (OLD)")
 UNIT_TEST_CASE_END
 
 //------------------------------------------------------------------------------
-
+/*
 UNIT_TEST_CASE_BEGIN(sess_init, "check prepare()")
 
   tftp::SmBuf b_addr(sizeof(struct sockaddr_in), 0);
@@ -137,7 +137,7 @@ UNIT_TEST_CASE_BEGIN(sess_init, "check prepare()")
   TEST_CHECK_TRUE(s1.was_error());
 
 UNIT_TEST_CASE_END
-
+*/
 //------------------------------------------------------------------------------
 
 UNIT_TEST_SUITE_END

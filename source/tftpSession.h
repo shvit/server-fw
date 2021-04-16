@@ -1,5 +1,5 @@
 /**
- * \file tftp_session.h
+ * \file tftpSession.h
  * \brief TFTP session class header
  *
  *  TFTP session class header
@@ -17,15 +17,20 @@
 
 #include <thread>
 #include <map>
+#include <optional>
 
 #include "tftpCommon.h"
 #include "tftpDataMgr.h"
 #include "tftpSmBuf.h"
+#include "tftpOptions.h"
 
 namespace tftp
 {
 
-using Options = std::map<std::string, int>;
+//using OptionInt = std::optional<int>;
+
+//using OptionsMap = std::map<std::string, int>;
+
 
 // -----------------------------------------------------------------------------
 
@@ -68,9 +73,9 @@ protected:
 
   Options      opt_;
 
-  bool opt_has(std::string_view opt_name) const;
-  auto opt(std::string_view opt_name) const -> OptionInt;
-  void opt_set(std::string_view opt_name, const int & opt_val);
+  //bool opt_has(std::string_view opt_name) const;
+  //auto opt(std::string_view opt_name) const -> OptionInt;
+  //void opt_set(std::string_view opt_name, const int & opt_val);
 
   /** \brief Get uint16_t from RX buffer with offset
    *
