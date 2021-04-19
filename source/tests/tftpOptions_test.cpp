@@ -177,6 +177,11 @@ UNIT_TEST_CASE_BEGIN(opt_buffer_parse, "Check buffer_parse()")
   TEST_CHECK_TRUE(o.timeout() == tftp::constants::dflt_timeout);
   TEST_CHECK_TRUE(o.tsize()   == tftp::constants::dflt_tsize);
   TEST_CHECK_TRUE(o.windowsize() == tftp::constants::dflt_windowsize);
+
+  TEST_CHECK_FALSE(o.was_set_blksize());
+  TEST_CHECK_FALSE(o.was_set_timeout());
+  TEST_CHECK_FALSE(o.was_set_tsize());
+  TEST_CHECK_FALSE(o.was_set_windowsize());
 }
 
 // Stage 2 - filled zero buffer
@@ -200,6 +205,11 @@ UNIT_TEST_CASE_BEGIN(opt_buffer_parse, "Check buffer_parse()")
   TEST_CHECK_TRUE(o.timeout()    == tftp::constants::dflt_timeout);
   TEST_CHECK_TRUE(o.tsize()      == tftp::constants::dflt_tsize);
   TEST_CHECK_TRUE(o.windowsize() == tftp::constants::dflt_windowsize);
+
+  TEST_CHECK_FALSE(o.was_set_blksize());
+  TEST_CHECK_FALSE(o.was_set_timeout());
+  TEST_CHECK_FALSE(o.was_set_tsize());
+  TEST_CHECK_FALSE(o.was_set_windowsize());
 }
 
 // Stage 3 - fimple, w/o options
@@ -228,6 +238,11 @@ UNIT_TEST_CASE_BEGIN(opt_buffer_parse, "Check buffer_parse()")
   TEST_CHECK_TRUE(o.timeout()    == tftp::constants::dflt_timeout);
   TEST_CHECK_TRUE(o.tsize()      == tftp::constants::dflt_tsize);
   TEST_CHECK_TRUE(o.windowsize() == tftp::constants::dflt_windowsize);
+
+  TEST_CHECK_FALSE(o.was_set_blksize());
+  TEST_CHECK_FALSE(o.was_set_timeout());
+  TEST_CHECK_FALSE(o.was_set_tsize());
+  TEST_CHECK_FALSE(o.was_set_windowsize());
 }
 
 
@@ -261,6 +276,11 @@ UNIT_TEST_CASE_BEGIN(opt_buffer_parse, "Check buffer_parse()")
   TEST_CHECK_TRUE(o.timeout()    == tftp::constants::dflt_timeout);
   TEST_CHECK_TRUE(o.tsize()      == tftp::constants::dflt_tsize);
   TEST_CHECK_TRUE(o.windowsize() == tftp::constants::dflt_windowsize);
+
+  TEST_CHECK_FALSE(o.was_set_blksize());
+  TEST_CHECK_FALSE(o.was_set_timeout());
+  TEST_CHECK_FALSE(o.was_set_tsize());
+  TEST_CHECK_FALSE(o.was_set_windowsize());
 }
 
 // Stage 4 - full data buffer, good options
@@ -293,6 +313,11 @@ UNIT_TEST_CASE_BEGIN(opt_buffer_parse, "Check buffer_parse()")
   TEST_CHECK_TRUE(o.timeout() == 10);
   TEST_CHECK_TRUE(o.tsize()   == 2000123);
   TEST_CHECK_TRUE(o.windowsize() == 20);
+
+  TEST_CHECK_TRUE(o.was_set_blksize());
+  TEST_CHECK_TRUE(o.was_set_timeout());
+  TEST_CHECK_TRUE(o.was_set_tsize());
+  TEST_CHECK_TRUE(o.was_set_windowsize());
 }
 
 UNIT_TEST_CASE_END

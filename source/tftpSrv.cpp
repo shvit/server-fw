@@ -177,6 +177,8 @@ void Srv::main_loop()
 
       //ret = ret && sss.init();
 
+      //sss.init();
+
       sss.init(client_addr.cbegin(),
                client_addr.cbegin() + client_addr_size,
                buffer_.cbegin(),

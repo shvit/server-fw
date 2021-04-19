@@ -104,6 +104,15 @@ public:
 
   auto transfer_mode() const -> const TransfMode &;
 
+  bool was_set_blksize() const;
+
+  bool was_set_timeout() const;
+
+  bool was_set_tsize() const;
+
+  bool was_set_windowsize() const;
+
+
   // Procesing methods
 
   bool buffer_parse(

@@ -86,6 +86,28 @@ auto Options::windowsize() const -> const int &
 
 //------------------------------------------------------------------------------
 
+bool Options::was_set_blksize() const
+{
+  return std::get<0>(blksize_);
+}
+
+bool Options::was_set_timeout() const
+{
+  return std::get<0>(timeout_);
+}
+
+bool Options::was_set_tsize() const
+{
+  return std::get<0>(tsize_);
+}
+
+bool Options::was_set_windowsize() const
+{
+  return std::get<0>(windowsize_);
+}
+
+//------------------------------------------------------------------------------
+
 #define OPT_L_INF(MSG) if(log != nullptr) L_INF(MSG);
 #define OPT_L_WRN(MSG) if(log != nullptr) L_WRN(MSG);
 

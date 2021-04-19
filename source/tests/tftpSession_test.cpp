@@ -12,13 +12,13 @@ class test_session: public tftp::Session
 {
 public:
 
-  using tftp::Session::request_type_;
-  using tftp::Session::transfer_mode_;
+  //using tftp::Session::request_type_;
+  //using tftp::Session::transfer_mode_;
   using tftp::Session::client_;
-  using tftp::Session::filename_;
-  using tftp::Session::opt_blksize_;
-  using tftp::Session::opt_timeout_;
-  using tftp::Session::opt_tsize_;
+  //using tftp::Session::filename_;
+  //using tftp::Session::opt_blksize_;
+  //using tftp::Session::opt_timeout_;
+  //using tftp::Session::opt_tsize_;
   //using tftp::Session::opt_;
   //using tftp::Session::opt;
 
@@ -35,7 +35,7 @@ UNIT_TEST_CASE_BEGIN(session, "check session (OLD)")
   {
     TEST_CHECK_TRUE(temp_directory_create());
   }
-
+/*
   START_ITER("init");
   {
     struct sockaddr_in a;
@@ -60,24 +60,26 @@ UNIT_TEST_CASE_BEGIN(session, "check session (OLD)")
         static_cast<tftp::Buf::const_iterator>((char *) & a) + sizeof(a),
         pkt1.cbegin(),
         pkt1.cend()));
-    TEST_CHECK_TRUE(s1.request_type_ == tftp::SrvReq::write);
+    //TEST_CHECK_TRUE(s1.request_type_ == tftp::SrvReq::write);
     TEST_CHECK_TRUE(s1.transfer_mode_ == tftp::TransfMode::octet);
     TEST_CHECK_TRUE(s1.client_.size()==sizeof(a) &&
                     std::equal(s1.client_.cbegin(),
                                s1.client_.cend(),
                                (char *) & a));
-    TEST_CHECK_TRUE(std::get<0>(s1.opt_blksize_));
-    TEST_CHECK_TRUE(std::get<1>(s1.opt_blksize_) == 1024U);
-    TEST_CHECK_TRUE(std::get<0>(s1.opt_timeout_));
-    TEST_CHECK_TRUE(std::get<1>(s1.opt_timeout_) == 10);
-    TEST_CHECK_TRUE(std::get<0>(s1.opt_tsize_));
-    TEST_CHECK_TRUE(std::get<1>(s1.opt_tsize_) == 2000123);
+    //TEST_CHECK_TRUE(std::get<0>(s1.opt_blksize_));
+    //TEST_CHECK_TRUE(std::get<1>(s1.opt_blksize_) == 1024U);
+    //TEST_CHECK_TRUE(std::get<0>(s1.opt_timeout_));
+    //TEST_CHECK_TRUE(std::get<1>(s1.opt_timeout_) == 10);
+    //TEST_CHECK_TRUE(std::get<0>(s1.opt_tsize_));
+    //TEST_CHECK_TRUE(std::get<1>(s1.opt_tsize_) == 2000123);
     TEST_CHECK_TRUE(s1.filename_ == "filename.txt");
 
     TEST_CHECK_FALSE(s1.was_error());
     s1.set_error_if_first(909U, "Test error");
     TEST_CHECK_TRUE(s1.was_error());
   }
+
+  */
 UNIT_TEST_CASE_END
 
 //------------------------------------------------------------------------------

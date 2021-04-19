@@ -48,14 +48,14 @@ namespace tftp
 class Session: public Base
 {
 protected:
-  SrvReq       request_type_;    ///< Server request
-  std::string  filename_;        ///< Requested filename
-  TransfMode   transfer_mode_;   ///< Transfer mode
+  //SrvReq       request_type_;    ///< Server request
+  //std::string  filename_;        ///< Requested filename
+  //TransfMode   transfer_mode_;   ///< Transfer mode
   SmBuf        client_;          ///< Client socket address buffer
   int          socket_;          ///< Socket
-  OptInt       opt_blksize_;     ///< Option 'blksize'
-  OptInt       opt_timeout_;     ///< Option 'timeout'
-  OptInt       opt_tsize_;       ///< Option 'tsize'
+  //OptInt       opt_blksize_;     ///< Option 'blksize'
+  //OptInt       opt_timeout_;     ///< Option 'timeout'
+  //OptInt       opt_tsize_;       ///< Option 'tsize'
   uint16_t     re_tx_count_;     ///< Retransmitt count
   SmBuf        sess_buffer_tx_;  ///< Session buffer for TX operations
   SmBuf        sess_buffer_rx_;  ///< Session buffer for RX operations
@@ -107,7 +107,7 @@ protected:
    *  \param [in] str String value for add
    *  \return Size added data to buffer
    */
-  size_t push_buffer_string(std::string_view str);
+  auto push_buffer_string(std::string_view str) -> ssize_t;
 
   /** \brief Construct option acknowledge
    *

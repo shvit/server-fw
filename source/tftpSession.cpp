@@ -28,14 +28,14 @@ namespace tftp
 
 Session::Session():
     Base(),
-    request_type_{SrvReq::unknown},
-    filename_{""},
-    transfer_mode_{TransfMode::unknown},
+    //request_type_{SrvReq::unknown},
+    //filename_{""},
+    //transfer_mode_{TransfMode::unknown},
     client_{},
     socket_{0},
-    opt_blksize_{false, 512U},
-    opt_timeout_{false, 5U},
-    opt_tsize_{false, 0U},
+    //opt_blksize_{false, 512U},
+    //opt_timeout_{false, 5U},
+    //opt_tsize_{false, 0U},
     re_tx_count_{3},
     sess_buffer_tx_(0xFFFFU, 0),
     sess_buffer_rx_(0xFFFFU, 0),
@@ -67,14 +67,14 @@ auto Session::operator=(Session && val) -> Session &
 {
   if(this != & val)
   {
-    request_type_  = val.request_type_;
-    filename_      = val.filename_;
-    transfer_mode_ = val.transfer_mode_;
+    //request_type_  = val.request_type_;
+    //filename_      = val.filename_;
+    //transfer_mode_ = val.transfer_mode_;
     std::swap(client_, val.client_);
     socket_        = val.socket_;
-    opt_blksize_   = val.opt_blksize_;
-    opt_timeout_   = val.opt_timeout_;
-    opt_tsize_     = val.opt_tsize_;
+    //opt_blksize_   = val.opt_blksize_;
+    //opt_timeout_   = val.opt_timeout_;
+    //opt_tsize_     = val.opt_tsize_;
     re_tx_count_   = val.re_tx_count_;
     std::swap(sess_buffer_tx_, val.sess_buffer_tx_);
     std::swap(sess_buffer_rx_, val.sess_buffer_rx_);
@@ -145,19 +145,17 @@ void Session::set_buf_tx_u16_hton(const size_t offset, const uint16_t value)
 
 uint16_t Session::block_size() const
 {
-  return std::get<1>(opt_blksize_);
-//  auto tmp_val = opt(name_blksize);
-//
-//  return tmp_val.has_value() ?
-//      (uint16_t) tmp_val.value() :
-//      (uint16_t) default_blksize;
+  //return std::get<1>(opt_blksize_);
+  return opt_.blksize();
 }
 
 // -----------------------------------------------------------------------------
 
 bool Session::timeout_pass(const time_t gandicap) const
 {
-  return (time(nullptr) - oper_time_) < (std::get<1>(opt_timeout_) + gandicap);
+  //return (time(nullptr) - oper_time_) < (std::get<1>(opt_timeout_) + gandicap);
+
+  return (time(nullptr) - oper_time_) < (opt_.timeout() + gandicap);
 }
 
 // -----------------------------------------------------------------------------
@@ -251,6 +249,7 @@ bool Session::prepare(
           std::to_string(remote_addr_size)+")");
   }
 
+  // Parse pkt buffer
   ret = ret && opt_.buffer_parse(
       pkt_data,
       pkt_data_size,
@@ -260,109 +259,7 @@ bool Session::prepare(
           std::placeholders::_1,
           std::placeholders::_2));
 
-/*
-  // Init request type
-  size_t curr_pos=0U;
-  request_type_ = SrvReq::unknown;
-  if(ret)
-  {
-    if(auto rq_type = pkt_data.get_ntoh<int16_t>(curr_pos);
-       (ret = ret && ((rq_type == (int16_t)SrvReq::read) ||
-                      (rq_type == (int16_t)SrvReq::write))))
-    {
-      request_type_ = (SrvReq) rq_type;
-      L_INF("Recognize request type '"+
-            std::string{to_string(request_type_)}+"'");
-      curr_pos += 2U;
-    }
-    else
-    {
-      L_WRN("Wrong request type ("+std::to_string(rq_type)+")");
-    }
-  }
 
-  // Init filename
-  if(ret)
-  {
-    filename_ = std::move(pkt_data.get_string(
-        curr_pos,
-        pkt_data_size-curr_pos));
-    if((ret = (filename_.size() > 0U)))
-    {
-      L_INF("Recognize filename '"+filename_+"'");
-      curr_pos += filename_.size()+1U;
-    }
-    else
-    {
-      L_WRN("Wrong filename (empty!)");
-    }
-  }
-
-  // Init TFTP transfer mode
-  transfer_mode_ = TransfMode::unknown;
-  if(ret)
-  {
-    std::string curr_mod = std::move(pkt_data.get_string(
-        curr_pos,
-        pkt_data_size-curr_pos));
-    if((ret = (curr_mod.size() > 0U)))
-    {
-      do_lower(curr_mod);
-      if(curr_mod == "netascii") transfer_mode_ = TransfMode::netascii;
-      else
-      if(curr_mod == "octet") transfer_mode_ = TransfMode::octet;
-      else
-      if(curr_mod == "binary") transfer_mode_ = TransfMode::binary;
-      else
-      if(curr_mod == "mail") transfer_mode_ = TransfMode::mail;
-
-      if(transfer_mode_ != TransfMode::unknown)
-      {
-        L_INF("Recognize tranfser mode '"+curr_mod+"'");
-      }
-      else
-      {
-        L_WRN("Wrong tranfser mode '"+curr_mod+"'! ");
-      }
-      curr_pos += curr_mod.size()+1U;
-    }
-    else
-    {
-      L_WRN("Wrong transfer mode (empty!)");
-    }
-  }
-
-  // Init options
-  opt_.clear();
-  if(ret)
-  {
-    while(curr_pos < pkt_data_size)
-    {
-      std::string str_opt{pkt_data.get_string(
-          curr_pos,
-          pkt_data_size-curr_pos)};
-      do_lower(str_opt);
-      curr_pos += str_opt.size()+1U;
-      if(curr_pos >= pkt_data_size) break;
-
-      std::string str_val{pkt_data.get_string(
-          curr_pos,
-          pkt_data_size-curr_pos)};
-      curr_pos += str_val.size()+1U;
-
-      if(is_digit_str(str_val))
-      {
-        //std::cout << "[DBG] option::" << str_opt << "=" << str_val << std::endl;
-        opt_[std::move(str_opt)] = std::stoi(str_val);
-        L_INF("Recognize option '"+str_opt+"' value "+str_val);
-      }
-      else
-      {
-        L_WRN("Wrong option '"+str_opt+"'='"+str_val+"'");
-      }
-    }
-  }
-*/
   // alloc session buffer
   if(ret)
   {
@@ -441,7 +338,7 @@ bool Session::init()
           std::placeholders::_2);
     }
 
-    ret = manager_.init(request_type_, filename_);
+    ret = manager_.init(opt_.request_type(), opt_.filename());
   }
 
   L_INF("Session initialise is "+(ret ? "SUCCESSFUL" : "FAIL"));
@@ -466,9 +363,9 @@ bool Session::init(
   {
     local_base_as_inet().sin_port = 0; // with new automatic port number
 
-    request_type_=(SrvReq) be16toh(*((uint16_t *) & *buf_begin));
-    L_INF("Recognize request type '"+
-            std::string(to_string(request_type_))+"'");
+    //request_type_=(SrvReq) be16toh(*((uint16_t *) & *buf_begin));
+    //L_INF("Recognize request type '"+
+    //        std::string(to_string(request_type_))+"'");
 
     uint16_t stage = 0;
     auto it_beg = buf_begin + 2U; // 2 Bytes
@@ -480,51 +377,49 @@ bool Session::init(
         switch(++stage)
         {
           case 1: // filename
-            if(iter != it_beg) filename_.assign(it_beg, iter);
-            if(filename_.size())
-            {
-              L_INF("Recognize filename '"+filename_+"'");
-              std::regex regex_filename("^(.*\\/)?(.*)$");
-              std::smatch sm_filename;
-              if(std::regex_search(filename_, sm_filename, regex_filename) &&
-                 (sm_filename.size() == 3) &&
-                 (sm_filename[1].str().size()))
-              {
-                filename_ = sm_filename[2].str();
-                L_WRN("Strip directory in filename; new filename is '"+
-                        filename_+"'");
-              }
-
-            }
+            //if(iter != it_beg) filename_.assign(it_beg, iter);
+            //if(filename_.size())
+            //{
+            //  L_INF("Recognize filename '"+filename_+"'");
+            //  std::regex regex_filename("^(.*\\/)?(.*)$");
+            //  std::smatch sm_filename;
+            //  if(std::regex_search(filename_, sm_filename, regex_filename) &&
+            //     (sm_filename.size() == 3) &&
+            //     (sm_filename[1].str().size()))
+            //  {
+            //    filename_ = sm_filename[2].str();
+            //    L_WRN("Strip directory in filename; new filename is '"+
+            //            filename_+"'");
+            //  }
+            //}
             break;
           case 2: // mode
-            if(iter != it_beg)
-            {
-              std::string mode{it_beg, iter};
+            //if(iter != it_beg)
+            //{
+            //  std::string mode{it_beg, iter};
 
-              if(mode == to_string(TransfMode::octet))
-              {
-                transfer_mode_=TransfMode::octet;
-                L_INF("Recognize transfer mode "+mode+"'");
-              }
-              else
-              if(mode == to_string(TransfMode::netascii))
-              {
-                transfer_mode_=TransfMode::netascii;
-                L_INF("Recognize transfer mode "+mode+"'");
-              }
-              else
-              if(mode == to_string(TransfMode::binary))
-              {
-                transfer_mode_=TransfMode::octet;
-                L_INF("Change mode 'binary' to mode 'octet'");
-              }
-              else
-              {
-                L_WRN("Unknown transfer mode '"+mode+"'");
-              }
-
-            }
+            //  if(mode == to_string(TransfMode::octet))
+            //  {
+            //    transfer_mode_=TransfMode::octet;
+            //    L_INF("Recognize transfer mode "+mode+"'");
+            //  }
+            //  else
+            //  if(mode == to_string(TransfMode::netascii))
+            //  {
+            //    transfer_mode_=TransfMode::netascii;
+            //    L_INF("Recognize transfer mode "+mode+"'");
+            //  }
+            //  else
+            //  if(mode == to_string(TransfMode::binary))
+            //  {
+            //    transfer_mode_=TransfMode::octet;
+            //    L_INF("Change mode 'binary' to mode 'octet'");
+            //  }
+            //  else
+            //  {
+            //    L_WRN("Unknown transfer mode '"+mode+"'");
+            //  }
+            //}
             break;
           default: // next options
             if(stage % 2) // for even stage - keys
@@ -537,7 +432,7 @@ bool Session::init(
               if(opt_key.size())
               {
                 std::string opt_val{it_beg, iter};
-
+/*
 #define IF_KEY_EQUAL_INT(NAME) \
     if(opt_key== #NAME)\
     {\
@@ -560,18 +455,18 @@ bool Session::init(
       if(std::get<0>(opt_##NAME##_)) std::get<1>(opt_##NAME##_) = tmp_val;\
     }
 
-                IF_KEY_EQUAL_INT(blksize)
-                else
-                IF_KEY_EQUAL_INT(timeout)
-                else
-                IF_KEY_EQUAL_INT(tsize)
-                else
-                {
-                  L_WRN("Unknown option '"+opt_key+"'");\
-                }
+                //IF_KEY_EQUAL_INT(blksize)
+                //else
+                //IF_KEY_EQUAL_INT(timeout)
+                //else
+                //IF_KEY_EQUAL_INT(tsize)
+                //else
+                //{
+                //  L_WRN("Unknown option '"+opt_key+"'");\
+                //}
 
                 #undef IF_KEY_EQUAL_INT
-
+*/
               }
               else
               {
@@ -585,8 +480,8 @@ bool Session::init(
     } // for loop
   }
   ret = ret &&
-        (request_type_ != SrvReq::unknown) &&
-        filename_.size() && block_size();
+        (opt_.request_type() != SrvReq::unknown) &&
+        opt_.filename().size() && block_size();
 
   // alloc session buffer
   if(ret)
@@ -615,7 +510,7 @@ bool Session::init(
           std::placeholders::_2);
     }
 
-    ret = manager_.init(request_type_, filename_);
+    ret = manager_.init(opt_.request_type(), opt_.filename());
   }
 
 
@@ -637,14 +532,20 @@ void Session::check_buffer_tx_size(const size_t size_append)
 
 // -----------------------------------------------------------------------------
 
-size_t Session::push_buffer_string(std::string_view str)
+auto Session::push_buffer_string(std::string_view str) -> ssize_t
 {
-  Buf::size_type ret_size = set_buf_cont_str(
-      sess_buffer_tx_,
-      buf_size_tx_,
-      str,
-      true);
+  ssize_t ret_size = sess_buffer_tx_.set_string(buf_size_tx_, str, true);
+
+  // ssize_t ret_size = set_buf_cont_str(
+//      sess_buffer_tx_,
+//      buf_size_tx_,
+//      str,
+//      true);
+
+  assert(ret_size >= 0);
+
   buf_size_tx_ += ret_size;
+
   return ret_size;
 }
 
@@ -657,42 +558,33 @@ void Session::construct_opt_reply()
   check_buffer_tx_size(2);
   set_buf_tx_u16_hton(0, 6U);
 
-  if(std::get<0>(opt_blksize_))
+  if(opt_.was_set_blksize())
   {
     L_DBG("Find option 'blksize' for confirm");
-    if(size_t temp_size = buf_size_tx_;
-       !push_buffer_string("blksize") ||
-       !push_buffer_string(std::to_string(std::get<1>(opt_blksize_))))
-    {
-      buf_size_tx_ = temp_size;
-    }
+    push_buffer_string(constants::name_blksize);
+    push_buffer_string(std::to_string(opt_.blksize()));
+
   }
-  if(std::get<0>(opt_timeout_))
+  if(opt_.was_set_timeout())
   {
     L_DBG("Find option 'timeout' for confirm");
-    if(size_t temp_size = buf_size_tx_;
-       !push_buffer_string("timeout") ||
-       !push_buffer_string(std::to_string(std::get<1>(opt_timeout_))))
-    {
-      buf_size_tx_ = temp_size;
-    }
+    push_buffer_string(constants::name_timeout);
+    push_buffer_string(std::to_string(opt_.timeout()));
   }
-  if(std::get<0>(opt_tsize_))
+  if(opt_.was_set_tsize())
   {
     L_DBG("Find option 'tsize' for confirm");
-    if(size_t temp_size = buf_size_tx_;
-       !push_buffer_string("tsize") ||
-       !push_buffer_string(std::to_string(std::get<1>(opt_tsize_))))
-    {
-      buf_size_tx_ = temp_size;
-    }
+    push_buffer_string(constants::name_tsize);
+    push_buffer_string(std::to_string(opt_.tsize()));
   }
 
-  if(buf_size_tx_ < 4) buf_size_tx_ = 0;
-
-  if(buf_size_tx_)
+  if(buf_size_tx_ < 4)
+  { // Nothing to do
+    buf_size_tx_ = 0;
+  }
+  else
   {
-    L_DBG("Construct option confirm pkt "+
+    L_DBG("Construct confirm options pkt "+
             std::to_string(buf_size_tx_)+" octets");
   }
 }
@@ -769,7 +661,8 @@ void Session::run()
   L_INF("Running session");
 
   // checks
-  if((request_type_ != SrvReq::read) && (request_type_ != SrvReq::write))
+  if((opt_.request_type() != SrvReq::read) &&
+     (opt_.request_type() != SrvReq::write))
   {
     L_ERR("Fail request mode");
     return;
@@ -882,7 +775,7 @@ bool Session::transmit_no_wait()
   {
     if(!stage_) construct_opt_reply();
 
-    switch(request_type_)
+    switch(opt_.request_type())
     {
       case SrvReq::read:
         if(!stage_ && !buf_size_tx_) ++stage_;// if no conf opt -> start tx data
@@ -943,7 +836,7 @@ bool Session::transmit_no_wait()
           buf_size_tx_ = 0;
           set_stage_receive();
 
-          if((request_type_ == SrvReq::write) &&
+          if((opt_.request_type() == SrvReq::write) &&
              oper_last_block_ &&
              (oper_last_block_==stage_))
           {
@@ -1002,7 +895,7 @@ bool Session::receive_no_wait()
         case 4U: // ACK --------------------------------------------------------
           rx_msg.append(": ACK blk ").
                  append(std::to_string(get_buf_rx_u16_ntoh(1)));
-          if((request_type_ == SrvReq::read) &&
+          if((opt_.request_type() == SrvReq::read) &&
              (get_buf_rx_u16_ntoh(1) == blk_num_local()))
           {
             L_DBG("OK! "+rx_msg);
@@ -1023,7 +916,7 @@ bool Session::receive_no_wait()
                  append("; data size ").
                  append(std::to_string(rx_result_size));
           if(bool is_next = (get_buf_rx_u16_ntoh(1) == blk_num_local(1U));
-              (request_type_ == SrvReq::write) &&
+              (opt_.request_type() == SrvReq::write) &&
               ((get_buf_rx_u16_ntoh(1) == blk_num_local(0U)) || // current blk
                 is_next))  // or next blk
           {
