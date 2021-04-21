@@ -154,7 +154,7 @@ public:
   /** Copy constructor
    *
    */
-  Base(Base & src);
+  Base(const Base & src);
 
   /** Move constructor
    */

@@ -30,11 +30,11 @@ Session::Session():
     Base(),
     client_{},
     socket_{0},
-    re_tx_count_{3},
-    sess_buffer_tx_(0xFFFFU, 0),
-    sess_buffer_rx_(0xFFFFU, 0),
+    retransmit_count_{3U},
+    buf_tx_(0xFFFFU, 0),
+    buf_rx_(0xFFFFU, 0),
     stage_{0},
-    buf_size_tx_{0},
+    buf_tx_data_size_{0},
     oper_time_{0},
     oper_tx_count_{0},
     oper_wait_{false}, // fist stage is TX
@@ -51,6 +51,17 @@ Session::Session():
 
 // -----------------------------------------------------------------------------
 
+Session::Session(pSettings & new_settings):
+    Session()
+{
+  if(new_settings.get() != nullptr)
+  {
+    this->settings_ = new_settings;
+  }
+}
+
+// -----------------------------------------------------------------------------
+
 Session::~Session()
 {
 }
@@ -63,17 +74,17 @@ auto Session::operator=(Session && val) -> Session &
   {
     std::swap(client_, val.client_);
     socket_        = val.socket_;
-    re_tx_count_   = val.re_tx_count_;
-    std::swap(sess_buffer_tx_, val.sess_buffer_tx_);
-    std::swap(sess_buffer_rx_, val.sess_buffer_rx_);
+    retransmit_count_   = val.retransmit_count_;
+    std::swap(buf_tx_, val.buf_tx_);
+    std::swap(buf_rx_, val.buf_rx_);
     stage_         = val.stage_;
-    buf_size_tx_   = val.buf_size_tx_;
+    buf_tx_data_size_   = val.buf_tx_data_size_;
     oper_time_     = val.oper_time_;
     oper_tx_count_ = val.oper_tx_count_;
     oper_wait_     = val.oper_wait_;
     oper_last_block_ = val.oper_last_block_;
     stop_            = val.stop_;
-    finished_        = val.finished_;
+    finished_.store(val.finished_);// = val.finished_;
     manager_         = std::move(val.manager_);
     error_code_      = val.error_code_;
     std::swap(error_message_, val.error_message_);
@@ -82,6 +93,13 @@ auto Session::operator=(Session && val) -> Session &
   }
 
   return *this;
+}
+
+// -----------------------------------------------------------------------------
+
+bool Session::is_finished() const
+{
+  return finished_;
 }
 
 // -----------------------------------------------------------------------------
@@ -161,8 +179,8 @@ bool Session::prepare(
   {
     size_t sess_buf_size_ = (size_t)block_size() + 4U;
 
-    sess_buffer_tx_.resize(sess_buf_size_);
-    ret = (sess_buffer_tx_.size() == sess_buf_size_);
+    buf_tx_.resize(sess_buf_size_);
+    ret = (buf_tx_.size() == sess_buf_size_);
   }
 
 
@@ -247,9 +265,9 @@ bool Session::init()
 
 void Session::construct_opt_reply()
 {
-  buf_size_tx_=0;
+  buf_tx_data_size_=0;
 
-  push_data((uint16_t)6U);
+  push_data((uint16_t) 6U);
 
   if(opt_.was_set_blksize())
   {
@@ -274,14 +292,14 @@ void Session::construct_opt_reply()
     push_data(std::to_string(opt_.windowsize()));
   }
 
-  if(buf_size_tx_ < 4)
+  if(buf_tx_data_size_ < 4)
   { // Nothing to do
-    buf_size_tx_ = 0;
+    buf_tx_data_size_ = 0;
   }
   else
   {
     L_DBG("Construct confirm options pkt "+
-            std::to_string(buf_size_tx_)+" octets");
+            std::to_string(buf_tx_data_size_)+" octets");
   }
 }
 
@@ -290,14 +308,14 @@ void Session::construct_error(
     const uint16_t e_code,
     std::string_view e_msg)
 {
-  buf_size_tx_=0;
+  buf_tx_data_size_=0;
 
-  push_data((uint16_t)5U);
+  push_data((uint16_t) 5U);
   push_data(e_code);
   push_data(e_msg);
 
   L_DBG("Construct error pkt code "+std::to_string(e_code)+
-        " '"+std::string(e_msg)+"'; "+std::to_string(buf_size_tx_)+
+        " '"+std::string(e_msg)+"'; "+std::to_string(buf_tx_data_size_)+
         " octets");
 }
 
@@ -312,25 +330,25 @@ void  Session::construct_error()
 
 void Session::construct_data()
 {
-  buf_size_tx_ = 0;
+  buf_tx_data_size_ = 0;
 
-  push_data((uint16_t)3U);
+  push_data((uint16_t) 3U);
   push_data(blk_num_local());
 
   if(ssize_t tx_data_size = manager_.tx(
-         sess_buffer_tx_.begin() + buf_size_tx_,
-         sess_buffer_tx_.begin() + buf_size_tx_ + block_size(),
+         buf_tx_.begin() + buf_tx_data_size_,
+         buf_tx_.begin() + buf_tx_data_size_ + block_size(),
          (stage_-1U) * block_size());
      tx_data_size >= 0)
   {
-    buf_size_tx_ += tx_data_size;
+    buf_tx_data_size_ += tx_data_size;
     L_DBG("Construct data pkt block "+std::to_string(stage_)+
-            "; data size "+std::to_string(buf_size_tx_-4)+" bytes");
+            "; data size "+std::to_string(buf_tx_data_size_-4)+" bytes");
   }
   else // error prepare data
   {
     L_ERR("Error prepare data");
-    buf_size_tx_ = 0;
+    buf_tx_data_size_ = 0;
     set_error_if_first(0, "Failed prepare data to send");
     construct_error();
   }
@@ -340,7 +358,7 @@ void Session::construct_data()
 
 void Session::construct_ack()
 {
-  buf_size_tx_ = 0;
+  buf_tx_data_size_ = 0;
 
   push_data((uint16_t)4U);
   push_data(blk_num_local());
@@ -367,7 +385,7 @@ void Session::run()
   set_stage_transmit();
   oper_last_block_ = 0;
   stage_           = 0; // processed block number
-  buf_size_tx_     = 0;
+  buf_tx_data_size_     = 0;
   stop_            = false;
   finished_        = false;
 
@@ -399,14 +417,6 @@ void Session::run()
 }
 // -----------------------------------------------------------------------------
 
-std::thread Session::run_thread()
-{
-  std::thread th = std::thread(& tftp::Session::run, this);
-  return th;
-}
-
-// -----------------------------------------------------------------------------
-
 void Session::set_error_if_first(
     const uint16_t e_cod,
     std::string_view e_msg)
@@ -423,13 +433,6 @@ void Session::set_error_if_first(
 bool Session::was_error()
 {
   return error_code_ || error_message_.size();
-}
-
-// -----------------------------------------------------------------------------
-
-bool Session::is_stage_receive() const noexcept
-{
-  return oper_wait_;
 }
 
 // -----------------------------------------------------------------------------
@@ -464,23 +467,23 @@ bool Session::transmit_no_wait()
   bool ret = true;
 
   // 1 - prepare data for tx
-  if(ret && !buf_size_tx_)
+  if(ret && !buf_tx_data_size_)
   {
     if(!stage_) construct_opt_reply();
 
     switch(opt_.request_type())
     {
       case SrvReq::read:
-        if(!stage_ && !buf_size_tx_) ++stage_;// if no conf opt -> start tx data
+        if(!stage_ && !buf_tx_data_size_) ++stage_;// if no conf opt -> start tx data
         if(stage_) construct_data();
-        if((buf_size_tx_ < (block_size()+4U)))
+        if((buf_tx_data_size_ < (block_size()+4U)))
         {
           oper_last_block_ = stage_;
           L_DBG("Calculated last tx block "+std::to_string(oper_last_block_));
         }
         break;
       case SrvReq::write:
-        if(!buf_size_tx_) construct_ack();
+        if(!buf_tx_data_size_) construct_ack();
         break;
       default:
         ret=false;
@@ -490,13 +493,13 @@ bool Session::transmit_no_wait()
   }
 
   // 2 - Send data
-  if(ret && buf_size_tx_)
+  if(ret && buf_tx_data_size_)
   {
     if(!oper_tx_count_ || !timeout_pass()) // first try send or time is out
     {
-      if(oper_tx_count_ > re_tx_count_)
+      if(oper_tx_count_ > retransmit_count_)
       {
-        L_ERR("Retransmit count exceeded ("+std::to_string(re_tx_count_)+
+        L_ERR("Retransmit count exceeded ("+std::to_string(retransmit_count_)+
                 "). Break!");
         ret=false;
       }
@@ -504,8 +507,8 @@ bool Session::transmit_no_wait()
       if(ret) // need send
       {
         auto tx_result_size = sendto(socket_,
-                                     sess_buffer_tx_.data(),
-                                     buf_size_tx_,
+                                     buf_tx_.data(),
+                                     buf_tx_data_size_,
                                      0,
                                      (struct sockaddr *) client_.data(),
                                      client_.size());
@@ -516,17 +519,17 @@ bool Session::transmit_no_wait()
           L_ERR("sendto() error");
         }
         else
-        if(tx_result_size<(ssize_t)buf_size_tx_) // Fail TX: send lost
+        if(tx_result_size<(ssize_t)buf_tx_data_size_) // Fail TX: send lost
         {
           L_ERR("sendto() lost data error: sended "+
                   std::to_string(tx_result_size)+
-                  " from "+std::to_string(buf_size_tx_));
+                  " from "+std::to_string(buf_tx_data_size_));
         }
         else // Good TX
         {
-          L_DBG("Success send packet "+std::to_string(buf_size_tx_)+
+          L_DBG("Success send packet "+std::to_string(buf_tx_data_size_)+
                   " octets");
-          buf_size_tx_ = 0;
+          buf_tx_data_size_ = 0;
           set_stage_receive();
 
           if((opt_.request_type() == SrvReq::write) &&
@@ -555,13 +558,15 @@ bool Session::receive_no_wait()
   SmBuf rx_client_sa(sizeof(struct sockaddr_in6), 0);
   socklen_t  rx_client_size = rx_client_sa.size();
 
-  ssize_t rx_result_size = recvfrom(socket_,
-                             sess_buffer_rx_.data(),
-                             sess_buffer_rx_.size(),
-                             MSG_DONTWAIT,
-                             (struct sockaddr *) rx_client_sa.data(),
-                             & rx_client_size);
-  if(rx_result_size < 0)
+  ssize_t rx_data_size = recvfrom(
+      socket_,
+      buf_rx_.data(),
+      buf_rx_.size(),
+      MSG_DONTWAIT,
+      (struct sockaddr *) rx_client_sa.data(),
+      & rx_client_size);
+
+  if(rx_data_size < 0)
   {
     switch(errno)
     {
@@ -570,22 +575,21 @@ bool Session::receive_no_wait()
       default:
         ret=false;
         L_ERR("Error #"+std::to_string(errno)+
-                " when call recvfrom(). Break loop!");;
+                " when call recvfrom(). Break loop!");
         break;
     }
   }
   else
-  if(rx_result_size > 0)
+  if(rx_data_size > 0)
   {
     rx_msg.assign("Receive pkt ").
-           append(std::to_string(rx_result_size)).
+           append(std::to_string(rx_data_size)).
            append(" octets");
 
-    if(rx_result_size > 3) // minimal tftp pkt size 4 byte
+    if(rx_data_size > 3) // minimal tftp pkt size 4 byte
     {
-      //switch(get_buf_rx_u16_ntoh(0))
-      uint16_t rx_op  = sess_buffer_rx_.get_ntoh<uint16_t>(0U);
-      uint16_t rx_blk =  sess_buffer_rx_.get_ntoh<uint16_t>(2U);
+      uint16_t rx_op  = buf_rx_.get_ntoh<uint16_t>(0U);
+      uint16_t rx_blk = buf_rx_.get_ntoh<uint16_t>(2U);
 
       switch(rx_op)
       {
@@ -611,7 +615,7 @@ bool Session::receive_no_wait()
           rx_msg.append(": DATA blk ").
                  append(std::to_string(rx_blk)).
                  append("; data size ").
-                 append(std::to_string(rx_result_size));
+                 append(std::to_string(rx_data_size));
           if(bool is_next = (rx_blk == blk_num_local(1U));
               (opt_.request_type() == SrvReq::write) &&
               ((rx_blk == blk_num_local(0U)) || // current blk
@@ -623,8 +627,8 @@ bool Session::receive_no_wait()
             if(stage_)
             {
               ssize_t stored_data_size =  manager_.rx(
-                  sess_buffer_rx_.begin() + 2*sizeof(uint16_t),
-                  sess_buffer_rx_.begin() + rx_result_size,
+                  buf_rx_.begin() + 2*sizeof(uint16_t),
+                  buf_rx_.begin() + rx_data_size,
                   (stage_ - 1) * block_size());
               if(stored_data_size < 0)
               {
@@ -634,7 +638,7 @@ bool Session::receive_no_wait()
               }
             }
 
-            if(rx_result_size < (block_size() + 4))
+            if(rx_data_size < (block_size() + 4))
             {
               oper_last_block_ = stage_;
               L_DBG("Calculated last rx block "+
@@ -650,8 +654,8 @@ bool Session::receive_no_wait()
           break;
         case 5U: // ERROR ------------------------------------------------------
           L_ERR(": ERROR #"+std::to_string(rx_blk) + " '"+
-                std::string(sess_buffer_rx_.cbegin()+2*sizeof(uint16_t),
-                            sess_buffer_rx_.cend())+"'"+
+                std::string(buf_rx_.cbegin()+2*sizeof(uint16_t),
+                            buf_rx_.cend())+"'"+
                 rx_msg);
           ret=false;
           break;

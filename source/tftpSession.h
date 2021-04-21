@@ -15,6 +15,7 @@
 #ifndef SOURCE_TFTP_SESSION_H_
 #define SOURCE_TFTP_SESSION_H_
 
+#include <atomic>
 #include <thread>
 #include <map>
 #include <optional>
@@ -26,11 +27,6 @@
 
 namespace tftp
 {
-
-//using OptionInt = std::optional<int>;
-
-//using OptionsMap = std::map<std::string, int>;
-
 
 // -----------------------------------------------------------------------------
 
@@ -48,22 +44,22 @@ namespace tftp
 class Session: public Base
 {
 protected:
-  SmBuf        client_;          ///< Client socket address buffer
-  int          socket_;          ///< Socket
-  uint16_t     re_tx_count_;     ///< Retransmitt count
-  SmBuf        sess_buffer_tx_;  ///< Session buffer for TX operations
-  SmBuf        sess_buffer_rx_;  ///< Session buffer for RX operations
-  size_t       stage_;           ///< Stage
-  size_t       buf_size_tx_;     ///< TX data size
-  time_t       oper_time_;       ///< Last remembered action time
-  uint16_t     oper_tx_count_;   ///< Transmit try count
-  bool         oper_wait_;       ///< Flag r/w state (mode)
-  size_t       oper_last_block_; ///< Last (finish) block number
-  bool         stop_;            ///< Break loop request (when error, etc.)
-  bool         finished_;        ///< confirm (reply) break loop request
-  DataMgr      manager_;         ///< Data manager
-  uint16_t     error_code_;      ///< First error info - code
-  std::string  error_message_;   ///< First error info - message
+  SmBuf        client_;           ///< Client socket address buffer
+  int          socket_;           ///< Socket
+  uint16_t     retransmit_count_; ///< Retransmitt count
+  SmBuf        buf_tx_;           ///< Session buffer for TX operations
+  SmBuf        buf_rx_;           ///< Session buffer for RX operations
+  size_t       stage_;            ///< Stage
+  size_t       buf_tx_data_size_; ///< TX data size
+  time_t       oper_time_;        ///< Last remembered action time
+  uint16_t     oper_tx_count_;    ///< Transmit try count
+  bool         oper_wait_;        ///< Flag r/w state (mode)
+  size_t       oper_last_block_;  ///< Last (finish) block number
+  bool         stop_;             ///< Break loop request (when error, etc.)
+  std::atomic_bool finished_;     ///< External use flag: true when session finished
+  DataMgr      manager_;          ///< Data manager
+  uint16_t     error_code_;       ///< First error info - code
+  std::string  error_message_;    ///< First error info - message
 
   Options      opt_;
 
@@ -91,7 +87,7 @@ protected:
   /** \brief Construct data block
    *
    *  Construct tftp packet payload as data block
-   *  Fill buffer and set buf_size_tx_;
+   *  Fill buffer and set buf_tx_data_size_;
    *  if can't do it then construct error block
    */
   void construct_data();
@@ -99,7 +95,7 @@ protected:
   /** \brief Construct data block acknowledge
    *
    *  Construct tftp packet payload as acknowledge
-   *  Fill buffer and set buf_size_tx_
+   *  Fill buffer and set buf_tx_data_size_
    */
   void construct_ack();
 
@@ -149,12 +145,6 @@ protected:
    */
   bool was_error();
 
-  /** \brief Check current stage is receive
-   *
-   *  \return True if current stage is receive, else return false
-   */
-  bool is_stage_receive() const noexcept;
-
   /** \brief Check current stage is transmit
    *
    *  \return True if current stage is transmit, else return false
@@ -190,6 +180,8 @@ public:
   /** \brief Constructor
    */
   Session();
+
+  Session(pSettings & new_settings);
 
   // Deny copy
   Session(const Session & ) = delete;
@@ -228,13 +220,13 @@ public:
    */
   void run();
 
-  /** \brief Main session loop as thread executed
+  /** \brief Checker finished session
    *
-   *  \return Instance of std::thread
+   *   For external use
+   *  \return Value from protected atomic value 'finished_'
    */
-  std::thread run_thread();
+  bool is_finished() const;
 
-  friend class Srv;
 };
 
 // -----------------------------------------------------------------------------
@@ -244,9 +236,9 @@ void Session::push_data(T && value)
 {
   if constexpr (std::is_integral_v<T>)
   {
-    if((buf_size_tx_ + sizeof(T)) <= sess_buffer_tx_.size())
+    if((buf_tx_data_size_ + sizeof(T)) <= buf_tx_.size())
     {
-      buf_size_tx_ += sess_buffer_tx_.set_hton(buf_size_tx_, value);
+      buf_tx_data_size_ += buf_tx_.set_hton(buf_tx_data_size_, value);
     }
   }
   else
@@ -254,14 +246,14 @@ void Session::push_data(T && value)
   {
     std::string tmp_str{std::forward<T>(value)};
 
-    if((buf_size_tx_ + tmp_str.size()) <= sess_buffer_tx_.size())
+    if((buf_tx_data_size_ + tmp_str.size()) <= buf_tx_.size())
     {
-      buf_size_tx_ += sess_buffer_tx_.set_string(buf_size_tx_, tmp_str, true);
+      buf_tx_data_size_ += buf_tx_.set_string(buf_tx_data_size_, tmp_str, true);
     }
   }
   else // Never do it!
   {
-    assert(false);
+    assert(false); // Wrong use push_data() - Does't support pushed type
   }
 }
 

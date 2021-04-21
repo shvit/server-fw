@@ -66,7 +66,7 @@ Base::Base():
 
 // -----------------------------------------------------------------------------
 
-Base::Base(Base & src):
+Base::Base(const Base & src):
     settings_{src.settings_}
 {
 }

@@ -29,7 +29,7 @@ Srv::Srv():
     Base(),
     sessions_{},
     socket_{0},
-    buffer_(0x10000, 0),
+    buffer_(2000U, 0),
     stop_{false}
 {
 }
@@ -159,32 +159,33 @@ void Srv::main_loop()
               sockaddr_to_str(client_addr.cbegin(),
                               client_addr.cbegin()+client_addr_size));
 
-      auto new_session = sessions_.emplace(sessions_.end());
-
-      tftp::Session & sss = std::get<0>(* new_session);
+      tftp::Session sss(this->settings_);
 
       {
         this->begin_shared();
-        sss.settings_ = settings_;
+        //sss.settings_ = settings_;
       }
 
-      //bool ret =
-      sss.prepare(
+      bool ret = sss.prepare(
           client_addr,
           (size_t)client_addr_size,
           buffer_,
           (size_t)bsize);
 
-      //ret = ret && sss.init();
+      if(ret) ret = sss.init();
+        else L_ERR("Failed prepare session");
 
-      sss.init();
+      if(ret)
+      {
+        auto new_session = sessions_.emplace(sessions_.end());
 
-      //sss.init(client_addr.cbegin(),
-      //         client_addr.cbegin() + client_addr_size,
-      //         buffer_.cbegin(),
-      //         buffer_.cbegin() + bsize);
+        std::get<0>(* new_session) = std::move(sss);
 
-      std::get<1>(* new_session) = sss.run_thread();
+        std::get<1>(* new_session) = std::thread(
+            & tftp::Session::run,
+            & std::get<0>(* new_session));
+
+      }
     }
     else
     if(bsize > 0)
@@ -199,7 +200,7 @@ void Srv::main_loop()
     usleep(1000);
     for(auto it = sessions_.begin(); it != sessions_.end(); ++it)
     {
-      if(std::get<0>(* it).finished_)
+      if(std::get<0>(* it).is_finished())
       {
         std::get<1>(* it).join();
         sessions_.erase(it);
