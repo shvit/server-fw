@@ -30,21 +30,19 @@ Session::Session():
     Base(),
     client_{},
     socket_{0},
-    retransmit_count_{3U},
     buf_tx_(0xFFFFU, 0),
     buf_rx_(0xFFFFU, 0),
-    stage_{0},
-    buf_tx_data_size_{0},
+    stage_{0U},
+    buf_tx_data_size_{0U},
     oper_time_{0},
     oper_tx_count_{0},
     oper_wait_{false}, // fist stage is TX
-    oper_last_block_{0},
+    oper_last_block_{0U},
     stop_{false},
     finished_{false},
     manager_{DataMgr{}},
-    error_code_{0},
+    error_code_{0U},
     error_message_{""},
-
     opt_{}
 {
 }
@@ -74,7 +72,6 @@ auto Session::operator=(Session && val) -> Session &
   {
     std::swap(client_, val.client_);
     socket_        = val.socket_;
-    retransmit_count_   = val.retransmit_count_;
     std::swap(buf_tx_, val.buf_tx_);
     std::swap(buf_rx_, val.buf_rx_);
     stage_         = val.stage_;
@@ -497,9 +494,9 @@ bool Session::transmit_no_wait()
   {
     if(!oper_tx_count_ || !timeout_pass()) // first try send or time is out
     {
-      if(oper_tx_count_ > retransmit_count_)
+      if(oper_tx_count_ > get_retransmit_count())
       {
-        L_ERR("Retransmit count exceeded ("+std::to_string(retransmit_count_)+
+        L_ERR("Retransmit count exceeded ("+std::to_string(get_retransmit_count())+
                 "). Break!");
         ret=false;
       }
@@ -594,8 +591,8 @@ bool Session::receive_no_wait()
       switch(rx_op)
       {
         case 4U: // ACK --------------------------------------------------------
-          rx_msg.append(": ACK blk ").
-                 append(std::to_string(rx_blk));
+          rx_msg.append(": ACK blk ").append(std::to_string(rx_blk));
+
           if((opt_.request_type() == SrvReq::read) &&
              (rx_blk == blk_num_local()))
           {
@@ -612,10 +609,9 @@ bool Session::receive_no_wait()
           }
           break;
         case 3U: // DATA -------------------------------------------------------
-          rx_msg.append(": DATA blk ").
-                 append(std::to_string(rx_blk)).
-                 append("; data size ").
-                 append(std::to_string(rx_data_size));
+          rx_msg.append(": DATA blk ").append(std::to_string(rx_blk)).
+                 append("; data size ").append(std::to_string(rx_data_size));
+
           if(bool is_next = (rx_blk == blk_num_local(1U));
               (opt_.request_type() == SrvReq::write) &&
               ((rx_blk == blk_num_local(0U)) || // current blk

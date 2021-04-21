@@ -291,6 +291,10 @@ public:
                       std::string_view role,
                       uint16_t         dialect);
 
+  void set_retransmit_count(const uint16_t & val);
+
+  auto get_retransmit_count() const -> const uint16_t &;
+
   /** \brief Get: Firebird access information
    *
    *  Use mutex shared mode

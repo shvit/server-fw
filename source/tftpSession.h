@@ -35,18 +35,16 @@ namespace tftp
  *
  *  Class for emulate p2p UDP/IP session when request received by server.
  *  For use class:
- *  - Assign global settings.
- *  - Initialize with init(client socket address, recived packet).
- *  - execute run() for one instance or run_thread() for multi-thread
+ *  - Assign settings.
+ *  - Initialize
+ *  - Run main loop run()
  *
  */
-
 class Session: public Base
 {
 protected:
   SmBuf        client_;           ///< Client socket address buffer
   int          socket_;           ///< Socket
-  uint16_t     retransmit_count_; ///< Retransmitt count
   SmBuf        buf_tx_;           ///< Session buffer for TX operations
   SmBuf        buf_rx_;           ///< Session buffer for RX operations
   size_t       stage_;            ///< Stage

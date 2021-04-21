@@ -27,14 +27,6 @@ namespace tftp
 
 // -----------------------------------------------------------------------------
 
-// constants
-constexpr uint16_t    default_tftp_port        = 69;
-constexpr int         default_tftp_syslog_lvl  = 6;
-constexpr uint16_t    default_fb_dialect       = 3;
-constexpr std::string_view default_fb_lib_name = "libfbclient.so";
-
-// -----------------------------------------------------------------------------
-
 class Base;
 
 class Srv;

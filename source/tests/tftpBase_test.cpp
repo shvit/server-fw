@@ -155,7 +155,13 @@ UNIT_TEST_CASE_BEGIN(base_load_options, "Class 'tftp::Base' - options")
     TEST_CHECK_TRUE(u1.data()  != b.settings_->user.data());
     TEST_CHECK_TRUE(p1.data()  != b.settings_->pass.data());
     TEST_CHECK_TRUE(r1.data()  != b.settings_->role.data());
-  }
+
+    TEST_CHECK_TRUE(b.settings_->retransmit_count_ == tftp::constants::default_retransmit_count);
+    TEST_CHECK_TRUE(b.get_retransmit_count() == tftp::constants::default_retransmit_count);
+    b.set_retransmit_count(100U);
+    TEST_CHECK_TRUE(b.get_retransmit_count() == 100U);
+
+}
 
   // 2
   START_ITER("load options");
@@ -176,7 +182,8 @@ UNIT_TEST_CASE_BEGIN(base_load_options, "Class 'tftp::Base' - options")
       "--fb-role", "none",
       "--fb-dialect", "3",
       "--lib-dir", "/tmp/libs",
-      "--lib-name", "fbclient"
+      "--lib-name", "fbclient",
+      "--retransmit", "59"
     };
 
     tst_Base b;
@@ -238,6 +245,8 @@ UNIT_TEST_CASE_BEGIN(base_load_options, "Class 'tftp::Base' - options")
       TEST_CHECK_TRUE(p1.data()  != b.settings_->pass.data());
       TEST_CHECK_TRUE(r1.data()  != b.settings_->role.data());
     }
+    TEST_CHECK_TRUE(b.settings_->retransmit_count_ == 59U);
+    TEST_CHECK_TRUE(b.get_retransmit_count() == 59U);
 
     // 3
     START_ITER("set options");

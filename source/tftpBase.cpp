@@ -33,11 +33,11 @@ Base::Base():
     settings_{Settings::create()}
 {
   local_base_as_inet().sin_family = AF_INET;
-  local_base_as_inet().sin_port   = htobe16(default_tftp_port);
+  local_base_as_inet().sin_port   = htobe16(constants::default_tftp_port);
 
-  settings_->lib_name.assign(default_fb_lib_name);
-  settings_->dialect = default_fb_dialect;
-  settings_->use_syslog = default_tftp_syslog_lvl;
+  settings_->lib_name.assign(constants::default_fb_lib_name);
+  settings_->dialect = constants::default_fb_dialect;
+  settings_->use_syslog = constants::default_tftp_syslog_lvl;
 
   // Get system library path from current maps
   std::ifstream maps;
@@ -250,6 +250,18 @@ void Base::set_connection(
 
 // -----------------------------------------------------------------------------
 
+void Base::set_retransmit_count(const uint16_t & val)
+{
+  settings_->retransmit_count_ = val;
+}
+
+auto Base::get_retransmit_count() const -> const uint16_t &
+{
+  return settings_->retransmit_count_;
+}
+
+// -----------------------------------------------------------------------------
+
 auto Base::get_connection() const
   -> std::tuple<std::string,
                 std::string,
@@ -411,7 +423,7 @@ void Base::set_local_base(std::string_view addr)
       {
         in_port_t port=0;
         try { port = (std::stoul(src) & 0x0000FFFFU); } catch (...) {};
-        if(!port) port = default_tftp_port;
+        if(!port) port = constants::default_tftp_port;
         return htobe16(port);
       };
 
@@ -421,7 +433,7 @@ void Base::set_local_base(std::string_view addr)
     local_base_as_inet().sin_family = AF_INET;
 
     // port
-    local_base_as_inet().sin_port = htobe16(default_tftp_port);
+    local_base_as_inet().sin_port = htobe16(constants::default_tftp_port);
     if(std::string port_s{sm4[5].str()}; port_s.size())
     {
       local_base_as_inet().sin_port = str_to_port_be(port_s);
@@ -450,7 +462,7 @@ void Base::set_local_base(std::string_view addr)
     local_base_as_inet6().sin6_family = AF_INET6;
 
     // port
-    local_base_as_inet6().sin6_port = htobe16(default_tftp_port);
+    local_base_as_inet6().sin6_port = htobe16(constants::default_tftp_port);
     if(std::string port_s{sm6[2].str()}; port_s.size())
     {
       local_base_as_inet6().sin6_port = str_to_port_be(port_s);
@@ -497,6 +509,7 @@ bool Base::load_options(int argc, char* argv[])
       { "fb-role",    required_argument, NULL,  0  }, // 11
       { "fb-dialect", required_argument, NULL,  0  }, // 12
       { "daemon",           no_argument, NULL,  0  }, // 13
+      { "retransmit", required_argument, NULL,  0  }, // 14
       { NULL,               no_argument, NULL,  0  }  // always last
   };
 
@@ -572,9 +585,20 @@ bool Base::load_options(int argc, char* argv[])
       case 13: // --daemon
         set_is_daemon(true);
         break;
-      } // case
+      case 14: // --retransmit
+        if(optarg)
+        {
+          try
+          {
+            uint16_t rtr = (std::stoul(optarg) & 0xFFFFU);
+            set_retransmit_count(rtr);
+          } catch (...) { };
+        }
+        break;
+
+      } // case (for long option)
       break;
-    } // case
+    } // switch
   }
 
   return ret;
@@ -593,20 +617,21 @@ void Base::out_help(std::ostream & stream, std::string_view app) const
   << "Possible options:" << std::endl
   << "  {-h|-H|-?|--help} Show help message" << std::endl
   << "  {-l|-L|--ip|--listen} {<IPv4>|[<IPv6>]}[:port] Listening address and port" << std::endl
-  << "    (default 0.0.0.0:" << default_tftp_port << ")" << std::endl
+  << "    (default 0.0.0.0:" << constants::default_tftp_port << ")" << std::endl
   << "    Sample IPv4: 192.168.0.1:69" << std::endl
   << "    Sample IPv6: [::1]:69" << std::endl
-  << "  {-s|-S|--syslog} <0...7> SYSLOG level flooding (default " << default_tftp_syslog_lvl << ")" << std::endl
+  << "  {-s|-S|--syslog} <0...7> SYSLOG level flooding (default " << constants::default_tftp_syslog_lvl << ")" << std::endl
   << "  --lib-dir <directory> System library directory" << std::endl
-  << "  --lib-name <name> Firebird library filename (default " << default_fb_lib_name << ")" << std::endl
+  << "  --lib-name <name> Firebird library filename (default " << constants::default_fb_lib_name << ")" << std::endl
   << "  --root-dir <directory> Server root directory" << std::endl
   << "  --search <directory> Directory for recursive search by md5 sum (may be much)" << std::endl
   << "  --fb-db <database> Firebird access database name" << std::endl
   << "  --fb-user <username> Firebird access user name" << std::endl
   << "  --fb-pass <password> Firebird access password" << std::endl
   << "  --fb-role <role> Firebird access role" << std::endl
-  << "  --fb-dialect <1...3> Firebird server dialect (default " << default_fb_dialect << ")" << std::endl
-  << "  --daemon Run as daemon" << std::endl;
+  << "  --fb-dialect <1...3> Firebird server dialect (default " << constants::default_fb_dialect << ")" << std::endl
+  << "  --daemon Run as daemon" << std::endl
+  << "  --retransmit <N> Maximum retransmit count if fail" << std::endl;
 }
 
 // -----------------------------------------------------------------------------
