@@ -28,14 +28,8 @@ namespace tftp
 
 Session::Session():
     Base(),
-    //request_type_{SrvReq::unknown},
-    //filename_{""},
-    //transfer_mode_{TransfMode::unknown},
     client_{},
     socket_{0},
-    //opt_blksize_{false, 512U},
-    //opt_timeout_{false, 5U},
-    //opt_tsize_{false, 0U},
     re_tx_count_{3},
     sess_buffer_tx_(0xFFFFU, 0),
     sess_buffer_rx_(0xFFFFU, 0),
@@ -67,14 +61,8 @@ auto Session::operator=(Session && val) -> Session &
 {
   if(this != & val)
   {
-    //request_type_  = val.request_type_;
-    //filename_      = val.filename_;
-    //transfer_mode_ = val.transfer_mode_;
     std::swap(client_, val.client_);
     socket_        = val.socket_;
-    //opt_blksize_   = val.opt_blksize_;
-    //opt_timeout_   = val.opt_timeout_;
-    //opt_tsize_     = val.opt_tsize_;
     re_tx_count_   = val.re_tx_count_;
     std::swap(sess_buffer_tx_, val.sess_buffer_tx_);
     std::swap(sess_buffer_rx_, val.sess_buffer_rx_);
@@ -90,62 +78,16 @@ auto Session::operator=(Session && val) -> Session &
     error_code_      = val.error_code_;
     std::swap(error_message_, val.error_message_);
 
-    //std::swap(opt_, val.opt_);
+    std::swap(opt_, val.opt_);
   }
 
   return *this;
 }
 
 // -----------------------------------------------------------------------------
-/*
-auto Session::opt(std::string_view opt_name) const -> OptionInt
-{
-  OptionInt ret;
-  std::string key{opt_name};
-  do_lower(key);
-  if(auto it=opt_.find(key); it != opt_.end()) ret = it->second;
-
-  return ret;
-}
-
-bool Session::opt_has(std::string_view opt_name) const
-{
-  std::string key{opt_name};
-  do_lower(key);
-  return opt_.find(key) != opt_.end();
-}
-
-void Session::opt_set(std::string_view opt_name, const int & opt_val)
-{
-  std::string key{opt_name};
-  do_lower(key);
-  opt_[key] = opt_val;
-}
-*/
-// -----------------------------------------------------------------------------
-
-auto Session::get_buf_rx_u16_ntoh(const size_t offset)
-{
-  return get_buf_item_ntoh<uint16_t>(
-      sess_buffer_rx_,
-      offset * sizeof(uint16_t));
-}
-
-// -----------------------------------------------------------------------------
-
-void Session::set_buf_tx_u16_hton(const size_t offset, const uint16_t value)
-{
-  buf_size_tx_ += set_buf_item_hton<uint16_t>(
-      sess_buffer_tx_,
-      offset * sizeof(uint16_t),
-      value);
-}
-
-// -----------------------------------------------------------------------------
 
 uint16_t Session::block_size() const
 {
-  //return std::get<1>(opt_blksize_);
   return opt_.blksize();
 }
 
@@ -153,8 +95,6 @@ uint16_t Session::block_size() const
 
 bool Session::timeout_pass(const time_t gandicap) const
 {
-  //return (time(nullptr) - oper_time_) < (std::get<1>(opt_timeout_) + gandicap);
-
   return (time(nullptr) - oper_time_) < (opt_.timeout() + gandicap);
 }
 
@@ -170,50 +110,6 @@ void Session::timeout_reset()
 uint16_t Session::blk_num_local(const uint16_t step) const
 {
   return ((stage_ + step) & 0x000000000000FFFFU);
-}
-
-// -----------------------------------------------------------------------------
-
-bool Session::socket_open()
-{
-  L_DBG("Init socket");
-  {
-    begin_shared();
-    socket_ = socket(local_base_as_inet().sin_family, SOCK_DGRAM, 0);
-  }
-  if (socket_< 0)
-  {
-    Buf err_msg_buf(1024, 0);
-    L_ERR("socket() error: "+
-            std::string{strerror_r(errno,
-                                   err_msg_buf.data(),
-                                   err_msg_buf.size())});
-    return false;
-  };
-
-  L_DBG("Bind socket");
-  int res;
-  {
-    begin_shared();
-    res = bind(
-        socket_,
-        (struct sockaddr *) settings_->local_base_.data(),
-        settings_->local_base_.size());
-  }
-
-  if(res)
-  {
-    Buf err_msg_buf(1024, 0);
-    L_ERR("bind() error: "+
-            std::string{strerror_r(errno,
-                                   err_msg_buf.data(),
-                                   err_msg_buf.size())});
-    close(socket_);
-    return false;
-  }
-
-  L_DBG("Socket opened successful");
-  return true;
 }
 
 // -----------------------------------------------------------------------------
@@ -285,6 +181,8 @@ bool Session::init()
   {
     auto lk = begin_shared();
     family = local_base_as_inet().sin_family;
+
+    local_base_as_inet().sin_port = 0;
   }
 
   // Socket open
@@ -347,235 +245,33 @@ bool Session::init()
 
 // -----------------------------------------------------------------------------
 
-bool Session::init(
-    const Buf::const_iterator addr_begin,
-    const Buf::const_iterator addr_end,
-    const Buf::const_iterator buf_begin,
-    const Buf::const_iterator buf_end)
-{
-  L_INF("Session initialize started");
-
-  client_.assign(addr_begin, addr_end);
-
-  bool ret = client_.size() >= sizeof(struct sockaddr_in); // miminal length
-
-  if(ret)
-  {
-    local_base_as_inet().sin_port = 0; // with new automatic port number
-
-    //request_type_=(SrvReq) be16toh(*((uint16_t *) & *buf_begin));
-    //L_INF("Recognize request type '"+
-    //        std::string(to_string(request_type_))+"'");
-
-    uint16_t stage = 0;
-    auto it_beg = buf_begin + 2U; // 2 Bytes
-    std::string opt_key;
-    for(auto iter = it_beg; iter != buf_end; ++iter)
-    {
-      if(*iter == 0)
-      {
-        switch(++stage)
-        {
-          case 1: // filename
-            //if(iter != it_beg) filename_.assign(it_beg, iter);
-            //if(filename_.size())
-            //{
-            //  L_INF("Recognize filename '"+filename_+"'");
-            //  std::regex regex_filename("^(.*\\/)?(.*)$");
-            //  std::smatch sm_filename;
-            //  if(std::regex_search(filename_, sm_filename, regex_filename) &&
-            //     (sm_filename.size() == 3) &&
-            //     (sm_filename[1].str().size()))
-            //  {
-            //    filename_ = sm_filename[2].str();
-            //    L_WRN("Strip directory in filename; new filename is '"+
-            //            filename_+"'");
-            //  }
-            //}
-            break;
-          case 2: // mode
-            //if(iter != it_beg)
-            //{
-            //  std::string mode{it_beg, iter};
-
-            //  if(mode == to_string(TransfMode::octet))
-            //  {
-            //    transfer_mode_=TransfMode::octet;
-            //    L_INF("Recognize transfer mode "+mode+"'");
-            //  }
-            //  else
-            //  if(mode == to_string(TransfMode::netascii))
-            //  {
-            //    transfer_mode_=TransfMode::netascii;
-            //    L_INF("Recognize transfer mode "+mode+"'");
-            //  }
-            //  else
-            //  if(mode == to_string(TransfMode::binary))
-            //  {
-            //    transfer_mode_=TransfMode::octet;
-            //    L_INF("Change mode 'binary' to mode 'octet'");
-            //  }
-            //  else
-            //  {
-            //    L_WRN("Unknown transfer mode '"+mode+"'");
-            //  }
-            //}
-            break;
-          default: // next options
-            if(stage % 2) // for even stage - keys
-            {
-              if(iter != it_beg) opt_key.assign(it_beg, iter);
-                            else opt_key.clear();
-            }
-            else // for odd stage - values
-            {
-              if(opt_key.size())
-              {
-                std::string opt_val{it_beg, iter};
-/*
-#define IF_KEY_EQUAL_INT(NAME) \
-    if(opt_key== #NAME)\
-    {\
-      std::tuple_element_t<1, decltype(opt_##NAME##_)> tmp_val=0;\
-      try\
-      {\
-        tmp_val = std::stoi(opt_val);\
-        std::get<0>(opt_##NAME##_) = true;\
-      }\
-      catch (std::invalid_argument) \
-      {\
-        std::get<0>(opt_##NAME##_) = false;\
-        L_WRN("Invalid value option "+opt_key+"='"+opt_val+"'");\
-      }\
-      catch (std::out_of_range    )\
-      {\
-        std::get<0>(opt_##NAME##_) = false;\
-        L_WRN("Out of range value option "+opt_key+"='"+opt_val+"'");\
-      }\
-      if(std::get<0>(opt_##NAME##_)) std::get<1>(opt_##NAME##_) = tmp_val;\
-    }
-
-                //IF_KEY_EQUAL_INT(blksize)
-                //else
-                //IF_KEY_EQUAL_INT(timeout)
-                //else
-                //IF_KEY_EQUAL_INT(tsize)
-                //else
-                //{
-                //  L_WRN("Unknown option '"+opt_key+"'");\
-                //}
-
-                #undef IF_KEY_EQUAL_INT
-*/
-              }
-              else
-              {
-                L_WRN("Option name not exist, but value present");\
-              }
-            }
-            break;
-        } // switch stage
-        it_beg = iter + 1;
-      }
-    } // for loop
-  }
-  ret = ret &&
-        (opt_.request_type() != SrvReq::unknown) &&
-        opt_.filename().size() && block_size();
-
-  // alloc session buffer
-  if(ret)
-  {
-    size_t sess_buf_size_ = block_size() + 4;
-    if(sess_buf_size_ < 2048) sess_buf_size_= 2048;
-    sess_buffer_tx_.assign(sess_buf_size_, 0);
-    ret = (sess_buffer_tx_.size() == sess_buf_size_);
-  }
-
-  // Socket open
-  if(ret)
-  {
-    ret = socket_open();
-  }
-
-  // Data manager init
-  if(ret)
-  {
-    {
-      manager_.settings_ = settings_;
-      manager_.set_error_ = std::bind(
-          & Session::set_error_if_first,
-          this,
-          std::placeholders::_1,
-          std::placeholders::_2);
-    }
-
-    ret = manager_.init(opt_.request_type(), opt_.filename());
-  }
-
-
-  L_INF("Session initialise is "+(ret ? "SUCCESSFUL" : "FAIL"));
-  return ret;
-}
-
-// -----------------------------------------------------------------------------
-
-void Session::check_buffer_tx_size(const size_t size_append)
-{
-  if((buf_size_tx_+size_append) > sess_buffer_tx_.size())
-  {
-    sess_buffer_tx_.resize(buf_size_tx_+size_append);
-    L_WRN("Deprecated buffer resize to "+
-          std::to_string(sess_buffer_tx_.size())+" bytes");
-  }
-}
-
-// -----------------------------------------------------------------------------
-
-auto Session::push_buffer_string(std::string_view str) -> ssize_t
-{
-  ssize_t ret_size = sess_buffer_tx_.set_string(buf_size_tx_, str, true);
-
-  // ssize_t ret_size = set_buf_cont_str(
-//      sess_buffer_tx_,
-//      buf_size_tx_,
-//      str,
-//      true);
-
-  assert(ret_size >= 0);
-
-  buf_size_tx_ += ret_size;
-
-  return ret_size;
-}
-
-// -----------------------------------------------------------------------------
-
 void Session::construct_opt_reply()
 {
   buf_size_tx_=0;
 
-  check_buffer_tx_size(2);
-  set_buf_tx_u16_hton(0, 6U);
+  push_data((uint16_t)6U);
 
   if(opt_.was_set_blksize())
   {
-    L_DBG("Find option 'blksize' for confirm");
-    push_buffer_string(constants::name_blksize);
-    push_buffer_string(std::to_string(opt_.blksize()));
-
+    push_data(constants::name_blksize);
+    push_data(std::to_string(opt_.blksize()));
   }
+
   if(opt_.was_set_timeout())
   {
-    L_DBG("Find option 'timeout' for confirm");
-    push_buffer_string(constants::name_timeout);
-    push_buffer_string(std::to_string(opt_.timeout()));
+    push_data(constants::name_timeout);
+    push_data(std::to_string(opt_.timeout()));
   }
+
   if(opt_.was_set_tsize())
   {
-    L_DBG("Find option 'tsize' for confirm");
-    push_buffer_string(constants::name_tsize);
-    push_buffer_string(std::to_string(opt_.tsize()));
+    push_data(constants::name_tsize);
+    push_data(std::to_string(opt_.tsize()));
+  }
+  if(opt_.was_set_windowsize())
+  {
+    push_data(constants::name_windowsize);
+    push_data(std::to_string(opt_.windowsize()));
   }
 
   if(buf_size_tx_ < 4)
@@ -596,11 +292,9 @@ void Session::construct_error(
 {
   buf_size_tx_=0;
 
-  check_buffer_tx_size(2);
-  set_buf_tx_u16_hton(0, 5);
-  set_buf_tx_u16_hton(1, e_code);
-
-  push_buffer_string(e_msg);
+  push_data((uint16_t)5U);
+  push_data(e_code);
+  push_data(e_msg);
 
   L_DBG("Construct error pkt code "+std::to_string(e_code)+
         " '"+std::string(e_msg)+"'; "+std::to_string(buf_size_tx_)+
@@ -620,13 +314,13 @@ void Session::construct_data()
 {
   buf_size_tx_ = 0;
 
-  set_buf_tx_u16_hton(0, 3);
-  set_buf_tx_u16_hton(1, blk_num_local());
+  push_data((uint16_t)3U);
+  push_data(blk_num_local());
 
   if(ssize_t tx_data_size = manager_.tx(
          sess_buffer_tx_.begin() + buf_size_tx_,
          sess_buffer_tx_.begin() + buf_size_tx_ + block_size(),
-         (stage_-1) * block_size());
+         (stage_-1U) * block_size());
      tx_data_size >= 0)
   {
     buf_size_tx_ += tx_data_size;
@@ -647,12 +341,11 @@ void Session::construct_data()
 void Session::construct_ack()
 {
   buf_size_tx_ = 0;
-  auto blk = blk_num_local();
 
-  set_buf_tx_u16_hton(0, 4);
-  set_buf_tx_u16_hton(1, blk);
+  push_data((uint16_t)4U);
+  push_data(blk_num_local());
 
-  L_DBG("Construct ACK pkt block "+std::to_string(blk));
+  L_DBG("Construct ACK pkt block "+std::to_string(blk_num_local()));
 }
 
 // -----------------------------------------------------------------------------
@@ -859,7 +552,7 @@ bool Session::receive_no_wait()
   bool ret = true;
   std::string rx_msg;
 
-  decltype(client_) rx_client_sa(sizeof(struct sockaddr_in6), 0);
+  SmBuf rx_client_sa(sizeof(struct sockaddr_in6), 0);
   socklen_t  rx_client_size = rx_client_sa.size();
 
   ssize_t rx_result_size = recvfrom(socket_,
@@ -890,13 +583,17 @@ bool Session::receive_no_wait()
 
     if(rx_result_size > 3) // minimal tftp pkt size 4 byte
     {
-      switch(get_buf_rx_u16_ntoh(0))
+      //switch(get_buf_rx_u16_ntoh(0))
+      uint16_t rx_op  = sess_buffer_rx_.get_ntoh<uint16_t>(0U);
+      uint16_t rx_blk =  sess_buffer_rx_.get_ntoh<uint16_t>(2U);
+
+      switch(rx_op)
       {
         case 4U: // ACK --------------------------------------------------------
           rx_msg.append(": ACK blk ").
-                 append(std::to_string(get_buf_rx_u16_ntoh(1)));
+                 append(std::to_string(rx_blk));
           if((opt_.request_type() == SrvReq::read) &&
-             (get_buf_rx_u16_ntoh(1) == blk_num_local()))
+             (rx_blk == blk_num_local()))
           {
             L_DBG("OK! "+rx_msg);
             if(oper_last_block_) ret=false; // GOOD EXIT at end
@@ -912,12 +609,12 @@ bool Session::receive_no_wait()
           break;
         case 3U: // DATA -------------------------------------------------------
           rx_msg.append(": DATA blk ").
-                 append(std::to_string(get_buf_rx_u16_ntoh(1))).
+                 append(std::to_string(rx_blk)).
                  append("; data size ").
                  append(std::to_string(rx_result_size));
-          if(bool is_next = (get_buf_rx_u16_ntoh(1) == blk_num_local(1U));
+          if(bool is_next = (rx_blk == blk_num_local(1U));
               (opt_.request_type() == SrvReq::write) &&
-              ((get_buf_rx_u16_ntoh(1) == blk_num_local(0U)) || // current blk
+              ((rx_blk == blk_num_local(0U)) || // current blk
                 is_next))  // or next blk
           {
             L_DBG("OK! "+rx_msg);
@@ -952,7 +649,7 @@ bool Session::receive_no_wait()
           }
           break;
         case 5U: // ERROR ------------------------------------------------------
-          L_ERR(": ERROR #"+std::to_string(get_buf_rx_u16_ntoh(1)) + " '"+
+          L_ERR(": ERROR #"+std::to_string(rx_blk) + " '"+
                 std::string(sess_buffer_rx_.cbegin()+2*sizeof(uint16_t),
                             sess_buffer_rx_.cend())+"'"+
                 rx_msg);

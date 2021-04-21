@@ -48,14 +48,8 @@ namespace tftp
 class Session: public Base
 {
 protected:
-  //SrvReq       request_type_;    ///< Server request
-  //std::string  filename_;        ///< Requested filename
-  //TransfMode   transfer_mode_;   ///< Transfer mode
   SmBuf        client_;          ///< Client socket address buffer
   int          socket_;          ///< Socket
-  //OptInt       opt_blksize_;     ///< Option 'blksize'
-  //OptInt       opt_timeout_;     ///< Option 'timeout'
-  //OptInt       opt_tsize_;       ///< Option 'tsize'
   uint16_t     re_tx_count_;     ///< Retransmitt count
   SmBuf        sess_buffer_tx_;  ///< Session buffer for TX operations
   SmBuf        sess_buffer_rx_;  ///< Session buffer for RX operations
@@ -72,42 +66,6 @@ protected:
   std::string  error_message_;   ///< First error info - message
 
   Options      opt_;
-
-  //bool opt_has(std::string_view opt_name) const;
-  //auto opt(std::string_view opt_name) const -> OptionInt;
-  //void opt_set(std::string_view opt_name, const int & opt_val);
-
-  /** \brief Get uint16_t from RX buffer with offset
-   *
-   *  Network byte order value read as host order value
-   *  \param [in] offset Index array of uint16_t values
-   *  \return Extracted value (host byte order)
-   */
-  auto get_buf_rx_u16_ntoh(const size_t offset);
-
-  /** \brief Set uint16_t to TX buffer with offset
-   *
-   *  Host byte order value write as network order value
-   *  \param [in] offset Index array of uint16_t values
-   *  \param [in] value Value (host byte order) to write buffer
-   */
-  void set_buf_tx_u16_hton(const size_t offset, const uint16_t value);
-
-
-  /** \brief Check size for append to buffer and resize if need
-   *
-   *  \param [in] size_append New size for append
-   */
-  void check_buffer_tx_size(const size_t size_append);
-
-  /** \brief Append string to buffer
-   *
-   *  Append zero at the end
-   *  If string length is zero do nothing
-   *  \param [in] str String value for add
-   *  \return Size added data to buffer
-   */
-  auto push_buffer_string(std::string_view str) -> ssize_t;
 
   /** \brief Construct option acknowledge
    *
@@ -170,10 +128,6 @@ protected:
    */
   uint16_t blk_num_local(const uint16_t step = 0) const;
 
-  /** \brief Open session socket and tune
-   */
-  bool socket_open();
-
   /** \brief Close session socket
    */
   void socket_close();
@@ -229,6 +183,9 @@ protected:
    */
   bool receive_no_wait();
 
+  template<typename T>
+  void push_data(T && value);
+
 public:
   /** \brief Constructor
    */
@@ -254,10 +211,10 @@ public:
    *  \param [in] buf_end UDP request data packet - end buffer iterator
    *  \return True if initialize success, else - false
    */
-  bool init(const Buf::const_iterator addr_begin,
-            const Buf::const_iterator addr_end,
-            const Buf::const_iterator buf_begin,
-            const Buf::const_iterator buf_end);
+  //bool init(const Buf::const_iterator addr_begin,
+  //          const Buf::const_iterator addr_end,
+  //          const Buf::const_iterator buf_begin,
+  //          const Buf::const_iterator buf_end);
 
   bool prepare(
       const SmBuf  & remote_addr,
@@ -279,6 +236,34 @@ public:
 
   friend class Srv;
 };
+
+// -----------------------------------------------------------------------------
+
+template<typename T>
+void Session::push_data(T && value)
+{
+  if constexpr (std::is_integral_v<T>)
+  {
+    if((buf_size_tx_ + sizeof(T)) <= sess_buffer_tx_.size())
+    {
+      buf_size_tx_ += sess_buffer_tx_.set_hton(buf_size_tx_, value);
+    }
+  }
+  else
+  if constexpr (std::is_constructible_v<std::string, T>)
+  {
+    std::string tmp_str{std::forward<T>(value)};
+
+    if((buf_size_tx_ + tmp_str.size()) <= sess_buffer_tx_.size())
+    {
+      buf_size_tx_ += sess_buffer_tx_.set_string(buf_size_tx_, tmp_str, true);
+    }
+  }
+  else // Never do it!
+  {
+    assert(false);
+  }
+}
 
 // -----------------------------------------------------------------------------
 

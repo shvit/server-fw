@@ -177,22 +177,22 @@ void Srv::main_loop()
 
       //ret = ret && sss.init();
 
-      //sss.init();
+      sss.init();
 
-      sss.init(client_addr.cbegin(),
-               client_addr.cbegin() + client_addr_size,
-               buffer_.cbegin(),
-               buffer_.cbegin() + bsize);
+      //sss.init(client_addr.cbegin(),
+      //         client_addr.cbegin() + client_addr_size,
+      //         buffer_.cbegin(),
+      //         buffer_.cbegin() + bsize);
 
       std::get<1>(* new_session) = sss.run_thread();
     }
     else
     if(bsize > 0)
     {
-      L_WRN("Receive fake initial pkt (data size "+std::to_string(bsize)+
-              " bytes) from "+
-              sockaddr_to_str(client_addr.cbegin(),
-                              client_addr.cbegin()+client_addr_size));
+      L_WRN("Receive fake initial pkt (data size " + std::to_string(bsize) +
+            " bytes) from " +
+            sockaddr_to_str(client_addr.cbegin(),
+                            client_addr.cbegin() + client_addr_size));
     }
 
     // check finished

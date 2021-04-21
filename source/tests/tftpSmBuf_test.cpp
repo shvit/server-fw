@@ -118,7 +118,8 @@ UNIT_TEST_CASE_BEGIN(sm_buf_get_set, "Check methods: set/get ntoh/raw")
   TEST_CHECK_TRUE(cb.get_ntoh< int64_t>(0) == ( int64_t)0x08090a0b0c0d0e0f);
 
   b.set_hton(0, (int16_t)0x1234);
-  TEST_CHECK_TRUE(b.get_ntoh< int16_t>(0) == ( int16_t)0x1234);
+  TEST_CHECK_TRUE(b.get_ntoh< int16_t>(0U) == ( int16_t)0x1234);
+  TEST_CHECK_TRUE(b.get_ntoh< int16_t>(2U) == ( int16_t)0x0a0b);
   b.set_hton(2, (int16_t)0x5678);
   TEST_CHECK_TRUE(b.get_ntoh< int32_t>(0) == ( int32_t)0x12345678);
   b.set_hton(4, (int32_t)0x90abcdef);
