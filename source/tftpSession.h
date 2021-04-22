@@ -24,6 +24,7 @@
 #include "tftpDataMgr.h"
 #include "tftpSmBuf.h"
 #include "tftpOptions.h"
+#include "tftpAddr.h"
 
 namespace tftp
 {
@@ -43,7 +44,7 @@ namespace tftp
 class Session: public Base
 {
 protected:
-  SmBuf        client_;           ///< Client socket address buffer
+  Addr         cl_addr_;           ///< Client socket address buffer
   int          socket_;           ///< Socket
   SmBuf        buf_tx_;           ///< Session buffer for TX operations
   SmBuf        buf_rx_;           ///< Session buffer for RX operations

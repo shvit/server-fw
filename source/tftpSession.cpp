@@ -28,7 +28,7 @@ namespace tftp
 
 Session::Session():
     Base(),
-    client_{},
+    cl_addr_{},
     socket_{0},
     buf_tx_(0xFFFFU, 0),
     buf_rx_(0xFFFFU, 0),
@@ -70,7 +70,7 @@ auto Session::operator=(Session && val) -> Session &
 {
   if(this != & val)
   {
-    std::swap(client_, val.client_);
+    cl_addr_ = val.cl_addr_;
     socket_        = val.socket_;
     std::swap(buf_tx_, val.buf_tx_);
     std::swap(buf_rx_, val.buf_rx_);
@@ -148,11 +148,10 @@ bool Session::prepare(
   bool ret=true;
 
   // Init client remote addr
-  client_.clear();
+  cl_addr_.clear();
   if((ret = ret && remote_addr_size >= sizeof(struct sockaddr_in)))
   {
-    client_.assign(remote_addr.cbegin(),
-                   remote_addr.cbegin()+remote_addr_size);
+    cl_addr_.assign(remote_addr.data(), remote_addr_size);
   }
   else
   {
@@ -507,8 +506,8 @@ bool Session::transmit_no_wait()
                                      buf_tx_.data(),
                                      buf_tx_data_size_,
                                      0,
-                                     (struct sockaddr *) client_.data(),
-                                     client_.size());
+                                     cl_addr_.as_sockaddr_ptr(),
+                                     cl_addr_.size());
         ++oper_tx_count_;
         timeout_reset();
         if(tx_result_size < 0) // Fail TX: error
