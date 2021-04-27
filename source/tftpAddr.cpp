@@ -10,9 +10,11 @@
  *  \version 0.1
  */
 
-#include <netinet/in.h> // sockaddr_in6
 //#include <vector>
 #include <arpa/inet.h>
+#include <type_traits>
+#include <string>
+
 
 #include "tftpAddr.h"
 
@@ -28,6 +30,13 @@ static_assert(
     (constants::max_sockaddr_size >= sizeof(struct sockaddr_in6)),
     "Fail buffer maximum size for sockaddr struct data!");
 
+// Check type data_size_ is same socklen_t
+static_assert(
+    sizeof(std::decay_t<decltype(Addr().data_size())>) == sizeof(socklen_t) &&
+    (std::is_signed_v<std::decay_t<decltype(Addr().data_size())>> ==
+     std::is_signed_v<socklen_t>),
+    "Fail type for tftp::Addr::data_size_");
+
 // -----------------------------------------------------------------------------
 
 Addr::Addr():
@@ -38,14 +47,14 @@ Addr::Addr():
 
 // -----------------------------------------------------------------------------
 
-auto Addr::data_size() noexcept -> size_t &
+auto Addr::data_size() noexcept -> decltype(data_size_) &
 {
   return data_size_;
 }
 
 // -----------------------------------------------------------------------------
 
-auto Addr::data_size() const noexcept -> const size_t &
+auto Addr::data_size() const noexcept -> const decltype(data_size_) &
 {
   return data_size_;
 }
@@ -185,6 +194,66 @@ void Addr::set_family(const uint16_t & new_family) noexcept
 void Addr::set_port(const uint16_t & new_port)
 {
   *((uint16_t *) (data() + 2U)) = htobe16(new_port);
+}
+
+// -----------------------------------------------------------------------------
+
+bool Addr::set_addr_str(const std::string & adr)
+{
+  bool ret=false;
+  switch(family())
+  {
+    case AF_INET:
+      ret = inet_pton(AF_INET, adr.c_str(), & as_in().sin_addr) > 0;
+      break;
+    case AF_INET6:
+      ret = inet_pton(AF_INET6, adr.c_str(), & as_in6().sin6_addr) > 0;
+      break;
+    default:
+      // Noithing to do
+      break;
+  }
+
+  return ret;
+}
+
+// -----------------------------------------------------------------------------
+
+bool Addr::set_port_str(const std::string & adr)
+{
+  bool ret = false;
+
+  try
+  {
+    auto new_port = std::stoul(adr);
+    new_port &= 0xFFFFUL;
+    set_port((uint16_t) new_port);
+    ret = true;
+  } catch (...) {};
+
+  return ret;
+}
+
+// -----------------------------------------------------------------------------
+
+void Addr::set_addr_in(const in_addr & adr)
+{
+  set_family(AF_INET);
+
+  std::copy((char *) & adr,
+            ((char *) & adr) + sizeof(in_addr),
+            (char *) & as_in().sin_addr);
+}
+
+// -----------------------------------------------------------------------------
+
+void Addr::set_addr_in6(const in6_addr & adr)
+{
+  set_family(AF_INET6);
+
+  std::copy((char *) & adr,
+            ((char *) & adr) + sizeof(in6_addr),
+            (char *) & as_in6().sin6_addr);
 }
 
 // -----------------------------------------------------------------------------

@@ -60,19 +60,22 @@ protected:
    */
   auto begin_unique() const -> std::unique_lock<std::shared_mutex>;
 
+  auto local_base() -> Addr &;
+  auto local_base() const -> const Addr &;
+
   /** \brief Reference to settings_->local_base as struct sockaddr_in (IPv4)
    *
    *  Check size settings_->local_base and allocate if need.
    *  Not use mutex.
    */
-  auto local_base_as_inet()  -> struct sockaddr_in &;
+  //auto local_base_as_inet_()  -> struct sockaddr_in &;
 
   /** \brief Reference to settings_->local_base as struct sockaddr_in6 (IPv6)
    *
    *  Check size settings_->local_base and allocate if need.
    *  Not use mutex.
    */
-  auto local_base_as_inet6() -> struct sockaddr_in6 &;
+  //auto local_base_as_inet6() -> struct sockaddr_in6 &;
 
   /** \brief Get raw value from buffer (as reference!)
    *

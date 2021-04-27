@@ -13,6 +13,7 @@
 #ifndef SOURCE_TFTPADDR_H_
 #define SOURCE_TFTPADDR_H_
 
+#include <netinet/in.h> // sockaddr_in6
 #include <array>
 #include <stddef.h>
 
@@ -40,11 +41,12 @@ class Addr: public std::array<char, constants::max_sockaddr_size>
 {
 protected:
 
-  /** \brief  Data size; optional for set data size value
+  /** \brief  Data size; optional for set real data size value
    *
-   *  Sample use - for recvfrom() length pointer
+   *  Same type as socklen_t
+   *  Sample use - for recvfrom() "fromlen" pointer
    */
-  size_t data_size_;
+  unsigned int data_size_;
 
 public:
 
@@ -58,13 +60,13 @@ public:
    *
    *  \return Refernce to value
    */
-  auto data_size() noexcept -> size_t &;
+  auto data_size() noexcept -> decltype(data_size_) &;
 
   /** \brief Get data size (const version)
    *
    *  \return Data size
    */
-  auto data_size() const noexcept -> const size_t &;
+  auto data_size() const noexcept -> const decltype(data_size_) &;
 
   /** \brief Clear buffer
    */
@@ -149,6 +151,14 @@ public:
    *  \param [in] new_port New port value
    */
   void set_port(const uint16_t & new_port);
+
+  bool set_addr_str(const std::string & adr);
+
+  bool set_port_str(const std::string & adr);
+
+  void set_addr_in(const in_addr & adr);
+
+  void set_addr_in6(const in6_addr & adr);
 
 };
 

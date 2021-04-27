@@ -19,6 +19,7 @@
 #include "tftpSrv.h"
 #include "tftpCommon.h"
 #include "tftpSmBuf.h"
+#include "tftpAddr.h"
 
 namespace tftp
 {
@@ -29,7 +30,6 @@ Srv::Srv():
     Base(),
     sessions_{},
     socket_{0},
-    buffer_(2000U, 0),
     stop_{false}
 {
 }
@@ -44,16 +44,15 @@ Srv::~Srv()
 
 bool Srv::socket_open()
 {
-  // Get inet family
-  int family;
+  // Open socket
   {
     auto lk = begin_shared();
-    family = local_base_as_inet().sin_family;
-  }
 
-  // Open socket
-  socket_ = socket(family, SOCK_DGRAM, 0);
-  if (socket_< 0)
+    socket_ = socket(local_base().family(),
+                     SOCK_DGRAM,
+                     0);
+  }
+  if(socket_< 0)
   {
     Buf err_msg_buf(1024, 0);
 
@@ -65,43 +64,29 @@ bool Srv::socket_open()
   };
 
   // Bind
-  struct sockaddr * sock_addr;
-  socklen_t         sock_size;
   int bind_result;
   {
     auto lk = begin_shared();
 
-    switch(family)
-    {
-      case AF_INET:
-        sock_addr =  (struct sockaddr *) & local_base_as_inet();
-        sock_size = sizeof(decltype(local_base_as_inet()));
-        break;
-      case AF_INET6:
-        sock_addr = (struct sockaddr *) & local_base_as_inet6();
-        sock_size = sizeof(decltype(local_base_as_inet6()));
-        break;
-      default:
-        L_ERR("Wrong network family id_"+std::to_string(family));
-        return false;
-    }
-
-    bind_result = bind(socket_, sock_addr, sock_size);
+    bind_result = bind(socket_,
+                       local_base().as_sockaddr_ptr(),
+                       local_base().data_size());
   }
-
-  if(bind_result)
+  if(bind_result != 0)
   {
     Buf err_msg_buf(1024, 0);
     L_ERR("bind() error: "+
-            std::string{strerror_r(errno,
-                                   err_msg_buf.data(),
-                                   err_msg_buf.size())});
+           std::string{strerror_r(errno,
+                                  err_msg_buf.data(),
+                                  err_msg_buf.size())});
     socket_close();
     return false;
   };
 
   return true;
 }
+
+// -----------------------------------------------------------------------------
 
 void Srv::socket_close()
 {
@@ -115,15 +100,14 @@ bool Srv::init()
 {
   L_INF("Server initialise started");
 
-  bool ret = true;
-
   if(socket_ > 0) socket_close();
 
-  ret = socket_open();
+  bool ret = socket_open();
 
   if(ret) L_INF("Server listening "+get_local_base_str());
 
   L_INF("Server initialise is "+(ret ? "SUCCESSFUL" : "FAIL"));
+
   return ret;
 }
 
@@ -137,27 +121,33 @@ void Srv::stop()
 // -----------------------------------------------------------------------------
 void Srv::main_loop()
 {
-  // prepare
-  stop_ = false;
-  SmBuf  client_addr(sizeof(struct sockaddr_in6), 0); // max known buffer size
-  unsigned int client_addr_size = client_addr.size();
+  // Try init if need
+  if(socket_ == 0)
+  {
+    if(!init()) return;
+  }
 
-  // main server loop
+  // prepare loop
+  stop_ = false;
+  Addr  client_addr;
+  SmBuf pkt_buf(0xFFFFU, 0);
+
+  // do main server loop
   while (!stop_)
   {
+    client_addr.data_size() = client_addr.size();
+
     int bsize = recvfrom(socket_,
-                         buffer_.data(),
-                         buffer_.size(),
+                         pkt_buf.data(),
+                         pkt_buf.size(),
                          MSG_DONTWAIT,
-                         (struct sockaddr *) client_addr.data(),
-                         & client_addr_size);
+                         client_addr.as_sockaddr_ptr(),
+                         & client_addr.data_size());
 
     if(bsize >= 9) // minimal size = 2+1+1+4+1
     {
       L_INF("Receive initial pkt (data size "+std::to_string(bsize)+
-              " bytes) from "+
-              sockaddr_to_str(client_addr.cbegin(),
-                              client_addr.cbegin()+client_addr_size));
+              " bytes) from "+client_addr.str());
 
       tftp::Session sss(this->settings_);
 
@@ -168,9 +158,8 @@ void Srv::main_loop()
 
       bool ret = sss.prepare(
           client_addr,
-          (size_t)client_addr_size,
-          buffer_,
-          (size_t)bsize);
+          pkt_buf,
+          (size_t) bsize);
 
       if(ret) ret = sss.init();
         else L_ERR("Failed prepare session");
@@ -191,9 +180,7 @@ void Srv::main_loop()
     if(bsize > 0)
     {
       L_WRN("Receive fake initial pkt (data size " + std::to_string(bsize) +
-            " bytes) from " +
-            sockaddr_to_str(client_addr.cbegin(),
-                            client_addr.cbegin() + client_addr_size));
+            " bytes) from " + client_addr.str());
     }
 
     // check finished

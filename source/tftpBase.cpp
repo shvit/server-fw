@@ -32,8 +32,9 @@ namespace tftp
 Base::Base():
     settings_{Settings::create()}
 {
-  local_base_as_inet().sin_family = AF_INET;
-  local_base_as_inet().sin_port   = htobe16(constants::default_tftp_port);
+  local_base().set_family(AF_INET);
+  local_base().set_port(constants::default_tftp_port);
+  //local_base_as_inet().sin_port   = htobe16(constants::default_tftp_port);
 
   settings_->lib_name.assign(constants::default_fb_lib_name);
   settings_->dialect = constants::default_fb_dialect;
@@ -279,46 +280,59 @@ auto Base::get_connection() const
 }
 
 // -----------------------------------------------------------------------------
-auto Base::local_base_as_inet() -> struct sockaddr_in &
+
+auto Base::local_base() -> Addr &
 {
-  if(settings_->local_base_.empty())
-  {
-    settings_->local_base_.assign(sizeof(struct sockaddr_in), 0);
-  }
-  else
-  {
+  return settings_->local_base_;
+}
+
+auto Base::local_base() const -> const Addr &
+{
+  return settings_->local_base_;
+}
+
+// -----------------------------------------------------------------------------
+/*
+auto Base::local_base_as_inet_() -> struct sockaddr_in &
+{
+//  if(settings_->local_base_.empty())
+//  {
+//    settings_->local_base_.assign(sizeof(struct sockaddr_in), 0);
+//  }
+//  else
+//  {
     if(settings_->local_base_.size() < sizeof(struct sockaddr_in))
       ERROR_THROW_RUNTIME(
           "Small size settings_->local_base_ ("+
           std::to_string(settings_->local_base_.size())+
           " bytes less struct sockaddr_in)");
-  }
+//  }
 
-  return *((struct sockaddr_in *) settings_->local_base_.data());
+  return settings_->local_base_.as_in();
 }
 
 // -----------------------------------------------------------------------------
 
 auto Base::local_base_as_inet6() -> struct sockaddr_in6 &
 {
-  if(settings_->local_base_.empty())
-  {
-    settings_->local_base_.assign(sizeof(struct sockaddr_in6), 0);
-  }
-  else
-  {
+//  if(settings_->local_base_.empty())
+//  {
+//    settings_->local_base_.assign(sizeof(struct sockaddr_in6), 0);
+//  }
+//  else
+//  {
     if(settings_->local_base_.size() < sizeof(struct sockaddr_in6))
       ERROR_THROW_RUNTIME(
           "Small size settings_->local_base_ ("+
           std::to_string(settings_->local_base_.size())+
           " bytes less struct sockaddr_in6)");
-  }
+//  }
 
-  return *((struct sockaddr_in6 *) settings_->local_base_.data());
+  return settings_->local_base_.as_in6();
 }
-
+*/
 // -----------------------------------------------------------------------------
-
+/*
 void Base::set_local_base_inet(struct in_addr * addr, uint16_t port)
 {
   auto lk = begin_unique(); // write lock
@@ -342,16 +356,18 @@ void Base::set_local_base_inet6(struct in6_addr * addr, uint16_t port)
   local_base_as_inet6().sin6_addr   = * addr;
   local_base_as_inet6().sin6_port  = htobe16(port);
 }
-
+*/
 // -----------------------------------------------------------------------------
 
 auto Base::get_local_base_str() const -> std::string
 {
   auto lk = begin_shared(); // read lock
 
-  return sockaddr_to_str(
-      settings_->local_base_.cbegin(),
-      settings_->local_base_.cend());
+  return settings_->local_base_.str();
+
+//  return sockaddr_to_str(
+//      settings_->local_base_.cbegin(),
+//      settings_->local_base_.cend());
 }
 
 // -----------------------------------------------------------------------------
@@ -419,64 +435,73 @@ void Base::set_local_base(std::string_view addr)
   bool is_ipv4 = (std::regex_search(tmp, sm4, re4) && (sm4.size() == 6));
   bool is_ipv6 = std::regex_search(tmp, sm6, re6);
 
-  auto str_to_port_be=[](const std::string & src) -> uint16_t
-      {
-        in_port_t port=0;
-        try { port = (std::stoul(src) & 0x0000FFFFU); } catch (...) {};
-        if(!port) port = constants::default_tftp_port;
-        return htobe16(port);
-      };
+  //auto str_to_port_be=[](const std::string & src) -> uint16_t
+  //    {
+  //      in_port_t port=0;
+  //      try { port = (std::stoul(src) & 0x0000FFFFU); } catch (...) {};
+  //      if(!port) port = constants::default_tftp_port;
+  //      return htobe16(port);
+  //    };
 
   if(is_ipv4)
   {
     // family
-    local_base_as_inet().sin_family = AF_INET;
+    local_base().set_family(AF_INET);
 
     // port
-    local_base_as_inet().sin_port = htobe16(constants::default_tftp_port);
+    local_base().set_port(constants::default_tftp_port);
+
     if(std::string port_s{sm4[5].str()}; port_s.size())
     {
-      local_base_as_inet().sin_port = str_to_port_be(port_s);
+      local_base().set_port_str(port_s);
     }
     else
     if(std::string port_s{sm4[4].str()}; port_s.size())
     {
-      local_base_as_inet().sin_port = str_to_port_be(port_s);
+      local_base().set_port_str(port_s);
     }
 
     // addr
     if(std::string addr_s{sm4[3].str()}; addr_s.size())
     {
-      inet_pton(AF_INET, addr_s.c_str(), & local_base_as_inet().sin_addr);
+      local_base().set_addr_str(addr_s);
+      //inet_pton(AF_INET, addr_s.c_str(), & local_base_as_inet().sin_addr);
     }
     else
     if(std::string addr_s{sm4[1].str()}; addr_s.size())
     {
-      inet_pton(AF_INET, addr_s.c_str(), & local_base_as_inet().sin_addr);
+      local_base().set_addr_str(addr_s);
+      //inet_pton(AF_INET, addr_s.c_str(), & local_base_as_inet().sin_addr);
     }
   }
   else
   if(is_ipv6)
   {
     // family
-    local_base_as_inet6().sin6_family = AF_INET6;
+    local_base().set_family(AF_INET6);
+    //local_base_as_inet6().sin6_family = AF_INET6;
 
     // port
-    local_base_as_inet6().sin6_port = htobe16(constants::default_tftp_port);
+    local_base().set_port(constants::default_tftp_port);
+
+    //local_base_as_inet6().sin6_port = htobe16(constants::default_tftp_port);
     if(std::string port_s{sm6[2].str()}; port_s.size())
     {
-      local_base_as_inet6().sin6_port = str_to_port_be(port_s);
+      local_base().set_port_str(port_s);
+      //local_base_as_inet6().sin6_port = str_to_port_be(port_s);
     }
 
     // addr
     if(std::string addr_s{sm6[3].str()}; addr_s.size())
     {
-      inet_pton(AF_INET6, addr_s.c_str(), & local_base_as_inet6().sin6_addr);
+      local_base().set_addr_str(addr_s);
+      //inet_pton(AF_INET6, addr_s.c_str(), & local_base_as_inet6().sin6_addr);
     }
     else
     if(std::string addr_s{sm6[1].str()}; addr_s.size())
     {
-      inet_pton(AF_INET6, addr_s.c_str(), & local_base_as_inet6().sin6_addr);
+      local_base().set_addr_str(addr_s);
+      //inet_pton(AF_INET6, addr_s.c_str(), & local_base_as_inet6().sin6_addr);
     }
   }
   else

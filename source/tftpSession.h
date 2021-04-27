@@ -208,8 +208,9 @@ public:
   //          const Buf::const_iterator buf_end);
 
   bool prepare(
-      const SmBuf  & remote_addr,
-      const size_t & remote_addr_size,
+      const Addr & remote_addr,
+      //const SmBuf  & remote_addr,
+      //const size_t & remote_addr_size,
       const SmBuf  & pkt_data,
       const size_t & pkt_data_size);
 

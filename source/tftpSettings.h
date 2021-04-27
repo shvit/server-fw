@@ -17,6 +17,7 @@
 
 
 #include "tftpCommon.h"
+#include "tftpAddr.h"
 
 
 namespace tftp
@@ -61,7 +62,7 @@ public:
 
   bool is_daemon; ///< Flag showing run as daemon
 
-  Buf local_base_; ///< Listening server address:port (sockaddr_in*)
+  Addr local_base_; ///< Listening server address:port (sockaddr_in*)
 
   // fb lib settings
   std::string lib_dir;  ///< System library directory

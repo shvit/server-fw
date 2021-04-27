@@ -87,11 +87,15 @@ UNIT_TEST_CASE_END
 
 UNIT_TEST_CASE_BEGIN(sess_init, "check prepare()")
 
-  tftp::SmBuf b_addr(sizeof(struct sockaddr_in), 0);
+  tftp::Addr b_addr;
 
-  b_addr.set_hton(0U, (int16_t) AF_INET);
-  b_addr.set_hton(2U, (int16_t) 0x0506);
-  b_addr.set_hton(4U, (int32_t) 0x01020304);
+  b_addr.set_family(AF_INET);
+  b_addr.set_port(0x0506);
+  //b_addr.set_hton(4U, (int32_t) 0x01020304);
+  *(b_addr.data() + 4U) = 1;
+  *(b_addr.data() + 5U) = 2;
+  *(b_addr.data() + 6U) = 3;
+  *(b_addr.data() + 7U) = 4;
 
   tftp::SmBuf b_pkt
   {
@@ -105,11 +109,11 @@ UNIT_TEST_CASE_BEGIN(sess_init, "check prepare()")
 
   test_session s1;
 
-  TEST_CHECK_FALSE(s1.prepare(b_addr, b_addr.size(), b_pkt, b_pkt.size()));
+  TEST_CHECK_FALSE(s1.prepare(b_addr, b_pkt, b_pkt.size()));
   TEST_CHECK_TRUE(s1.opt_.request_type() == tftp::SrvReq::unknown);
 
   b_pkt.set_hton(0U, (int16_t)tftp::SrvReq::write);
-  TEST_CHECK_TRUE (s1.prepare(b_addr, b_addr.size(), b_pkt, b_pkt.size()));
+  TEST_CHECK_TRUE (s1.prepare(b_addr, b_pkt, b_pkt.size()));
 
   TEST_CHECK_TRUE(std::equal(s1.cl_addr_.data(),
                              s1.cl_addr_.data() + b_addr.size(),

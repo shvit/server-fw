@@ -138,8 +138,9 @@ void Session::socket_close()
 // -----------------------------------------------------------------------------
 
 bool Session::prepare(
-    const SmBuf  & remote_addr,
-    const size_t & remote_addr_size,
+    const Addr & remote_addr,
+    //const SmBuf  & remote_addr,
+    //const size_t & remote_addr_size,
     const SmBuf  & pkt_data,
     const size_t & pkt_data_size)
 {
@@ -148,16 +149,16 @@ bool Session::prepare(
   bool ret=true;
 
   // Init client remote addr
-  cl_addr_.clear();
-  if((ret = ret && remote_addr_size >= sizeof(struct sockaddr_in)))
-  {
-    cl_addr_.assign(remote_addr.data(), remote_addr_size);
-  }
-  else
-  {
-    L_WRN("Wrong remote addr size ("+
-          std::to_string(remote_addr_size)+")");
-  }
+  cl_addr_ = remote_addr;
+  //if((ret = ret && remote_addr_size >= sizeof(struct sockaddr_in)))
+  //{
+  //  cl_addr_.assign(remote_addr.data(), remote_addr_size);
+  //}
+  //else
+  //{
+  //  L_WRN("Wrong remote addr size ("+
+  //        std::to_string(remote_addr_size)+")");
+  //}
 
   // Parse pkt buffer
   ret = ret && opt_.buffer_parse(
@@ -194,9 +195,10 @@ bool Session::init()
   int family;
   {
     auto lk = begin_shared();
-    family = local_base_as_inet().sin_family;
+    family = local_base().family();
 
-    local_base_as_inet().sin_port = 0;
+    local_base().set_port(0U);
+    //local_base_as_inet().sin_port = 0;
   }
 
   // Socket open
