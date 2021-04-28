@@ -32,12 +32,12 @@ namespace tftp
 Base::Base():
     settings_{Settings::create()}
 {
-  local_base_as_inet().sin_family = AF_INET;
-  local_base_as_inet().sin_port   = htobe16(default_tftp_port);
+  local_base().set_family(AF_INET);
+  local_base().set_port(constants::default_tftp_port);
 
-  settings_->lib_name.assign(default_fb_lib_name);
-  settings_->dialect = default_fb_dialect;
-  settings_->use_syslog = default_tftp_syslog_lvl;
+  //settings_->lib_name.assign(constants::default_fb_lib_name);
+  //settings_->dialect = constants::default_fb_dialect;
+  //settings_->use_syslog = constants::default_tftp_syslog_lvl;
 
   // Get system library path from current maps
   std::ifstream maps;
@@ -66,7 +66,7 @@ Base::Base():
 
 // -----------------------------------------------------------------------------
 
-Base::Base(Base & src):
+Base::Base(const Base & src):
     settings_{src.settings_}
 {
 }
@@ -77,6 +77,14 @@ Base::Base(Base && src):
     settings_{std::move(src.settings_)}
 {
 }
+
+Base & Base::operator=(Base && src)
+{
+  settings_ = std::move(src.settings_);
+
+  return *this;
+}
+
 
 Base::~Base()
 {
@@ -132,12 +140,12 @@ void Base::set_syslog_level(const int lvl)
   settings_->use_syslog = lvl;
 }
 
-auto Base::get_syslog_level() const -> int
-{
-  auto lk = begin_shared(); // read lock
-
-  return settings_->use_syslog;
-}
+//auto Base::get_syslog_level_() const -> int
+//{
+//  auto lk = begin_shared(); // read lock
+//
+//  return settings_->use_syslog;
+//}
 
 // -----------------------------------------------------------------------------
 
@@ -242,6 +250,18 @@ void Base::set_connection(
 
 // -----------------------------------------------------------------------------
 
+void Base::set_retransmit_count(const uint16_t & val)
+{
+  settings_->retransmit_count_ = val;
+}
+
+auto Base::get_retransmit_count() const -> const uint16_t &
+{
+  return settings_->retransmit_count_;
+}
+
+// -----------------------------------------------------------------------------
+
 auto Base::get_connection() const
   -> std::tuple<std::string,
                 std::string,
@@ -259,46 +279,59 @@ auto Base::get_connection() const
 }
 
 // -----------------------------------------------------------------------------
-auto Base::local_base_as_inet() -> struct sockaddr_in &
+
+auto Base::local_base() -> Addr &
 {
-  if(settings_->local_base_.empty())
-  {
-    settings_->local_base_.assign(sizeof(struct sockaddr_in), 0);
-  }
-  else
-  {
+  return settings_->local_base_;
+}
+
+auto Base::local_base() const -> const Addr &
+{
+  return settings_->local_base_;
+}
+
+// -----------------------------------------------------------------------------
+/*
+auto Base::local_base_as_inet_() -> struct sockaddr_in &
+{
+//  if(settings_->local_base_.empty())
+//  {
+//    settings_->local_base_.assign(sizeof(struct sockaddr_in), 0);
+//  }
+//  else
+//  {
     if(settings_->local_base_.size() < sizeof(struct sockaddr_in))
       ERROR_THROW_RUNTIME(
           "Small size settings_->local_base_ ("+
           std::to_string(settings_->local_base_.size())+
           " bytes less struct sockaddr_in)");
-  }
+//  }
 
-  return *((struct sockaddr_in *) settings_->local_base_.data());
+  return settings_->local_base_.as_in();
 }
 
 // -----------------------------------------------------------------------------
 
 auto Base::local_base_as_inet6() -> struct sockaddr_in6 &
 {
-  if(settings_->local_base_.empty())
-  {
-    settings_->local_base_.assign(sizeof(struct sockaddr_in6), 0);
-  }
-  else
-  {
+//  if(settings_->local_base_.empty())
+//  {
+//    settings_->local_base_.assign(sizeof(struct sockaddr_in6), 0);
+//  }
+//  else
+//  {
     if(settings_->local_base_.size() < sizeof(struct sockaddr_in6))
       ERROR_THROW_RUNTIME(
           "Small size settings_->local_base_ ("+
           std::to_string(settings_->local_base_.size())+
           " bytes less struct sockaddr_in6)");
-  }
+//  }
 
-  return *((struct sockaddr_in6 *) settings_->local_base_.data());
+  return settings_->local_base_.as_in6();
 }
-
+*/
 // -----------------------------------------------------------------------------
-
+/*
 void Base::set_local_base_inet(struct in_addr * addr, uint16_t port)
 {
   auto lk = begin_unique(); // write lock
@@ -322,16 +355,18 @@ void Base::set_local_base_inet6(struct in6_addr * addr, uint16_t port)
   local_base_as_inet6().sin6_addr   = * addr;
   local_base_as_inet6().sin6_port  = htobe16(port);
 }
-
+*/
 // -----------------------------------------------------------------------------
 
 auto Base::get_local_base_str() const -> std::string
 {
   auto lk = begin_shared(); // read lock
 
-  return sockaddr_to_str(
-      settings_->local_base_.cbegin(),
-      settings_->local_base_.cend());
+  return settings_->local_base_.str();
+
+//  return sockaddr_to_str(
+//      settings_->local_base_.cbegin(),
+//      settings_->local_base_.cend());
 }
 
 // -----------------------------------------------------------------------------
@@ -391,78 +426,10 @@ void Base::set_local_base(std::string_view addr)
 
   settings_->local_base_.clear();
 
-  std::string tmp{addr.begin(), addr.end()};
-  std::regex  re4("^(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})$|(^(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}):(\\d{0,5}))$|^:(\\d{1,5})$");
-  std::regex  re6("^\\[?([0-9a-fA-F\\:]*)[\\]]?:(\\d{1,5})$|^\\[?([0-9a-fA-F\\:]*)[\\]]?$");
-  std::smatch sm4, sm6;
+  auto [set_addr,set_port] = settings_->local_base_.set_string(addr);
 
-  bool is_ipv4 = (std::regex_search(tmp, sm4, re4) && (sm4.size() == 6));
-  bool is_ipv6 = std::regex_search(tmp, sm6, re6);
-
-  auto str_to_port_be=[](const std::string & src) -> uint16_t
-      {
-        in_port_t port=0;
-        try { port = (std::stoul(src) & 0x0000FFFFU); } catch (...) {};
-        if(!port) port = default_tftp_port;
-        return htobe16(port);
-      };
-
-  if(is_ipv4)
-  {
-    // family
-    local_base_as_inet().sin_family = AF_INET;
-
-    // port
-    local_base_as_inet().sin_port = htobe16(default_tftp_port);
-    if(std::string port_s{sm4[5].str()}; port_s.size())
-    {
-      local_base_as_inet().sin_port = str_to_port_be(port_s);
-    }
-    else
-    if(std::string port_s{sm4[4].str()}; port_s.size())
-    {
-      local_base_as_inet().sin_port = str_to_port_be(port_s);
-    }
-
-    // addr
-    if(std::string addr_s{sm4[3].str()}; addr_s.size())
-    {
-      inet_pton(AF_INET, addr_s.c_str(), & local_base_as_inet().sin_addr);
-    }
-    else
-    if(std::string addr_s{sm4[1].str()}; addr_s.size())
-    {
-      inet_pton(AF_INET, addr_s.c_str(), & local_base_as_inet().sin_addr);
-    }
-  }
-  else
-  if(is_ipv6)
-  {
-    // family
-    local_base_as_inet6().sin6_family = AF_INET6;
-
-    // port
-    local_base_as_inet6().sin6_port = htobe16(default_tftp_port);
-    if(std::string port_s{sm6[2].str()}; port_s.size())
-    {
-      local_base_as_inet6().sin6_port = str_to_port_be(port_s);
-    }
-
-    // addr
-    if(std::string addr_s{sm6[3].str()}; addr_s.size())
-    {
-      inet_pton(AF_INET6, addr_s.c_str(), & local_base_as_inet6().sin6_addr);
-    }
-    else
-    if(std::string addr_s{sm6[1].str()}; addr_s.size())
-    {
-      inet_pton(AF_INET6, addr_s.c_str(), & local_base_as_inet6().sin6_addr);
-    }
-  }
-  else
-  {
-
-  }
+  if(!set_addr) settings_->local_base_.set_family(AF_INET);
+  if(!set_port) settings_->local_base_.set_port(constants::default_tftp_port);
 }
 
 // -----------------------------------------------------------------------------
@@ -489,6 +456,7 @@ bool Base::load_options(int argc, char* argv[])
       { "fb-role",    required_argument, NULL,  0  }, // 11
       { "fb-dialect", required_argument, NULL,  0  }, // 12
       { "daemon",           no_argument, NULL,  0  }, // 13
+      { "retransmit", required_argument, NULL,  0  }, // 14
       { NULL,               no_argument, NULL,  0  }  // always last
   };
 
@@ -564,9 +532,20 @@ bool Base::load_options(int argc, char* argv[])
       case 13: // --daemon
         set_is_daemon(true);
         break;
-      } // case
+      case 14: // --retransmit
+        if(optarg)
+        {
+          try
+          {
+            uint16_t rtr = (std::stoul(optarg) & 0xFFFFU);
+            set_retransmit_count(rtr);
+          } catch (...) { };
+        }
+        break;
+
+      } // case (for long option)
       break;
-    } // case
+    } // switch
   }
 
   return ret;
@@ -585,20 +564,21 @@ void Base::out_help(std::ostream & stream, std::string_view app) const
   << "Possible options:" << std::endl
   << "  {-h|-H|-?|--help} Show help message" << std::endl
   << "  {-l|-L|--ip|--listen} {<IPv4>|[<IPv6>]}[:port] Listening address and port" << std::endl
-  << "    (default 0.0.0.0:" << default_tftp_port << ")" << std::endl
+  << "    (default 0.0.0.0:" << constants::default_tftp_port << ")" << std::endl
   << "    Sample IPv4: 192.168.0.1:69" << std::endl
   << "    Sample IPv6: [::1]:69" << std::endl
-  << "  {-s|-S|--syslog} <0...7> SYSLOG level flooding (default " << default_tftp_syslog_lvl << ")" << std::endl
+  << "  {-s|-S|--syslog} <0...7> SYSLOG level flooding (default " << constants::default_tftp_syslog_lvl << ")" << std::endl
   << "  --lib-dir <directory> System library directory" << std::endl
-  << "  --lib-name <name> Firebird library filename (default " << default_fb_lib_name << ")" << std::endl
+  << "  --lib-name <name> Firebird library filename (default " << constants::default_fb_lib_name << ")" << std::endl
   << "  --root-dir <directory> Server root directory" << std::endl
   << "  --search <directory> Directory for recursive search by md5 sum (may be much)" << std::endl
   << "  --fb-db <database> Firebird access database name" << std::endl
   << "  --fb-user <username> Firebird access user name" << std::endl
   << "  --fb-pass <password> Firebird access password" << std::endl
   << "  --fb-role <role> Firebird access role" << std::endl
-  << "  --fb-dialect <1...3> Firebird server dialect (default " << default_fb_dialect << ")" << std::endl
-  << "  --daemon Run as daemon" << std::endl;
+  << "  --fb-dialect <1...3> Firebird server dialect (default " << constants::default_fb_dialect << ")" << std::endl
+  << "  --daemon Run as daemon" << std::endl
+  << "  --retransmit <N> Maximum retransmit count if fail" << std::endl;
 }
 
 // -----------------------------------------------------------------------------

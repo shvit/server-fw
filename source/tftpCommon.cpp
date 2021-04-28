@@ -14,6 +14,7 @@
 
 #include <string>
 #include <arpa/inet.h>
+#include <numeric>
 
 #include "tftpCommon.h"
 
@@ -66,6 +67,29 @@ std::string sockaddr_to_str(
     default:
       return "";
   }
+}
+
+// -----------------------------------------------------------------------------
+
+void do_lower(std::string & val)
+{
+  std::transform(val.cbegin(),
+                 val.cend(),
+                 val.begin(),
+                 [](const char v){ return (char)std::tolower(v); });
+}
+
+// -----------------------------------------------------------------------------
+
+bool is_digit_str(std::string_view val)
+{
+  if(val.size() == 0U) return false;
+
+  return std::accumulate(
+      val.cbegin(),
+      val.cend(),
+      true,
+      [](bool l, auto & c){ return l && std::isdigit(c); });
 }
 
 // -----------------------------------------------------------------------------

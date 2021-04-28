@@ -17,10 +17,23 @@
 
 
 #include "tftpCommon.h"
+#include "tftpAddr.h"
 
 
 namespace tftp
 {
+
+// -----------------------------------------------------------------------------
+
+namespace constants
+{
+  constexpr uint16_t default_tftp_port        = 69;
+  constexpr uint16_t default_retransmit_count = 3U;
+  constexpr uint16_t default_fb_dialect       = 3U;
+  constexpr int      default_tftp_syslog_lvl  = 6;
+
+  constexpr std::string_view default_fb_lib_name = "libfbclient.so";
+}
 
 // -----------------------------------------------------------------------------
 
@@ -49,7 +62,7 @@ public:
 
   bool is_daemon; ///< Flag showing run as daemon
 
-  Buf local_base_; ///< Listening server address:port (sockaddr_in*)
+  Addr local_base_; ///< Listening server address:port (sockaddr_in*)
 
   // fb lib settings
   std::string lib_dir;  ///< System library directory
@@ -69,6 +82,9 @@ public:
   //logger
   int use_syslog;    ///< Syslog pass level logging message
   fLogMsg log_;  ///< External callback for logging message
+
+  // protocol
+  uint16_t retransmit_count_;
 };
 
 // -----------------------------------------------------------------------------

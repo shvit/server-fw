@@ -101,6 +101,9 @@ public:
   /**  Constructor
    */
   DataMgr();
+  DataMgr(DataMgr &&) = default;
+
+  DataMgr & operator=(DataMgr &&) = default;
 
   /** Destructor
    */

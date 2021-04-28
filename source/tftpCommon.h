@@ -19,6 +19,7 @@
 #include <functional>
 #include <vector>
 #include <memory>
+#include <string>
 
 
 namespace tftp
@@ -26,13 +27,7 @@ namespace tftp
 
 // -----------------------------------------------------------------------------
 
-// constants
-constexpr uint16_t    default_tftp_port        = 69;
-constexpr int         default_tftp_syslog_lvl  = 6;
-constexpr uint16_t    default_fb_dialect       = 3;
-constexpr std::string_view default_fb_lib_name = "libfbclient.so";
-
-// -----------------------------------------------------------------------------
+class Addr;
 
 class Base;
 
@@ -47,15 +42,6 @@ class Settings;
 using pSettings = std::shared_ptr<Settings>;
 
 using Buf = std::vector<char>;
-
-/** \bief Optional class storage with default value
- *
- *  Info: std::optional<T> does't have default value
- */
-template<typename T>
-using Opt = std::tuple<bool, T>;
-
-using OptInt = Opt<int>;
 
 // -----------------------------------------------------------------------------
 
@@ -80,7 +66,7 @@ enum class TransfMode: uint16_t
   netascii=1, ///< Text transfer mode
   octet=2,    ///< Octet (binary) transfer mode
   binary,     ///< Binary transfer mode (fake mode, auto change to octet)
-//mail,
+  mail,
 };
 
 // -----------------------------------------------------------------------------
@@ -235,6 +221,24 @@ constexpr auto to_string(const LogLvl & val) -> std::string_view
 std::string sockaddr_to_str(
     Buf::const_iterator addr_begin,
     Buf::const_iterator addr_end);
+
+
+// -----------------------------------------------------------------------------
+
+/** \brief Conversion string to lowercase
+ *
+ *  \param [in,out] val String
+ */
+void do_lower(std::string & val);
+
+// -----------------------------------------------------------------------------
+
+/** \brief Check source string has digits only (0...9)
+ *
+ *  \param [in] val Source string
+ *  \return True if string has digits only (len >= 1), else - false
+ */
+bool is_digit_str(std::string_view val);
 
 // -----------------------------------------------------------------------------
 

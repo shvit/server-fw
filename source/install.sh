@@ -5,7 +5,7 @@ DEF_FILE="/etc/default/$NAME"
 LOG_FILE="/etc/rsyslog.d/$NAME.conf"
 APP_DIR="/mnt/tftp"
 SRCH_DIR="/mnt/backup"
-BIN_DIR="obj"
+BIN_DIR="bin"
 SRC_DIR="source"
 DAEMON_FILE_SRC="$BIN_DIR/$NAME"
 DAEMON_FILE_DST="/usr/sbin/$NAME"
@@ -52,7 +52,6 @@ do_make_inst_def(){
 
   if [ ! -f "$DEF_FILE" ]; then
     echo "[INSTALL] Creating daemon config file"
-    echo "START_DAEMON" > "$DEF_FILE"
     echo "IP=0.0.0.0:69" >> "$DEF_FILE"
     echo "SYSLOG=6" >> "$DEF_FILE"
     echo "ROOT_DIR=/mnt/tftp" >> "$DEF_FILE"

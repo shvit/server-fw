@@ -18,6 +18,7 @@
 #include <list>
 
 #include "tftpSession.h"
+#include "tftpSmBuf.h"
 
 namespace tftp
 {
@@ -39,30 +40,48 @@ protected:
   /// List of running sessions
   std::list<std::tuple<Session, std::thread>> sessions_;
 
-  int      socket_; ///< Socket of listener
-  Buf buffer_; ///< Income buffer for tftp request
+  /// Socket for tftp  port listener
+  int socket_;
 
-  bool stop_; ///< Flag "need stop"
+  /// Flag "need stop"
+  bool stop_;
 
-  /// Listening socket open and tune
+  /** \brief Open socket and listening
+   *
+   *  \return True if success, false if error occured
+   */
   bool socket_open();
 
-  /// Listening socket close
+  /** \brief Close socket
+   */
   void socket_close();
 
 public:
-  /// Constructor
+
+  /** \brief Default constructor
+   */
   Srv();
 
-  /// Destructor
+  /** \brief Destructor
+   */
   virtual ~Srv();
 
-  /// Initalise server method
+  /** \brief Initalise server method
+   *
+   *  Can do reinitialize too
+   *  Not close running session (to do or not to do)
+   */
   bool init();
 
-  /// Server loop
+  /** \brief Main server loop
+   *
+   *  At begin run init()
+   *  For exit loop outside use Srv::stop()
+   */
   void main_loop();
 
+  /** \brief Set exit flag for break inside main_loop()
+   */
   void stop();
 
 };
