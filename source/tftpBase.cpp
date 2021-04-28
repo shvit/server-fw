@@ -34,11 +34,10 @@ Base::Base():
 {
   local_base().set_family(AF_INET);
   local_base().set_port(constants::default_tftp_port);
-  //local_base_as_inet().sin_port   = htobe16(constants::default_tftp_port);
 
-  settings_->lib_name.assign(constants::default_fb_lib_name);
-  settings_->dialect = constants::default_fb_dialect;
-  settings_->use_syslog = constants::default_tftp_syslog_lvl;
+  //settings_->lib_name.assign(constants::default_fb_lib_name);
+  //settings_->dialect = constants::default_fb_dialect;
+  //settings_->use_syslog = constants::default_tftp_syslog_lvl;
 
   // Get system library path from current maps
   std::ifstream maps;
@@ -141,12 +140,12 @@ void Base::set_syslog_level(const int lvl)
   settings_->use_syslog = lvl;
 }
 
-auto Base::get_syslog_level() const -> int
-{
-  auto lk = begin_shared(); // read lock
-
-  return settings_->use_syslog;
-}
+//auto Base::get_syslog_level_() const -> int
+//{
+//  auto lk = begin_shared(); // read lock
+//
+//  return settings_->use_syslog;
+//}
 
 // -----------------------------------------------------------------------------
 
@@ -427,87 +426,10 @@ void Base::set_local_base(std::string_view addr)
 
   settings_->local_base_.clear();
 
-  std::string tmp{addr.begin(), addr.end()};
-  std::regex  re4("^(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})$|(^(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}):(\\d{0,5}))$|^:(\\d{1,5})$");
-  std::regex  re6("^\\[?([0-9a-fA-F\\:]*)[\\]]?:(\\d{1,5})$|^\\[?([0-9a-fA-F\\:]*)[\\]]?$");
-  std::smatch sm4, sm6;
+  auto [set_addr,set_port] = settings_->local_base_.set_string(addr);
 
-  bool is_ipv4 = (std::regex_search(tmp, sm4, re4) && (sm4.size() == 6));
-  bool is_ipv6 = std::regex_search(tmp, sm6, re6);
-
-  //auto str_to_port_be=[](const std::string & src) -> uint16_t
-  //    {
-  //      in_port_t port=0;
-  //      try { port = (std::stoul(src) & 0x0000FFFFU); } catch (...) {};
-  //      if(!port) port = constants::default_tftp_port;
-  //      return htobe16(port);
-  //    };
-
-  if(is_ipv4)
-  {
-    // family
-    local_base().set_family(AF_INET);
-
-    // port
-    local_base().set_port(constants::default_tftp_port);
-
-    if(std::string port_s{sm4[5].str()}; port_s.size())
-    {
-      local_base().set_port_str(port_s);
-    }
-    else
-    if(std::string port_s{sm4[4].str()}; port_s.size())
-    {
-      local_base().set_port_str(port_s);
-    }
-
-    // addr
-    if(std::string addr_s{sm4[3].str()}; addr_s.size())
-    {
-      local_base().set_addr_str(addr_s);
-      //inet_pton(AF_INET, addr_s.c_str(), & local_base_as_inet().sin_addr);
-    }
-    else
-    if(std::string addr_s{sm4[1].str()}; addr_s.size())
-    {
-      local_base().set_addr_str(addr_s);
-      //inet_pton(AF_INET, addr_s.c_str(), & local_base_as_inet().sin_addr);
-    }
-  }
-  else
-  if(is_ipv6)
-  {
-    // family
-    local_base().set_family(AF_INET6);
-    //local_base_as_inet6().sin6_family = AF_INET6;
-
-    // port
-    local_base().set_port(constants::default_tftp_port);
-
-    //local_base_as_inet6().sin6_port = htobe16(constants::default_tftp_port);
-    if(std::string port_s{sm6[2].str()}; port_s.size())
-    {
-      local_base().set_port_str(port_s);
-      //local_base_as_inet6().sin6_port = str_to_port_be(port_s);
-    }
-
-    // addr
-    if(std::string addr_s{sm6[3].str()}; addr_s.size())
-    {
-      local_base().set_addr_str(addr_s);
-      //inet_pton(AF_INET6, addr_s.c_str(), & local_base_as_inet6().sin6_addr);
-    }
-    else
-    if(std::string addr_s{sm6[1].str()}; addr_s.size())
-    {
-      local_base().set_addr_str(addr_s);
-      //inet_pton(AF_INET6, addr_s.c_str(), & local_base_as_inet6().sin6_addr);
-    }
-  }
-  else
-  {
-
-  }
+  if(!set_addr) settings_->local_base_.set_family(AF_INET);
+  if(!set_port) settings_->local_base_.set_port(constants::default_tftp_port);
 }
 
 // -----------------------------------------------------------------------------

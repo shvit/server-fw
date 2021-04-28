@@ -10,11 +10,10 @@
  *  \version 0.1
  */
 
-//#include <vector>
 #include <arpa/inet.h>
 #include <type_traits>
 #include <string>
-
+#include <regex>
 
 #include "tftpAddr.h"
 
@@ -29,13 +28,6 @@ static_assert(
     (constants::max_sockaddr_size >= sizeof(struct sockaddr_in)) &&
     (constants::max_sockaddr_size >= sizeof(struct sockaddr_in6)),
     "Fail buffer maximum size for sockaddr struct data!");
-
-// Check type data_size_ is same socklen_t
-static_assert(
-    sizeof(std::decay_t<decltype(Addr().data_size())>) == sizeof(socklen_t) &&
-    (std::is_signed_v<std::decay_t<decltype(Addr().data_size())>> ==
-     std::is_signed_v<socklen_t>),
-    "Fail type for tftp::Addr::data_size_");
 
 // -----------------------------------------------------------------------------
 
@@ -191,7 +183,7 @@ void Addr::set_family(const uint16_t & new_family) noexcept
 
 // -----------------------------------------------------------------------------
 
-void Addr::set_port(const uint16_t & new_port)
+void Addr::set_port_u16(const uint16_t & new_port)
 {
   *((uint16_t *) (data() + 2U)) = htobe16(new_port);
 }
@@ -229,7 +221,7 @@ bool Addr::set_port_str(const std::string & adr)
     new_port &= 0xFFFFUL;
     set_port((uint16_t) new_port);
     ret = true;
-  } catch (...) {};
+  } catch (...) { };
 
   return ret;
 }
@@ -254,6 +246,73 @@ void Addr::set_addr_in6(const in6_addr & adr)
   std::copy((char *) & adr,
             ((char *) & adr) + sizeof(in6_addr),
             (char *) & as_in6().sin6_addr);
+}
+
+// -----------------------------------------------------------------------------
+
+auto Addr::set_string(std::string_view new_value) -> std::tuple<bool,bool>
+{
+  bool is_set_addr = false;
+  bool is_set_port = false;
+  std::string tmp{new_value};
+  std::regex  re4("^(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})$|(^(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}):(\\d{0,5}))$|^:(\\d{1,5})$");
+  std::regex  re6("^\\[?([0-9a-fA-F\\:]*)[\\]]?:(\\d{1,5})$|^\\[?([0-9a-fA-F\\:]*)[\\]]?$");
+  std::smatch sm4, sm6;
+
+  bool is_ipv4 = (std::regex_search(tmp, sm4, re4) && (sm4.size() == 6));
+  bool is_ipv6 = std::regex_search(tmp, sm6, re6);
+
+  if(is_ipv4)
+  {
+    set_family(AF_INET);
+
+    // port
+    if(std::string port_s{sm4[5].str()}; port_s.size())
+    {
+      is_set_port = set_port(port_s);
+    }
+    else
+    if(std::string port_s{sm4[4].str()}; port_s.size())
+    {
+      is_set_port = set_port(port_s);
+    }
+
+    // addr
+    if(std::string addr_s{sm4[3].str()}; addr_s.size())
+    {
+      is_set_addr = set_addr(addr_s);
+    }
+    else
+    if(std::string addr_s{sm4[1].str()}; addr_s.size())
+    {
+      is_set_addr = set_addr(addr_s);
+    }
+  }
+  else
+  if(is_ipv6)
+  {
+    set_family(AF_INET6);
+
+    // port
+    if(std::string port_s{sm6[2].str()}; port_s.size())
+    {
+      is_set_port = set_port(port_s);
+    }
+
+    // addr
+    if(std::string addr_s{sm6[3].str()}; addr_s.size())
+    {
+      is_set_addr = set_addr(addr_s);
+    }
+    else
+    if(std::string addr_s{sm6[1].str()}; addr_s.size())
+    {
+      is_set_addr = set_addr(addr_s);
+    }
+  }
+
+  return {is_set_addr, is_set_port};
+;
 }
 
 // -----------------------------------------------------------------------------

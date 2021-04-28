@@ -197,7 +197,7 @@ public:
    *  Use mutex shared mode
    *  \return Syslog level pass
    */
-  auto get_syslog_level() const -> int;
+  //auto get_syslog_level_() const -> int;
 
   /** \brief Set: root server directory
    *

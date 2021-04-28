@@ -36,6 +36,9 @@ namespace constants{
 
 /** \brief Class for address buffer manipulation
  *
+ *  Now support (easy use) only IPv4 and IPv6 families
+ *  Other families need use raw access with: data(), size()
+ *
  */
 class Addr: public std::array<char, constants::max_sockaddr_size>
 {
@@ -43,10 +46,43 @@ protected:
 
   /** \brief  Data size; optional for set real data size value
    *
-   *  Same type as socklen_t
-   *  Sample use - for recvfrom() "fromlen" pointer
+   *  Sample use - for recvfrom() as "fromlen" pointer
    */
-  unsigned int data_size_;
+  socklen_t data_size_;
+
+  /* \brief Set port value
+   *
+   *  \param [in] new_port New port value
+   */
+  void set_port_u16(const uint16_t & new_port);
+
+  /* \brief Set port value from string value
+   *
+   *  \param [in] new_port New port value string
+   *  \return True if convert was success, else - false
+   */
+  bool set_port_str(const std::string & adr);
+
+  /* \brief Set address value from string value
+   *
+   *  Now support only IPv4 and IPv6
+   *  Warning! Before use need set family value or use set_string()
+   *  \param [in] adr New address value string
+   *  \return True if convert was success, else - false
+   */
+  bool set_addr_str(const std::string & adr);
+
+  /* \brief Set IPv4 address value
+   *
+   *  \param [in] adr New address value
+   */
+  void set_addr_in(const in_addr & adr);
+
+  /* \brief Set IPv6 address value
+   *
+   *  \param [in] adr New address value
+   */
+  void set_addr_in6(const in6_addr & adr);
 
 public:
 
@@ -146,21 +182,86 @@ public:
    */
   void set_family(const uint16_t & new_family) noexcept;
 
-  /* \brief Set port value
+  /** \brief Set L4 port value
    *
-   *  \param [in] new_port New port value
+   *  Value types: integer, string
+   *  \param [in] new_port New port value (some type)
+   *  \return True if success, else - false
    */
-  void set_port(const uint16_t & new_port);
+  template<typename T>
+  bool set_port(const T & new_port);
 
-  bool set_addr_str(const std::string & adr);
+  /** \brief Set L3 address value
+   *
+   *  Value types: in_addr, in6_addr, string
+   *  Warning! Before use string need set family value or use set_string()
+   *  \param [in] new_addr New address value (some type)
+   *  \return True if success, else - false
+   */
+  template<typename T>
+  bool set_addr(const T & new_addr);
 
-  bool set_port_str(const std::string & adr);
-
-  void set_addr_in(const in_addr & adr);
-
-  void set_addr_in6(const in6_addr & adr);
-
+  /** \brief Set address (and if exist - port) from string
+   *
+   *  Support formats:
+   *  - 8.8.8.8 = only IPv4 adrress
+   *  - 4.4.4.4:8080 = IPv4 address and port
+   *  - fe80::1 = only IPv6 address
+   *  - [fe80::1]:80 = IPv6 address and port
+   *  \param [in] new_port New string value
+   *  \return Two booleans {was set address, was set port} (true if success)
+   */
+  auto set_string(std::string_view new_value) -> std::tuple<bool,bool>;
 };
+
+// -----------------------------------------------------------------------------
+
+template<typename T>
+bool Addr::set_port(const T & new_port)
+{
+  bool ret = false;
+  if constexpr (std::is_integral_v<T>)
+  {
+    set_port_u16((uint16_t) new_port);
+    ret = true;
+  }
+  else
+  if constexpr (std::is_constructible_v<std::string, T>)
+  {
+    std::string temp_str{new_port};
+    ret = set_port_str(temp_str);
+  }
+
+  return ret;
+}
+
+
+// -----------------------------------------------------------------------------
+
+template<typename T>
+bool Addr::set_addr(const T & new_addr)
+{
+  bool ret = false;
+  if constexpr (std::is_same_v<T, in_addr>)
+  {
+    set_addr_in(new_addr);
+    ret = true;
+  }
+  else
+  if constexpr (std::is_same_v<T, in6_addr>)
+  {
+    set_addr_in6(new_addr);
+    ret = true;
+  }
+  else
+  if constexpr (std::is_constructible_v<std::string, T>)
+  {
+    std::string temp_str{new_addr};
+    ret = set_addr_str(temp_str);
+  }
+
+  return ret;
+}
 
 // -----------------------------------------------------------------------------
 

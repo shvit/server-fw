@@ -115,7 +115,7 @@ UNIT_TEST_CASE_BEGIN(base_load_options, "Class 'tftp::Base' - options")
     TEST_CHECK_FALSE(b.get_is_daemon());
     // syslog level
     TEST_CHECK_TRUE(b.settings_->use_syslog == 6);
-    TEST_CHECK_TRUE(b.get_syslog_level() == 6);
+    //TEST_CHECK_TRUE(b.get_syslog_level() == 6);
     // addr
     TEST_CHECK_TRUE(((struct sockaddr_in *) b.settings_->local_base_.data())->sin_family == 2);
     TEST_CHECK_TRUE(be16toh(((struct sockaddr_in *) b.settings_->local_base_.data())->sin_port) == 69);
@@ -194,7 +194,7 @@ UNIT_TEST_CASE_BEGIN(base_load_options, "Class 'tftp::Base' - options")
     TEST_CHECK_TRUE(b.get_is_daemon());
     // syslog level
     TEST_CHECK_TRUE(b.settings_->use_syslog == 7);
-    TEST_CHECK_TRUE(b.get_syslog_level() == 7);
+    //TEST_CHECK_TRUE(b.get_syslog_level() == 7);
     // addr
     TEST_CHECK_TRUE(((struct sockaddr_in *) b.settings_->local_base_.data())->sin_family == 2);
     TEST_CHECK_TRUE(be16toh(((struct sockaddr_in *) b.settings_->local_base_.data())->sin_port) == 7777);
@@ -260,14 +260,14 @@ UNIT_TEST_CASE_BEGIN(base_load_options, "Class 'tftp::Base' - options")
     b.set_connection("qq.gdb", "admin", "passss","no_role", 2);
     struct in_addr a{0x02020202U};
     //b.set_local_base_inet(& a, 8888);
-    b.local_base().set_addr_in(a);
+    b.local_base().set_addr(a);
     b.local_base().set_port(8888);
     // is daemon
     TEST_CHECK_FALSE(b.settings_->is_daemon);
     TEST_CHECK_FALSE(b.get_is_daemon());
     // syslog level
     TEST_CHECK_TRUE(b.settings_->use_syslog == 5);
-    TEST_CHECK_TRUE(b.get_syslog_level() == 5);
+    //TEST_CHECK_TRUE(b.get_syslog_level() == 5);
     // addr
     TEST_CHECK_TRUE(((struct sockaddr_in *) b.settings_->local_base_.data())->sin_family == 2);
     TEST_CHECK_TRUE(be16toh(((struct sockaddr_in *) b.settings_->local_base_.data())->sin_port) == 8888);

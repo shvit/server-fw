@@ -111,6 +111,94 @@ UNIT_TEST_CASE_BEGIN(main, "Check main methods")
   TEST_CHECK_TRUE(a.as_sockaddr_ptr()->sa_data[4] == 0x03);
   TEST_CHECK_TRUE(a.as_sockaddr_ptr()->sa_data[5] == 0x04);
 
+  // set_port()
+  a.set_family(AF_INET);
+  TEST_CHECK_TRUE(a.set_port(1234));
+  TEST_CHECK_TRUE(a.port() == 1234U);
+  TEST_CHECK_TRUE(a.family() == AF_INET);
+  a.set_family(AF_INET6);
+  TEST_CHECK_TRUE(a.set_port(60004));
+  TEST_CHECK_TRUE(a.port() == 60004U);
+  TEST_CHECK_TRUE(a.family() == AF_INET6);
+  TEST_CHECK_TRUE(a.set_port("56789"));
+  TEST_CHECK_TRUE(a.port() == 56789U);
+  TEST_CHECK_TRUE(a.family() == AF_INET6);
+
+  // set_addr()
+  a.clear();
+  struct in_addr ip4;
+  ip4.s_addr = 0x04030201U;
+  TEST_CHECK_TRUE(a.set_addr(ip4));
+  TEST_CHECK_TRUE(a.str() == "1.2.3.4:0");
+
+  {
+    auto [b1,b2] = a.set_string("[fe80::225:90ff:feed:20d4]:60123");
+    TEST_CHECK_TRUE(b1);
+    TEST_CHECK_TRUE(b2);
+    TEST_CHECK_TRUE(a.family() == AF_INET6);
+    TEST_CHECK_TRUE(a.port() == 60123U);
+    TEST_CHECK_TRUE(a.as_in6().sin6_addr.__in6_u.__u6_addr8[ 0] == 0xfeU);
+    TEST_CHECK_TRUE(a.as_in6().sin6_addr.__in6_u.__u6_addr8[ 1] == 0x80U);
+    TEST_CHECK_TRUE(a.as_in6().sin6_addr.__in6_u.__u6_addr8[ 2] == 0x0U);
+    TEST_CHECK_TRUE(a.as_in6().sin6_addr.__in6_u.__u6_addr8[ 3] == 0x0U);
+    TEST_CHECK_TRUE(a.as_in6().sin6_addr.__in6_u.__u6_addr8[ 4] == 0x0U);
+    TEST_CHECK_TRUE(a.as_in6().sin6_addr.__in6_u.__u6_addr8[ 5] == 0x0U);
+    TEST_CHECK_TRUE(a.as_in6().sin6_addr.__in6_u.__u6_addr8[ 6] == 0x0U);
+    TEST_CHECK_TRUE(a.as_in6().sin6_addr.__in6_u.__u6_addr8[ 7] == 0x0U);
+    TEST_CHECK_TRUE(a.as_in6().sin6_addr.__in6_u.__u6_addr8[ 8] == 0x02U);
+    TEST_CHECK_TRUE(a.as_in6().sin6_addr.__in6_u.__u6_addr8[ 9] == 0x25U);
+    TEST_CHECK_TRUE(a.as_in6().sin6_addr.__in6_u.__u6_addr8[10] == 0x90U);
+    TEST_CHECK_TRUE(a.as_in6().sin6_addr.__in6_u.__u6_addr8[11] == 0xffU);
+    TEST_CHECK_TRUE(a.as_in6().sin6_addr.__in6_u.__u6_addr8[12] == 0xfeU);
+    TEST_CHECK_TRUE(a.as_in6().sin6_addr.__in6_u.__u6_addr8[13] == 0xedU);
+    TEST_CHECK_TRUE(a.as_in6().sin6_addr.__in6_u.__u6_addr8[14] == 0x20U);
+    TEST_CHECK_TRUE(a.as_in6().sin6_addr.__in6_u.__u6_addr8[15] == 0xd4U);
+  }
+
+  {
+    a.clear();
+    auto [b1,b2] = a.set_string("fe80::225:90ff:feed:20d4");
+    TEST_CHECK_TRUE(b1);
+    TEST_CHECK_FALSE(b2);
+    TEST_CHECK_TRUE(a.family() == AF_INET6);
+    TEST_CHECK_TRUE(a.port() == 0U);
+    TEST_CHECK_TRUE(a.as_in6().sin6_addr.__in6_u.__u6_addr8[ 0] == 0xfeU);
+    TEST_CHECK_TRUE(a.as_in6().sin6_addr.__in6_u.__u6_addr8[ 1] == 0x80U);
+    TEST_CHECK_TRUE(a.as_in6().sin6_addr.__in6_u.__u6_addr8[ 2] == 0x0U);
+    TEST_CHECK_TRUE(a.as_in6().sin6_addr.__in6_u.__u6_addr8[ 3] == 0x0U);
+    TEST_CHECK_TRUE(a.as_in6().sin6_addr.__in6_u.__u6_addr8[ 4] == 0x0U);
+    TEST_CHECK_TRUE(a.as_in6().sin6_addr.__in6_u.__u6_addr8[ 5] == 0x0U);
+    TEST_CHECK_TRUE(a.as_in6().sin6_addr.__in6_u.__u6_addr8[ 6] == 0x0U);
+    TEST_CHECK_TRUE(a.as_in6().sin6_addr.__in6_u.__u6_addr8[ 7] == 0x0U);
+    TEST_CHECK_TRUE(a.as_in6().sin6_addr.__in6_u.__u6_addr8[ 8] == 0x02U);
+    TEST_CHECK_TRUE(a.as_in6().sin6_addr.__in6_u.__u6_addr8[ 9] == 0x25U);
+    TEST_CHECK_TRUE(a.as_in6().sin6_addr.__in6_u.__u6_addr8[10] == 0x90U);
+    TEST_CHECK_TRUE(a.as_in6().sin6_addr.__in6_u.__u6_addr8[11] == 0xffU);
+    TEST_CHECK_TRUE(a.as_in6().sin6_addr.__in6_u.__u6_addr8[12] == 0xfeU);
+    TEST_CHECK_TRUE(a.as_in6().sin6_addr.__in6_u.__u6_addr8[13] == 0xedU);
+    TEST_CHECK_TRUE(a.as_in6().sin6_addr.__in6_u.__u6_addr8[14] == 0x20U);
+    TEST_CHECK_TRUE(a.as_in6().sin6_addr.__in6_u.__u6_addr8[15] == 0xd4U);
+  }
+
+  {
+    auto [b1,b2] = a.set_string("12.34.56.78:59001");
+    TEST_CHECK_TRUE(b1);
+    TEST_CHECK_TRUE(b2);
+    TEST_CHECK_TRUE(a.family() == AF_INET);
+    TEST_CHECK_TRUE(a.port() == 59001U);
+    TEST_CHECK_TRUE(a.as_in().sin_addr.s_addr == 0x4e38220cU);
+  }
+
+  {
+    auto [b1,b2] = a.set_string("4.3.2.1");
+    TEST_CHECK_TRUE(b1);
+    TEST_CHECK_FALSE(b2);
+    TEST_CHECK_TRUE(a.family() == AF_INET);
+    TEST_CHECK_TRUE(a.port() == 59001U);
+    TEST_CHECK_TRUE(a.as_in().sin_addr.s_addr == 0x01020304U);
+  }
+
+
 UNIT_TEST_CASE_END
 
 //------------------------------------------------------------------------------

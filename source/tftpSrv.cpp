@@ -151,11 +151,6 @@ void Srv::main_loop()
 
       tftp::Session sss(this->settings_);
 
-      {
-        this->begin_shared();
-        //sss.settings_ = settings_;
-      }
-
       bool ret = sss.prepare(
           client_addr,
           pkt_buf,
