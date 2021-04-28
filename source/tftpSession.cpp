@@ -139,26 +139,15 @@ void Session::socket_close()
 
 bool Session::prepare(
     const Addr & remote_addr,
-    //const SmBuf  & remote_addr,
-    //const size_t & remote_addr_size,
     const SmBuf  & pkt_data,
     const size_t & pkt_data_size)
 {
-  L_INF("Session prpare started");
+  L_INF("Session prepare started");
 
   bool ret=true;
 
   // Init client remote addr
   cl_addr_ = remote_addr;
-  //if((ret = ret && remote_addr_size >= sizeof(struct sockaddr_in)))
-  //{
-  //  cl_addr_.assign(remote_addr.data(), remote_addr_size);
-  //}
-  //else
-  //{
-  //  L_WRN("Wrong remote addr size ("+
-  //        std::to_string(remote_addr_size)+")");
-  //}
 
   // Parse pkt buffer
   ret = ret && opt_.buffer_parse(
@@ -181,7 +170,7 @@ bool Session::prepare(
   }
 
 
-  L_INF("Session prpare is "+(ret ? "SUCCESSFUL" : "FAIL"));
+  L_INF("Session prepare is "+(ret ? "SUCCESSFUL" : "FAIL"));
   return ret;
 }
 

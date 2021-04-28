@@ -196,21 +196,13 @@ public:
   /** \brief Session initialize
    *
    *  Initialize session from top level after receive tftp request
-   *  \param [in] addr_begin Client socket - begin buffer iterator
-   *  \param [in] addr_end Client socket - end buffer iterator
-   *  \param [in] buf_begin UDP request data packet - begin buffer iterator
-   *  \param [in] buf_end UDP request data packet - end buffer iterator
+   *  \param [in] remote_addr Client socket
+   *  \param [in] pkt_data Request data packet buffer
+   *  \param [in] pkt_data_size Packet buffer size
    *  \return True if initialize success, else - false
    */
-  //bool init(const Buf::const_iterator addr_begin,
-  //          const Buf::const_iterator addr_end,
-  //          const Buf::const_iterator buf_begin,
-  //          const Buf::const_iterator buf_end);
-
   bool prepare(
       const Addr & remote_addr,
-      //const SmBuf  & remote_addr,
-      //const size_t & remote_addr_size,
       const SmBuf  & pkt_data,
       const size_t & pkt_data_size);
 

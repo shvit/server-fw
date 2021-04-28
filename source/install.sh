@@ -52,7 +52,6 @@ do_make_inst_def(){
 
   if [ ! -f "$DEF_FILE" ]; then
     echo "[INSTALL] Creating daemon config file"
-    echo "START_DAEMON" > "$DEF_FILE"
     echo "IP=0.0.0.0:69" >> "$DEF_FILE"
     echo "SYSLOG=6" >> "$DEF_FILE"
     echo "ROOT_DIR=/mnt/tftp" >> "$DEF_FILE"

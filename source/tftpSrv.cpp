@@ -29,7 +29,7 @@ namespace tftp
 Srv::Srv():
     Base(),
     sessions_{},
-    socket_{0},
+    socket_{-1},
     stop_{false}
 {
 }
@@ -91,7 +91,7 @@ bool Srv::socket_open()
 void Srv::socket_close()
 {
   close(socket_);
-  socket_ = 0;
+  socket_ = -1;
 }
 
 // -----------------------------------------------------------------------------
@@ -100,7 +100,7 @@ bool Srv::init()
 {
   L_INF("Server initialise started");
 
-  if(socket_ > 0) socket_close();
+  if(socket_ >= 0) socket_close();
 
   bool ret = socket_open();
 
