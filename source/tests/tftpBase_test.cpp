@@ -20,8 +20,9 @@ public:
 
   using tftp::Base::settings_;
 
-  using tftp::Base::local_base_as_inet;
-  using tftp::Base::local_base_as_inet6;
+  //using tftp::Base::local_base_as_inet;
+  //using tftp::Base::local_base_as_inet6;
+  using tftp::Base::local_base;
   using tftp::Base::get_buf_item_raw;
   using tftp::Base::get_buf_item_ntoh;
   using tftp::Base::set_buf_item_raw;
@@ -114,16 +115,16 @@ UNIT_TEST_CASE_BEGIN(base_load_options, "Class 'tftp::Base' - options")
     TEST_CHECK_FALSE(b.get_is_daemon());
     // syslog level
     TEST_CHECK_TRUE(b.settings_->use_syslog == 6);
-    TEST_CHECK_TRUE(b.get_syslog_level() == 6);
+    //TEST_CHECK_TRUE(b.get_syslog_level() == 6);
     // addr
     TEST_CHECK_TRUE(((struct sockaddr_in *) b.settings_->local_base_.data())->sin_family == 2);
     TEST_CHECK_TRUE(be16toh(((struct sockaddr_in *) b.settings_->local_base_.data())->sin_port) == 69);
     TEST_CHECK_TRUE(((struct sockaddr_in *) b.settings_->local_base_.data())->sin_addr.s_addr == 0);
-    TEST_CHECK_TRUE(b.local_base_as_inet().sin_family == 2);
-    TEST_CHECK_TRUE(be16toh(b.local_base_as_inet().sin_port) == 69);
-    TEST_CHECK_TRUE(b.local_base_as_inet().sin_addr.s_addr == 0);
+    TEST_CHECK_TRUE(b.local_base().family() == 2);
+    TEST_CHECK_TRUE(b.local_base().port() == 69);
+    TEST_CHECK_TRUE(b.local_base().as_in().sin_addr.s_addr == 0);
     TEST_CHECK_TRUE(b.get_local_base_str() == "0.0.0.0:69");
-    TEST_CHECK_TRUE(& ((struct sockaddr_in *) b.settings_->local_base_.data())->sin_addr.s_addr == & b.local_base_as_inet().sin_addr.s_addr);
+    TEST_CHECK_TRUE(& ((struct sockaddr_in *) b.settings_->local_base_.data())->sin_addr.s_addr == & b.local_base().as_in().sin_addr.s_addr);
 
     // sys lib dir
     TEST_CHECK_TRUE(b.settings_->lib_dir == "/usr/lib/x86_64-linux-gnu/");
@@ -155,7 +156,13 @@ UNIT_TEST_CASE_BEGIN(base_load_options, "Class 'tftp::Base' - options")
     TEST_CHECK_TRUE(u1.data()  != b.settings_->user.data());
     TEST_CHECK_TRUE(p1.data()  != b.settings_->pass.data());
     TEST_CHECK_TRUE(r1.data()  != b.settings_->role.data());
-  }
+
+    TEST_CHECK_TRUE(b.settings_->retransmit_count_ == tftp::constants::default_retransmit_count);
+    TEST_CHECK_TRUE(b.get_retransmit_count() == tftp::constants::default_retransmit_count);
+    b.set_retransmit_count(100U);
+    TEST_CHECK_TRUE(b.get_retransmit_count() == 100U);
+
+}
 
   // 2
   START_ITER("load options");
@@ -176,7 +183,8 @@ UNIT_TEST_CASE_BEGIN(base_load_options, "Class 'tftp::Base' - options")
       "--fb-role", "none",
       "--fb-dialect", "3",
       "--lib-dir", "/tmp/libs",
-      "--lib-name", "fbclient"
+      "--lib-name", "fbclient",
+      "--retransmit", "59"
     };
 
     tst_Base b;
@@ -186,16 +194,16 @@ UNIT_TEST_CASE_BEGIN(base_load_options, "Class 'tftp::Base' - options")
     TEST_CHECK_TRUE(b.get_is_daemon());
     // syslog level
     TEST_CHECK_TRUE(b.settings_->use_syslog == 7);
-    TEST_CHECK_TRUE(b.get_syslog_level() == 7);
+    //TEST_CHECK_TRUE(b.get_syslog_level() == 7);
     // addr
     TEST_CHECK_TRUE(((struct sockaddr_in *) b.settings_->local_base_.data())->sin_family == 2);
     TEST_CHECK_TRUE(be16toh(((struct sockaddr_in *) b.settings_->local_base_.data())->sin_port) == 7777);
     TEST_CHECK_TRUE(((struct sockaddr_in *) b.settings_->local_base_.data())->sin_addr.s_addr == 16843009);
-    TEST_CHECK_TRUE(b.local_base_as_inet().sin_family == 2);
-    TEST_CHECK_TRUE(be16toh(b.local_base_as_inet().sin_port) == 7777);
-    TEST_CHECK_TRUE(b.local_base_as_inet().sin_addr.s_addr == 16843009);
+    TEST_CHECK_TRUE(b.local_base().family() == 2);
+    TEST_CHECK_TRUE(b.local_base().port() == 7777);
+    TEST_CHECK_TRUE(b.local_base().as_in().sin_addr.s_addr == 16843009);
     TEST_CHECK_TRUE(b.get_local_base_str() == "1.1.1.1:7777");
-    TEST_CHECK_TRUE(& ((struct sockaddr_in *) b.settings_->local_base_.data())->sin_addr.s_addr == & b.local_base_as_inet().sin_addr.s_addr);
+    TEST_CHECK_TRUE(& ((struct sockaddr_in *) b.settings_->local_base_.data())->sin_addr.s_addr == & b.local_base().as_in().sin_addr.s_addr);
     // sys lib dir
     TEST_CHECK_TRUE(b.settings_->lib_dir == "/tmp/libs");
     TEST_CHECK_TRUE(b.get_lib_dir() == "/tmp/libs/");
@@ -238,6 +246,8 @@ UNIT_TEST_CASE_BEGIN(base_load_options, "Class 'tftp::Base' - options")
       TEST_CHECK_TRUE(p1.data()  != b.settings_->pass.data());
       TEST_CHECK_TRUE(r1.data()  != b.settings_->role.data());
     }
+    TEST_CHECK_TRUE(b.settings_->retransmit_count_ == 59U);
+    TEST_CHECK_TRUE(b.get_retransmit_count() == 59U);
 
     // 3
     START_ITER("set options");
@@ -249,22 +259,24 @@ UNIT_TEST_CASE_BEGIN(base_load_options, "Class 'tftp::Base' - options")
     b.set_lib_name_fb("ib_client");
     b.set_connection("qq.gdb", "admin", "passss","no_role", 2);
     struct in_addr a{0x02020202U};
-    b.set_local_base_inet(& a, 8888);
+    //b.set_local_base_inet(& a, 8888);
+    b.local_base().set_addr(a);
+    b.local_base().set_port(8888);
     // is daemon
     TEST_CHECK_FALSE(b.settings_->is_daemon);
     TEST_CHECK_FALSE(b.get_is_daemon());
     // syslog level
     TEST_CHECK_TRUE(b.settings_->use_syslog == 5);
-    TEST_CHECK_TRUE(b.get_syslog_level() == 5);
+    //TEST_CHECK_TRUE(b.get_syslog_level() == 5);
     // addr
     TEST_CHECK_TRUE(((struct sockaddr_in *) b.settings_->local_base_.data())->sin_family == 2);
     TEST_CHECK_TRUE(be16toh(((struct sockaddr_in *) b.settings_->local_base_.data())->sin_port) == 8888);
     TEST_CHECK_TRUE(((struct sockaddr_in *) b.settings_->local_base_.data())->sin_addr.s_addr == 0x02020202U);
-    TEST_CHECK_TRUE(b.local_base_as_inet().sin_family == 2);
-    TEST_CHECK_TRUE(be16toh(b.local_base_as_inet().sin_port) == 8888);
-    TEST_CHECK_TRUE(b.local_base_as_inet().sin_addr.s_addr == 0x02020202U);
+    TEST_CHECK_TRUE(b.local_base().family() == 2);
+    TEST_CHECK_TRUE(b.local_base().port() == 8888);
+    TEST_CHECK_TRUE(b.local_base().as_in().sin_addr.s_addr == 0x02020202U);
     TEST_CHECK_TRUE(b.get_local_base_str() == "2.2.2.2:8888");
-    TEST_CHECK_TRUE(& ((struct sockaddr_in *) b.settings_->local_base_.data())->sin_addr.s_addr == & b.local_base_as_inet().sin_addr.s_addr);
+    TEST_CHECK_TRUE(& ((struct sockaddr_in *) b.settings_->local_base_.data())->sin_addr.s_addr == & b.local_base().as_in().sin_addr.s_addr);
     // sys lib dir
     TEST_CHECK_TRUE(b.settings_->lib_dir == "/bubin/libs");
     TEST_CHECK_TRUE(b.get_lib_dir() == "/bubin/libs/");

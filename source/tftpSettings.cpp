@@ -30,16 +30,17 @@ Settings::Settings():
   is_daemon{false},
   local_base_{},
   lib_dir{},
-  lib_name{default_fb_lib_name},
+  lib_name{constants::default_fb_lib_name},
   root_dir{},
   backup_dirs{},
   db{},
   user{},
   pass{},
   role{},
-  dialect{default_fb_dialect},
-  use_syslog{default_tftp_syslog_lvl},
-  log_{nullptr}
+  dialect{constants::default_fb_dialect},
+  use_syslog{constants::default_tftp_syslog_lvl},
+  log_{nullptr},
+  retransmit_count_{constants::default_retransmit_count}
 {
 }
 

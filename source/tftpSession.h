@@ -1,5 +1,5 @@
 /**
- * \file tftp_session.h
+ * \file tftpSession.h
  * \brief TFTP session class header
  *
  *  TFTP session class header
@@ -15,10 +15,16 @@
 #ifndef SOURCE_TFTP_SESSION_H_
 #define SOURCE_TFTP_SESSION_H_
 
+#include <atomic>
 #include <thread>
+#include <map>
+#include <optional>
 
 #include "tftpCommon.h"
 #include "tftpDataMgr.h"
+#include "tftpSmBuf.h"
+#include "tftpOptions.h"
+#include "tftpAddr.h"
 
 namespace tftp
 {
@@ -30,69 +36,31 @@ namespace tftp
  *
  *  Class for emulate p2p UDP/IP session when request received by server.
  *  For use class:
- *  - Assign global settings.
- *  - Initialize with init(client socket address, recived packet).
- *  - execute run() for one instance or run_thread() for multi-thread
+ *  - Assign settings.
+ *  - Initialize
+ *  - Run main loop run()
  *
  */
-
 class Session: public Base
 {
 protected:
-  SrvReq       request_type_;    ///< Server request
-  std::string  filename_;        ///< Requested filename
-  TransfMode   transfer_mode_;   ///< Transfer mode
-  Buf          client_;          ///< Client socket address buffer
-  int          socket_;          ///< Socket
-  OptInt       opt_blksize_;     ///< Option 'blksize'
-  OptInt       opt_timeout_;     ///< Option 'timeout'
-  OptInt       opt_tsize_;       ///< Option 'tsize'
-  uint16_t     re_tx_count_;     ///< Retransmitt count
-  Buf          sess_buffer_tx_;  ///< Session buffer for TX operations
-  Buf          sess_buffer_rx_;  ///< Session buffer for RX operations
-  size_t       stage_;           ///< Stage
-  size_t       buf_size_tx_;     ///< TX data size
-  time_t       oper_time_;       ///< Last remembered action time
-  uint16_t     oper_tx_count_;   ///< Transmit try count
-  bool         oper_wait_;       ///< Flag r/w state (mode)
-  size_t       oper_last_block_; ///< Last (finish) block number
-  bool         stop_;            ///< Break loop request (when error, etc.)
-  bool         finished_;        ///< confirm (reply) break loop request
-  DataMgr     manager_;         ///< Data manager
-  uint16_t     error_code_;      ///< First error info - code
-  std::string  error_message_;   ///< First error info - message
+  Addr         cl_addr_;           ///< Client socket address buffer
+  int          socket_;           ///< Socket
+  SmBuf        buf_tx_;           ///< Session buffer for TX operations
+  SmBuf        buf_rx_;           ///< Session buffer for RX operations
+  size_t       stage_;            ///< Stage
+  size_t       buf_tx_data_size_; ///< TX data size
+  time_t       oper_time_;        ///< Last remembered action time
+  uint16_t     oper_tx_count_;    ///< Transmit try count
+  bool         oper_wait_;        ///< Flag r/w state (mode)
+  size_t       oper_last_block_;  ///< Last (finish) block number
+  bool         stop_;             ///< Break loop request (when error, etc.)
+  std::atomic_bool finished_;     ///< External use flag: true when session finished
+  DataMgr      manager_;          ///< Data manager
+  uint16_t     error_code_;       ///< First error info - code
+  std::string  error_message_;    ///< First error info - message
 
-  /** \brief Get uint16_t from RX buffer with offset
-   *
-   *  Network byte order value read as host order value
-   *  \param [in] offset Index array of uint16_t values
-   *  \return Extracted value (host byte order)
-   */
-  auto get_buf_rx_u16_ntoh(const size_t offset);
-
-  /** \brief Set uint16_t to TX buffer with offset
-   *
-   *  Host byte order value write as network order value
-   *  \param [in] offset Index array of uint16_t values
-   *  \param [in] value Value (host byte order) to write buffer
-   */
-  void set_buf_tx_u16_hton(const size_t offset, const uint16_t value);
-
-
-  /** \brief Check size for append to buffer and resize if need
-   *
-   *  \param [in] size_append New size for append
-   */
-  void check_buffer_tx_size(const size_t size_append);
-
-  /** \brief Append string to buffer
-   *
-   *  Append zero at the end
-   *  If string length is zero do nothing
-   *  \param [in] str String value for add
-   *  \return Size added data to buffer
-   */
-  size_t push_buffer_string(std::string_view str);
+  Options      opt_;
 
   /** \brief Construct option acknowledge
    *
@@ -118,7 +86,7 @@ protected:
   /** \brief Construct data block
    *
    *  Construct tftp packet payload as data block
-   *  Fill buffer and set buf_size_tx_;
+   *  Fill buffer and set buf_tx_data_size_;
    *  if can't do it then construct error block
    */
   void construct_data();
@@ -126,7 +94,7 @@ protected:
   /** \brief Construct data block acknowledge
    *
    *  Construct tftp packet payload as acknowledge
-   *  Fill buffer and set buf_size_tx_
+   *  Fill buffer and set buf_tx_data_size_
    */
   void construct_ack();
 
@@ -155,10 +123,6 @@ protected:
    */
   uint16_t blk_num_local(const uint16_t step = 0) const;
 
-  /** \brief Open session socket and tune
-   */
-  bool socket_open();
-
   /** \brief Close session socket
    */
   void socket_close();
@@ -179,12 +143,6 @@ protected:
    *  \return Teue if error code and message assigned, else - false
    */
   bool was_error();
-
-  /** \brief Check current stage is receive
-   *
-   *  \return True if current stage is receive, else return false
-   */
-  bool is_stage_receive() const noexcept;
 
   /** \brief Check current stage is transmit
    *
@@ -214,15 +172,22 @@ protected:
    */
   bool receive_no_wait();
 
+  template<typename T>
+  void push_data(T && value);
+
 public:
   /** \brief Constructor
    */
   Session();
 
+  Session(pSettings & new_settings);
+
   // Deny copy
   Session(const Session & ) = delete;
   Session(      Session & ) = delete;
   Session(      Session &&) = delete;
+
+  auto operator=(Session && val) -> Session &;
 
   /** \brief Destructor
    */
@@ -231,29 +196,58 @@ public:
   /** \brief Session initialize
    *
    *  Initialize session from top level after receive tftp request
-   *  \param [in] addr_begin Client socket - begin buffer iterator
-   *  \param [in] addr_end Client socket - end buffer iterator
-   *  \param [in] buf_begin UDP request data packet - begin buffer iterator
-   *  \param [in] buf_end UDP request data packet - end buffer iterator
+   *  \param [in] remote_addr Client socket
+   *  \param [in] pkt_data Request data packet buffer
+   *  \param [in] pkt_data_size Packet buffer size
    *  \return True if initialize success, else - false
    */
-  bool init(const Buf::const_iterator addr_begin,
-            const Buf::const_iterator addr_end,
-            const Buf::const_iterator buf_begin,
-            const Buf::const_iterator buf_end);
+  bool prepare(
+      const Addr & remote_addr,
+      const SmBuf  & pkt_data,
+      const size_t & pkt_data_size);
+
+  bool init();
 
   /** \brief Main session loop
    */
   void run();
 
-  /** \brief Main session loop as thread executed
+  /** \brief Checker finished session
    *
-   *  \return Instance of std::thread
+   *   For external use
+   *  \return Value from protected atomic value 'finished_'
    */
-  std::thread run_thread();
+  bool is_finished() const;
 
-  friend class Srv;
 };
+
+// -----------------------------------------------------------------------------
+
+template<typename T>
+void Session::push_data(T && value)
+{
+  if constexpr (std::is_integral_v<T>)
+  {
+    if((buf_tx_data_size_ + sizeof(T)) <= buf_tx_.size())
+    {
+      buf_tx_data_size_ += buf_tx_.set_hton(buf_tx_data_size_, value);
+    }
+  }
+  else
+  if constexpr (std::is_constructible_v<std::string, T>)
+  {
+    std::string tmp_str{std::forward<T>(value)};
+
+    if((buf_tx_data_size_ + tmp_str.size()) <= buf_tx_.size())
+    {
+      buf_tx_data_size_ += buf_tx_.set_string(buf_tx_data_size_, tmp_str, true);
+    }
+  }
+  else // Never do it!
+  {
+    assert(false); // Wrong use push_data() - Does't support pushed type
+  }
+}
 
 // -----------------------------------------------------------------------------
 
