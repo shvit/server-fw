@@ -14,6 +14,7 @@
 
 #include <getopt.h>
 #include <syslog.h>
+#include <iostream>
 
 #include "tftpSettings.h"
 
@@ -175,6 +176,42 @@ bool Settings::load_options(int argc, char * argv[])
 }
 
 //------------------------------------------------------------------------------
+
+void Settings::out_help(std::ostream & stream, std::string_view app) const
+{
+  out_id(stream);
+
+  stream << "Some features:" << std::endl
+  << "  - Recursive search requested files by md5 sum in search directory" << std::endl
+  << "  - Use Firebird SQL server as file storage (optional requirement)" << std::endl
+  << "Usage: " << app << " [<option1> [<option1 argument>]] [<option2> [<option2 argument>]] ... " << std::endl
+  << "Possible options:" << std::endl
+  << "  {-h|-H|-?|--help} Show help message" << std::endl
+  << "  {-l|-L|--ip|--listen} {<IPv4>|[<IPv6>]}[:port] Listening address and port" << std::endl
+  << "    (default 0.0.0.0:" << constants::default_tftp_port << ")" << std::endl
+  << "    Sample IPv4: 192.168.0.1:69" << std::endl
+  << "    Sample IPv6: [::1]:69" << std::endl
+  << "  {-s|-S|--syslog} <0...7> SYSLOG level flooding (default " << constants::default_tftp_syslog_lvl << ")" << std::endl
+  << "  --lib-dir <directory> System library directory" << std::endl
+  << "  --lib-name <name> Firebird library filename (default " << constants::default_fb_lib_name << ")" << std::endl
+  << "  --root-dir <directory> Server root directory" << std::endl
+  << "  --search <directory> Directory for recursive search by md5 sum (may be much)" << std::endl
+  << "  --fb-db <database> Firebird access database name" << std::endl
+  << "  --fb-user <username> Firebird access user name" << std::endl
+  << "  --fb-pass <password> Firebird access password" << std::endl
+  << "  --fb-role <role> Firebird access role" << std::endl
+  << "  --fb-dialect <1...3> Firebird server dialect (default " << constants::default_fb_dialect << ")" << std::endl
+  << "  --daemon Run as daemon" << std::endl
+  << "  --retransmit <N> Maximum retransmit count if fail" << std::endl;
+}
+
+// -----------------------------------------------------------------------------
+
+void Settings::out_id(std::ostream & stream) const
+{
+  stream << "Simple tftp firmware server 'server_fw' licensed GPL-3.0" << std::endl
+  << "(c) 2019-2021 Vitaliy.V.Shirinkin, e-mail: vitaliy.shirinkin@gmail.com" << std::endl;
+}
 
 
 } // namespace tftp

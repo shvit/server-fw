@@ -103,7 +103,7 @@ UNIT_TEST_CASE_BEGIN(buffer_operations, "Buffer operations")
 UNIT_TEST_CASE_END
 
 //------------------------------------------------------------------------------
-
+/*
 UNIT_TEST_CASE_BEGIN(base_load_options, "Class 'tftp::Base' - options")
 
   // 1
@@ -356,7 +356,7 @@ UNIT_TEST_CASE_BEGIN(base_load_options, "Class 'tftp::Base' - options")
 
   //
 UNIT_TEST_CASE_END
-
+*/
 //------------------------------------------------------------------------------
 
 UNIT_TEST_SUITE_END

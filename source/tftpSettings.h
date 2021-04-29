@@ -96,6 +96,10 @@ public:
    */
   bool load_options(int argc, char * argv[]);
 
+  void out_id(std::ostream & stream) const;
+
+  void out_help(std::ostream & stream, std::string_view app) const;
+
 };
 
 // -----------------------------------------------------------------------------

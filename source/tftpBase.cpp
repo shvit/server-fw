@@ -32,13 +32,6 @@ namespace tftp
 Base::Base():
     settings_{Settings::create()}
 {
-  local_base().set_family(AF_INET);
-  local_base().set_port(constants::default_tftp_port);
-
-  //settings_->lib_name.assign(constants::default_fb_lib_name);
-  //settings_->dialect = constants::default_fb_dialect;
-  //settings_->use_syslog = constants::default_tftp_syslog_lvl;
-
   // Get system library path from current maps
   std::ifstream maps;
   maps.open("/proc/self/maps", std::ios_base::in);
@@ -61,7 +54,6 @@ Base::Base():
   }
 
   maps.close();
-
 }
 
 // -----------------------------------------------------------------------------
@@ -78,6 +70,8 @@ Base::Base(Base && src):
 {
 }
 
+// -----------------------------------------------------------------------------
+
 Base & Base::operator=(Base && src)
 {
   settings_ = std::move(src.settings_);
@@ -85,6 +79,7 @@ Base & Base::operator=(Base && src)
   return *this;
 }
 
+// -----------------------------------------------------------------------------
 
 Base::~Base()
 {
@@ -132,21 +127,13 @@ void Base::set_logger(fLogMsg new_logger)
 }
 
 // -----------------------------------------------------------------------------
-
+/*
 void Base::set_syslog_level(const int lvl)
 {
   auto lk = begin_unique(); // write lock
 
   settings_->use_syslog = lvl;
 }
-
-//auto Base::get_syslog_level_() const -> int
-//{
-//  auto lk = begin_shared(); // read lock
-//
-//  return settings_->use_syslog;
-//}
-
 // -----------------------------------------------------------------------------
 
 void Base::set_root_dir(std::string_view root_dir)
@@ -155,7 +142,7 @@ void Base::set_root_dir(std::string_view root_dir)
 
   settings_->root_dir.assign(root_dir);
 }
-
+*/
 // -----------------------------------------------------------------------------
 auto Base::get_root_dir() const -> std::string
 {
@@ -176,14 +163,14 @@ auto Base::get_root_dir() const -> std::string
 }
 
 // -----------------------------------------------------------------------------
-
+/*
 void Base::set_lib_dir(std::string_view dir)
 {
   auto lk = begin_unique(); // write lock
 
   settings_->lib_dir.assign(dir);
 }
-
+*/
 // -----------------------------------------------------------------------------
 
 auto Base::get_lib_dir() const -> std::string
@@ -198,14 +185,14 @@ auto Base::get_lib_dir() const -> std::string
 }
 
 // -----------------------------------------------------------------------------
-
+/*
 void Base::set_lib_name_fb(std::string_view fb_name)
 {
   auto lk = begin_unique(); // write lock
 
   settings_->lib_name.assign(fb_name);
 }
-
+*/
 // -----------------------------------------------------------------------------
 
 auto Base::get_lib_name_fb() const -> std::string
@@ -216,7 +203,7 @@ auto Base::get_lib_name_fb() const -> std::string
 }
 
 // -----------------------------------------------------------------------------
-
+/*
 void Base::set_connection_db  (std::string_view val)
 { auto lk = begin_unique(); settings_->db  .assign(val); }
 
@@ -254,9 +241,12 @@ void Base::set_retransmit_count(const uint16_t & val)
 {
   settings_->retransmit_count_ = val;
 }
+*/
 
 auto Base::get_retransmit_count() const -> const uint16_t &
 {
+  auto lk = begin_shared(); // read lock
+
   return settings_->retransmit_count_;
 }
 
@@ -291,93 +281,22 @@ auto Base::local_base() const -> const Addr &
 }
 
 // -----------------------------------------------------------------------------
-/*
-auto Base::local_base_as_inet_() -> struct sockaddr_in &
-{
-//  if(settings_->local_base_.empty())
-//  {
-//    settings_->local_base_.assign(sizeof(struct sockaddr_in), 0);
-//  }
-//  else
-//  {
-    if(settings_->local_base_.size() < sizeof(struct sockaddr_in))
-      ERROR_THROW_RUNTIME(
-          "Small size settings_->local_base_ ("+
-          std::to_string(settings_->local_base_.size())+
-          " bytes less struct sockaddr_in)");
-//  }
-
-  return settings_->local_base_.as_in();
-}
-
-// -----------------------------------------------------------------------------
-
-auto Base::local_base_as_inet6() -> struct sockaddr_in6 &
-{
-//  if(settings_->local_base_.empty())
-//  {
-//    settings_->local_base_.assign(sizeof(struct sockaddr_in6), 0);
-//  }
-//  else
-//  {
-    if(settings_->local_base_.size() < sizeof(struct sockaddr_in6))
-      ERROR_THROW_RUNTIME(
-          "Small size settings_->local_base_ ("+
-          std::to_string(settings_->local_base_.size())+
-          " bytes less struct sockaddr_in6)");
-//  }
-
-  return settings_->local_base_.as_in6();
-}
-*/
-// -----------------------------------------------------------------------------
-/*
-void Base::set_local_base_inet(struct in_addr * addr, uint16_t port)
-{
-  auto lk = begin_unique(); // write lock
-
-  settings_->local_base_.clear();
-
-  local_base_as_inet().sin_family = AF_INET;
-  local_base_as_inet().sin_addr   = * addr;
-  local_base_as_inet().sin_port   = htobe16(port);
-}
-
-// -----------------------------------------------------------------------------
-
-void Base::set_local_base_inet6(struct in6_addr * addr, uint16_t port)
-{
-  auto lk = begin_unique(); // write lock
-
-  settings_->local_base_.clear();
-
-  local_base_as_inet6().sin6_family = AF_INET6;
-  local_base_as_inet6().sin6_addr   = * addr;
-  local_base_as_inet6().sin6_port  = htobe16(port);
-}
-*/
-// -----------------------------------------------------------------------------
 
 auto Base::get_local_base_str() const -> std::string
 {
   auto lk = begin_shared(); // read lock
 
   return settings_->local_base_.str();
-
-//  return sockaddr_to_str(
-//      settings_->local_base_.cbegin(),
-//      settings_->local_base_.cend());
 }
-
 // -----------------------------------------------------------------------------
-
+/*
 void Base::set_is_daemon(bool value)
 {
   auto lk = begin_unique(); // write lock
 
   settings_->is_daemon = value;
 }
-
+*/
 // -----------------------------------------------------------------------------
 
 bool Base::get_is_daemon() const
@@ -388,7 +307,7 @@ bool Base::get_is_daemon() const
 }
 
 // -----------------------------------------------------------------------------
-
+/*
 void Base::set_search_dir_append(std::string_view new_dir)
 {
   auto lk = begin_unique(); // write lock
@@ -401,7 +320,7 @@ void Base::set_search_dir_append(std::string_view new_dir)
 
   if(need_append) settings_->backup_dirs.emplace_back(new_dir);
 }
-
+*/
 // -----------------------------------------------------------------------------
 
 auto Base::get_serach_dir() const -> std::vector<std::string>
@@ -419,7 +338,7 @@ auto Base::get_serach_dir() const -> std::vector<std::string>
 }
 
 // -----------------------------------------------------------------------------
-
+/*
 void Base::set_local_base(std::string_view addr)
 {
   auto lk = begin_unique(); // write lock
@@ -431,162 +350,32 @@ void Base::set_local_base(std::string_view addr)
   if(!set_addr) settings_->local_base_.set_family(AF_INET);
   if(!set_port) settings_->local_base_.set_port(constants::default_tftp_port);
 }
-
+*/
 // -----------------------------------------------------------------------------
 
 bool Base::load_options(int argc, char* argv[])
 {
-  bool ret = true;
+  auto lk = begin_unique(); // write lock
 
-  static const char *optString = "l:L:s:S:h?";
-
-  static const struct option longOpts[] =
-  {
-      { "listen",     required_argument, NULL, 'l' }, // 0
-      { "ip",         required_argument, NULL, 'l' }, // 1
-      { "syslog",     required_argument, NULL, 's' }, // 2
-      { "help",             no_argument, NULL, 'h' }, // 3
-      { "lib-dir",    required_argument, NULL,  0  }, // 4
-      { "lib-name",   required_argument, NULL,  0  }, // 5
-      { "root-dir",   required_argument, NULL,  0  }, // 6
-      { "search",     required_argument, NULL,  0  }, // 7
-      { "fb-db",      required_argument, NULL,  0  }, // 8
-      { "fb-user",    required_argument, NULL,  0  }, // 9
-      { "fb-pass",    required_argument, NULL,  0  }, // 10
-      { "fb-role",    required_argument, NULL,  0  }, // 11
-      { "fb-dialect", required_argument, NULL,  0  }, // 12
-      { "daemon",           no_argument, NULL,  0  }, // 13
-      { "retransmit", required_argument, NULL,  0  }, // 14
-      { NULL,               no_argument, NULL,  0  }  // always last
-  };
-
-  set_search_dir();
-
-  optind=1;
-  while(argc > 1)
-  {
-    int longIndex;
-    int opt = getopt_long(argc, argv, optString, longOpts, & longIndex);
-    if(opt == -1) break; // end parsing
-    switch(opt)
-    {
-    case 'l':
-      if(optarg) set_local_base(optarg);
-      break;
-    case 's':
-    case 'S':
-      {
-        if(optarg)
-        {
-          try
-          {
-            int lvl = LOG_PRI(std::stoi(optarg));
-            set_syslog_level(lvl);
-          } catch (...) { };
-        }
-      }
-      break;
-    case 'h':
-    case 'H':
-    case '?':
-      ret = false; // Help message cout
-      break;
-    case 0:
-
-      switch(longIndex)
-      {
-      case 4: // --lib-dir
-        if(optarg) set_lib_dir(optarg);
-        break;
-      case 5: // --lib-name
-        if(optarg) set_lib_name_fb(optarg);
-        break;
-      case 6: // --root-dir
-        if(optarg) set_root_dir(optarg);
-        break;
-      case 7: // --search
-        if(optarg) set_search_dir_append(optarg);
-        break;
-      case 8: // --fb-db
-        if(optarg) set_connection_db(optarg);
-        break;
-      case 9: // --fb-user
-        if(optarg) set_connection_user(optarg);
-        break;
-      case 10: // --fb-pass
-        if(optarg) set_connection_pass(optarg);
-        break;
-      case 11: // --fb-role
-        if(optarg) set_connection_role(optarg);
-        break;
-      case 12: // --fb-dialect
-        if(optarg)
-        {
-          try
-          {
-            uint16_t dial = (std::stoul(optarg) & 0xFFFFU);
-            set_connection_dialect(dial);
-          } catch (...) { };
-        }
-        break;
-      case 13: // --daemon
-        set_is_daemon(true);
-        break;
-      case 14: // --retransmit
-        if(optarg)
-        {
-          try
-          {
-            uint16_t rtr = (std::stoul(optarg) & 0xFFFFU);
-            set_retransmit_count(rtr);
-          } catch (...) { };
-        }
-        break;
-
-      } // case (for long option)
-      break;
-    } // switch
-  }
-
-  return ret;
+  return settings_->load_options(argc, argv);
 }
 
 // -----------------------------------------------------------------------------
 
 void Base::out_help(std::ostream & stream, std::string_view app) const
 {
-  out_id(stream);
+  auto lk = begin_shared(); // read lock
 
-  stream << "Some features:" << std::endl
-  << "  - Recursive search requested files by md5 sum in search directory" << std::endl
-  << "  - Use Firebird SQL server as file storage (optional requirement)" << std::endl
-  << "Usage: " << app << " [<option1> [<option1 argument>]] [<option2> [<option2 argument>]] ... " << std::endl
-  << "Possible options:" << std::endl
-  << "  {-h|-H|-?|--help} Show help message" << std::endl
-  << "  {-l|-L|--ip|--listen} {<IPv4>|[<IPv6>]}[:port] Listening address and port" << std::endl
-  << "    (default 0.0.0.0:" << constants::default_tftp_port << ")" << std::endl
-  << "    Sample IPv4: 192.168.0.1:69" << std::endl
-  << "    Sample IPv6: [::1]:69" << std::endl
-  << "  {-s|-S|--syslog} <0...7> SYSLOG level flooding (default " << constants::default_tftp_syslog_lvl << ")" << std::endl
-  << "  --lib-dir <directory> System library directory" << std::endl
-  << "  --lib-name <name> Firebird library filename (default " << constants::default_fb_lib_name << ")" << std::endl
-  << "  --root-dir <directory> Server root directory" << std::endl
-  << "  --search <directory> Directory for recursive search by md5 sum (may be much)" << std::endl
-  << "  --fb-db <database> Firebird access database name" << std::endl
-  << "  --fb-user <username> Firebird access user name" << std::endl
-  << "  --fb-pass <password> Firebird access password" << std::endl
-  << "  --fb-role <role> Firebird access role" << std::endl
-  << "  --fb-dialect <1...3> Firebird server dialect (default " << constants::default_fb_dialect << ")" << std::endl
-  << "  --daemon Run as daemon" << std::endl
-  << "  --retransmit <N> Maximum retransmit count if fail" << std::endl;
+  settings_->out_help(stream, app);
 }
 
 // -----------------------------------------------------------------------------
 
 void Base::out_id(std::ostream & stream) const
 {
-  stream << "Simple tftp firmware server 'server_fw' licensed GPL-3.0" << std::endl
-  << "(c) 2019-2021 Vitaliy.V.Shirinkin, e-mail: vitaliy.shirinkin@gmail.com" << std::endl;
+  auto lk = begin_shared(); // read lock
+
+  settings_->out_id(stream);
 }
 
 // -----------------------------------------------------------------------------

@@ -190,7 +190,7 @@ public:
    *  Use mutex unique mode
    *  \param [in] lvl Syslog level pass messages
    */
-  void set_syslog_level(const int lvl);
+  //void set_syslog_level(const int lvl);
 
   /** \brief Get: syslog level
    *
@@ -204,7 +204,7 @@ public:
    *  Use mutex unique mode
    *  \param [in] root_dir Path to root server directory
    */
-  void set_root_dir(std::string_view root_dir);
+  //void set_root_dir(std::string_view root_dir);
 
   /** \brief Get: root server directory
    *
@@ -220,7 +220,7 @@ public:
    *  Use mutex unique mode
    *  \param [in] dir Path to system library directory
    */
-  void set_lib_dir(std::string_view dir);
+  //void set_lib_dir(std::string_view dir);
 
   /** \brief Get: system library directory
    *
@@ -235,7 +235,7 @@ public:
    *  Use mutex unique mode
    *  \param [in] fb_name Firebird library name
    */
-  void set_lib_name_fb(std::string_view fb_name);
+  //void set_lib_name_fb(std::string_view fb_name);
 
   /** \brief Get: Firebird library name
    *
@@ -249,35 +249,35 @@ public:
    *  Use mutex unique mode
    *  \param [in] val Firebird database name
    */
-  void set_connection_db(std::string_view val);
+  //void set_connection_db(std::string_view val);
 
   /** \brief Set: Firebird access user name
    *
    *  Use mutex unique mode
    *  \param [in] val Firebird access user name
    */
-  void set_connection_user(std::string_view val);
+  //void set_connection_user(std::string_view val);
 
   /** \brief Set: Firebird access password
    *
    *  Use mutex unique mode
    *  \param [in] val Firebird access password
    */
-  void set_connection_pass(std::string_view val);
+  //void set_connection_pass(std::string_view val);
 
   /** \brief Set: Firebird access role
    *
    *  \param [in] val Firebird access role
    *  Use mutex unique mode
    */
-  void set_connection_role(std::string_view val);
+  //void set_connection_role(std::string_view val);
 
   /** \brief Set: Firebird access dialect
    *
    *  Use mutex unique mode
    *  \param [in] val Firebird access dialect
    */
-  void set_connection_dialect(uint16_t val);
+  //void set_connection_dialect(uint16_t val);
 
   /** \brief Set: Firebird access information
    *
@@ -288,13 +288,13 @@ public:
    *  \param [in] role Firebird access role
    *  \param [in] dialect Firebird access dialect
    */
-  void set_connection(std::string_view db,
-                      std::string_view user,
-                      std::string_view pass,
-                      std::string_view role,
-                      uint16_t         dialect);
+  //void set_connection(std::string_view db,
+  //                    std::string_view user,
+  //                    std::string_view pass,
+  //                    std::string_view role,
+  //                    uint16_t         dialect);
 
-  void set_retransmit_count(const uint16_t & val);
+  //void set_retransmit_count(const uint16_t & val);
 
   auto get_retransmit_count() const -> const uint16_t &;
 
@@ -315,7 +315,7 @@ public:
    *  Use mutex unique mode
    *  \param [in] Flag is daemon
    */
-  void set_is_daemon(bool value);
+  //void set_is_daemon(bool value);
 
   /** \brief Get: Flag is daemon
    *
@@ -329,15 +329,15 @@ public:
    *  Use mutex unique mode
    *  \param [in] args Search directories (0...Many)
    */
-  template<typename ... Ts>
-  void set_search_dir(Ts && ...);
+  //template<typename ... Ts>
+  //void set_search_dir(Ts && ...);
 
   /** \brief Set: Append search directory
    *
    *  Use mutex unique mode
    *  \param [in] new_dir Search directory
    */
-  void set_search_dir_append(std::string_view new_dir);
+  //void set_search_dir_append(std::string_view new_dir);
 
   /** \brief Get searched directory
    *
@@ -351,7 +351,7 @@ public:
    *  Use mutex unique mode
    *  \param [in] addr Address and port (addr:port) IPv4 or IPv6
    */
-  void set_local_base(std::string_view addr);
+  //void set_local_base(std::string_view addr);
 
   /** \brief Set: Local base address and port as IPv4
    *
@@ -359,7 +359,7 @@ public:
    *  \param [in] addr Address IPv4
    *  \param [in] port Port
    */
-  void set_local_base_inet(struct in_addr * addr, uint16_t port);
+  //void set_local_base_inet(struct in_addr * addr, uint16_t port);
 
   /** \brief Set: Local base address and port as IPv6
    *
@@ -367,7 +367,7 @@ public:
    *  \param [in] addr Address IPv6
    *  \param [in] port Port
    */
-  void set_local_base_inet6(struct in6_addr * addr, uint16_t port);
+  //void set_local_base_inet6(struct in6_addr * addr, uint16_t port);
 
   /** \brief Get: Local base address and port as string
    *
@@ -468,7 +468,7 @@ auto Base::set_buf_item_hton(
 }
 
 // -----------------------------------------------------------------------------
-
+/*
 template<typename ... Ts>
 void Base::set_search_dir(Ts && ... args)
 {
@@ -478,7 +478,7 @@ void Base::set_search_dir(Ts && ... args)
 
   (settings_->backup_dirs.emplace_back(args), ...);
 }
-
+*/
 // -----------------------------------------------------------------------------
 
 template<typename T>
