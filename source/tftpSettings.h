@@ -23,6 +23,8 @@
 namespace tftp
 {
 
+using VecStr = std::vector<std::string>;
+
 // -----------------------------------------------------------------------------
 
 namespace constants
@@ -41,7 +43,7 @@ namespace constants
  * \brief Settings storage class
  *
  *  Class for store server settings.
- *  Can't simple construct
+ *  Can't simple construct - make it shareable
  *  Create only from Settings::create() as shared pointer
  */
 
@@ -54,25 +56,14 @@ protected:
 
 public:
 
-  /// Public creator
-  static auto create() -> pSettings;
+  bool        is_daemon;   ///< Flag showing run as daemon
+  Addr        local_base_; ///< Listening server family/address/port
+  std::string root_dir;    ///< Root directory of TFTP server
+  VecStr      backup_dirs; ///< Search directories
 
-  /// Destructor
-  virtual ~Settings();
-
-  bool is_daemon; ///< Flag showing run as daemon
-
-  Addr local_base_; ///< Listening server address:port (sockaddr_in*)
-
-  // fb lib settings
-  std::string lib_dir;  ///< System library directory
-  std::string lib_name; ///< Firebird library filename
-
-  // storage directory
-  std::string root_dir;                 ///< Root directory of TFTP server
-  std::vector<std::string> backup_dirs; ///< Search directories
-
-  // storage firebird
+  // firebird connect info
+  std::string lib_dir;  ///< Directory with access library
+  std::string lib_name; ///< Firebird access library filename
   std::string db;      ///< Database of firebird
   std::string user;    ///< User name access firebird
   std::string pass;    ///< Password access firebird
@@ -80,11 +71,31 @@ public:
   uint16_t    dialect; ///< Firebird server dialect
 
   //logger
-  int use_syslog;    ///< Syslog pass level logging message
-  fLogMsg log_;  ///< External callback for logging message
+  int use_syslog; ///< Syslog pass level logging message
+  fLogMsg log_;   ///< External callback for logging message
 
   // protocol
   uint16_t retransmit_count_;
+
+
+  /** \brief Public creator
+   *
+   *  \return Shared pointer to this class
+   */
+  static auto create() -> pSettings;
+
+  /** \brief Destructor
+   */
+  virtual ~Settings();
+
+  /** \brief Load settings from CMD arguments
+   *
+   *  \param [in] argc Count of elements in argv
+   *  \param [in] argv Array of arguments
+   *  \return True if success, else - false
+   */
+  bool load_options(int argc, char * argv[]);
+
 };
 
 // -----------------------------------------------------------------------------

@@ -248,6 +248,14 @@ bool Addr::set_addr(const T & new_addr)
     ret = true;
   }
   else
+  if constexpr (std::is_same_v<T, sockaddr_in>)
+  {
+    set_family(new_addr.sin_family);
+    set_port(ntohs(new_addr.sin_port));
+    set_addr_in(new_addr.sin_addr);
+    ret = true;
+  }
+  else
   if constexpr (std::is_same_v<T, in6_addr>)
   {
     set_addr_in6(new_addr);
