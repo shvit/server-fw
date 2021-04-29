@@ -63,89 +63,6 @@ protected:
   auto local_base() -> Addr &;
   auto local_base() const -> const Addr &;
 
-  /** \brief Reference to settings_->local_base as struct sockaddr_in (IPv4)
-   *
-   *  Check size settings_->local_base and allocate if need.
-   *  Not use mutex.
-   */
-  //auto local_base_as_inet_()  -> struct sockaddr_in &;
-
-  /** \brief Reference to settings_->local_base as struct sockaddr_in6 (IPv6)
-   *
-   *  Check size settings_->local_base and allocate if need.
-   *  Not use mutex.
-   */
-  //auto local_base_as_inet6() -> struct sockaddr_in6 &;
-
-  /** \brief Get raw value from buffer (as reference!)
-   *
-   *  \param [in] buf Operational buffer
-   *  \param [in] offset Buffer offset (position) in bytes
-   *  \return Referecne value type of T
-   */
-  template<typename T>
-  auto get_buf_item_raw(
-      Buf & buf,
-      const Buf::size_type offset) const
-          -> std::enable_if_t<std::is_integral_v<T>, T &>;
-
-  /** \brief Get value from buffer and convert network -> host byte order
-   *
-   *  \param [in] buf Operational buffer
-   *  \param [in] offset Buffer offset (position) in bytes
-   *  \return Value type of T
-   */
-  template<typename T>
-  auto get_buf_item_ntoh(
-      Buf & buf,
-      const Buf::size_type offset) const
-          -> std::enable_if_t<std::is_integral_v<T>, T>;
-
-  /** \brief Set (write) raw value to buffer
-   *
-   *  \param [in,out] buf Operational buffer
-   *  \param [in] offset Buffer offset (position) in bytes
-   *  \return Size of buffer increment (size added value)
-   */
-  template<typename T>
-  auto set_buf_item_raw(
-      Buf & buf,
-      const Buf::size_type offset,
-      const T & value)
-          -> std::enable_if_t<std::is_integral_v<T>, Buf::size_type>;
-
-  /** \brief Set raw value to buffer and convert host -> network byte order
-   *
-   *  \param [in,out] buf Operational buffer
-   *  \param [in] offset Buffer offset (position) in bytes
-   *  \param [in] value Value for buffer add
-   *  \return Size of buffer increment (size added value)
-   */
-  template<typename T>
-  auto set_buf_item_hton(
-      Buf & buf,
-      const Buf::size_type offset,
-      const T value)
-          -> std::enable_if_t<std::is_integral_v<T>, Buf::size_type>;
-
-  /** \brief Write container data to buffer
-   *
-   *  Can use for string with smart add zero end.
-   *  \param [in,out] buf Operational buffer
-   *  \param [in] offset Buffer offset (position) in bytes
-   *  \param [in] cntnr Container data
-   *  \param [in] check_zero_end Enable/disable smart end zero
-   *  \return Size of buffer increment (size of added data)
-   *
-   */
-  template<typename T>
-  auto set_buf_cont_str(
-      Buf & buf,
-      const Buf::size_type offset,
-      const T & cntnr,
-      bool check_zero_end = false)
-          -> std::enable_if_t<is_container_v<T>, Buf::size_type>;
-
 public:
 
   /** \brief Constructor
@@ -166,7 +83,6 @@ public:
   /** Destructor
    */
   virtual ~Base();
-
 
   Base & operator=(Base && src);
 
@@ -399,7 +315,7 @@ public:
 };
 
 //==============================================================================
-
+/*
 template<typename T>
 auto Base::get_buf_item_raw(
     Buf & buf,
@@ -468,17 +384,15 @@ auto Base::set_buf_item_hton(
 }
 
 // -----------------------------------------------------------------------------
-/*
-template<typename ... Ts>
-void Base::set_search_dir(Ts && ... args)
-{
-  auto lk = begin_unique(); // write lock
-
-  settings_->backup_dirs.clear();
-
-  (settings_->backup_dirs.emplace_back(args), ...);
-}
-*/
+//template<typename ... Ts>
+//void Base::set_search_dir(Ts && ... args)
+//{
+//  auto lk = begin_unique(); // write lock
+//
+//  settings_->backup_dirs.clear();
+//
+//  (settings_->backup_dirs.emplace_back(args), ...);
+//}
 // -----------------------------------------------------------------------------
 
 template<typename T>
@@ -510,7 +424,7 @@ auto Base::set_buf_cont_str(
 }
 
 // -----------------------------------------------------------------------------
-
+*/
 } // namespace tftp
 
 #endif /* SOURCE_TFTPBASE_H_ */

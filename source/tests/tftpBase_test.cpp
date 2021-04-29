@@ -23,16 +23,16 @@ public:
   //using tftp::Base::local_base_as_inet;
   //using tftp::Base::local_base_as_inet6;
   using tftp::Base::local_base;
-  using tftp::Base::get_buf_item_raw;
-  using tftp::Base::get_buf_item_ntoh;
-  using tftp::Base::set_buf_item_raw;
-  using tftp::Base::set_buf_item_hton;
-  using tftp::Base::set_buf_cont_str;
+  //using tftp::Base::get_buf_item_raw;
+  //using tftp::Base::get_buf_item_ntoh;
+  //using tftp::Base::set_buf_item_raw;
+  //using tftp::Base::set_buf_item_hton;
+  //using tftp::Base::set_buf_cont_str;
 
 };
 
 //------------------------------------------------------------------------------
-
+/*
 UNIT_TEST_CASE_BEGIN(buffer_operations, "Buffer operations")
 
   tst_Base b;
@@ -101,7 +101,7 @@ UNIT_TEST_CASE_BEGIN(buffer_operations, "Buffer operations")
   TEST_CHECK_TRUE(b.get_buf_item_ntoh<uint32_t>(a1, 4) == 0x74757600U);
 //
 UNIT_TEST_CASE_END
-
+*/
 //------------------------------------------------------------------------------
 /*
 UNIT_TEST_CASE_BEGIN(base_load_options, "Class 'tftp::Base' - options")
