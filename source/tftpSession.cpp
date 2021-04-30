@@ -28,6 +28,7 @@ namespace tftp
 
 Session::Session():
     Base(),
+    my_addr_{},
     cl_addr_{},
     socket_{0},
     buf_tx_(0xFFFFU, 0),
@@ -54,7 +55,9 @@ Session::Session(pSettings & new_settings):
 {
   if(new_settings.get() != nullptr)
   {
-    this->settings_ = new_settings;
+    auto lk = begin_unique(); // write lock
+
+    settings_ = new_settings;
   }
 }
 
@@ -70,6 +73,13 @@ auto Session::operator=(Session && val) -> Session &
 {
   if(this != & val)
   {
+    if(settings_.get() != val.settings_.get())
+    {
+      auto lk = begin_unique(); // write lock
+
+      settings_ = val.settings_;
+    }
+
     cl_addr_ = val.cl_addr_;
     socket_        = val.socket_;
     std::swap(buf_tx_, val.buf_tx_);
@@ -146,6 +156,13 @@ bool Session::prepare(
 
   bool ret=true;
 
+  {
+    auto lk = begin_shared(); // read lock
+
+    my_addr_ = server_addr();
+  }
+  my_addr_.set_port(0);
+
   // Init client remote addr
   cl_addr_ = remote_addr;
 
@@ -180,18 +197,8 @@ bool Session::init()
 {
   L_INF("Session initialize started");
 
-  // Get family
-  int family;
-  {
-    auto lk = begin_shared();
-    family = local_base().family();
-
-    local_base().set_port(0U);
-    //local_base_as_inet().sin_port = 0;
-  }
-
   // Socket open
-  socket_ = socket(family, SOCK_DGRAM, 0);
+  socket_ = socket(my_addr_.family(), SOCK_DGRAM, 0);
   bool ret;
   if ((ret = (socket_>= 0)))
   {
@@ -212,8 +219,8 @@ bool Session::init()
     begin_shared();
     ret = bind(
         socket_,
-        (struct sockaddr *) settings_->local_base_.data(),
-        settings_->local_base_.size()) != -1;
+        (struct sockaddr *) my_addr_.data(),
+        my_addr_.data_size()) != -1;
     if(ret)
     {
       L_DBG("Bind socket successful");

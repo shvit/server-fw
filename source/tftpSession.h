@@ -44,7 +44,8 @@ namespace tftp
 class Session: public Base
 {
 protected:
-  Addr         cl_addr_;           ///< Client socket address buffer
+  Addr         my_addr_;          ///< Self address
+  Addr         cl_addr_;          ///< Client socket address buffer
   int          socket_;           ///< Socket
   SmBuf        buf_tx_;           ///< Session buffer for TX operations
   SmBuf        buf_rx_;           ///< Session buffer for RX operations

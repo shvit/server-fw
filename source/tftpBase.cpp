@@ -12,17 +12,11 @@
  *  \version 0.1
  */
 
-#include <fstream>
-#include <regex>
 #include <unistd.h>
 #include <sys/syscall.h>
-#include <arpa/inet.h>
-#include <getopt.h>
 #include <syslog.h>
 
 #include "tftpBase.h"
-
-
 
 namespace tftp
 {
@@ -32,47 +26,11 @@ namespace tftp
 Base::Base():
     settings_{Settings::create()}
 {
-  // Get system library path from current maps
-  std::ifstream maps;
-  maps.open("/proc/self/maps", std::ios_base::in);
-  for (Buf arr(4096, 0); maps.getline(arr.data(), arr.size(), '\n'); )
-  {
-    std::string line{arr.data()};
-    std::regex  re("(/.*/)(libc-)");
-    std::smatch sm;
-
-    if(std::regex_search(line, sm, re))
-    {
-      settings_->lib_dir.assign("/usr").append(sm[1].str());  // hack
-      break;
-    }
-  }
-
-  if(!settings_->lib_dir.size()) // last chance try (life hack)
-  {
-    settings_->lib_dir.assign("/usr/lib/x86_64-linux-gnu");
-  }
-
-  maps.close();
 }
 
 // -----------------------------------------------------------------------------
 
-Base::Base(const Base & src):
-    settings_{src.settings_}
-{
-}
-
-// -----------------------------------------------------------------------------
-
-Base::Base(Base && src):
-    settings_{std::move(src.settings_)}
-{
-}
-
-// -----------------------------------------------------------------------------
-
-Base & Base::operator=(Base && src)
+auto Base::operator=(Base && src) -> Base &
 {
   settings_ = std::move(src.settings_);
 
@@ -83,6 +41,15 @@ Base & Base::operator=(Base && src)
 
 Base::~Base()
 {
+}
+
+// -----------------------------------------------------------------------------
+
+auto Base::server_addr() const -> Addr
+{
+  auto lk = begin_shared(); // read lock
+
+  return Addr{settings_->local_base_};
 }
 
 // -----------------------------------------------------------------------------
@@ -127,23 +94,7 @@ void Base::set_logger(fLogMsg new_logger)
 }
 
 // -----------------------------------------------------------------------------
-/*
-void Base::set_syslog_level(const int lvl)
-{
-  auto lk = begin_unique(); // write lock
 
-  settings_->use_syslog = lvl;
-}
-// -----------------------------------------------------------------------------
-
-void Base::set_root_dir(std::string_view root_dir)
-{
-  auto lk = begin_unique(); // write lock
-
-  settings_->root_dir.assign(root_dir);
-}
-*/
-// -----------------------------------------------------------------------------
 auto Base::get_root_dir() const -> std::string
 {
   auto lk = begin_shared(); // read lock
@@ -163,15 +114,6 @@ auto Base::get_root_dir() const -> std::string
 }
 
 // -----------------------------------------------------------------------------
-/*
-void Base::set_lib_dir(std::string_view dir)
-{
-  auto lk = begin_unique(); // write lock
-
-  settings_->lib_dir.assign(dir);
-}
-*/
-// -----------------------------------------------------------------------------
 
 auto Base::get_lib_dir() const -> std::string
 {
@@ -185,15 +127,6 @@ auto Base::get_lib_dir() const -> std::string
 }
 
 // -----------------------------------------------------------------------------
-/*
-void Base::set_lib_name_fb(std::string_view fb_name)
-{
-  auto lk = begin_unique(); // write lock
-
-  settings_->lib_name.assign(fb_name);
-}
-*/
-// -----------------------------------------------------------------------------
 
 auto Base::get_lib_name_fb() const -> std::string
 {
@@ -203,47 +136,8 @@ auto Base::get_lib_name_fb() const -> std::string
 }
 
 // -----------------------------------------------------------------------------
-/*
-void Base::set_connection_db  (std::string_view val)
-{ auto lk = begin_unique(); settings_->db  .assign(val); }
 
-void Base::set_connection_user(std::string_view val)
-{ auto lk = begin_unique(); settings_->user.assign(val); }
-
-void Base::set_connection_pass(std::string_view val)
-{ auto lk = begin_unique(); settings_->pass.assign(val); }
-
-void Base::set_connection_role(std::string_view val)
-{ auto lk = begin_unique(); settings_->role.assign(val); }
-
-void Base::set_connection_dialect(uint16_t      val)
-{ auto lk = begin_unique(); settings_->dialect = val; }
-
-// -----------------------------------------------------------------------------
-
-void Base::set_connection(
-    std::string_view db,
-    std::string_view user,
-    std::string_view pass,
-    std::string_view role,
-    uint16_t         dialect)
-{
-  set_connection_db  (db);
-  set_connection_user(user);
-  set_connection_pass(pass);
-  set_connection_role(role);
-  set_connection_dialect(dialect);
-}
-
-// -----------------------------------------------------------------------------
-
-void Base::set_retransmit_count(const uint16_t & val)
-{
-  settings_->retransmit_count_ = val;
-}
-*/
-
-auto Base::get_retransmit_count() const -> const uint16_t &
+auto Base::get_retransmit_count() const -> uint16_t
 {
   auto lk = begin_shared(); // read lock
 
@@ -270,33 +164,12 @@ auto Base::get_connection() const
 
 // -----------------------------------------------------------------------------
 
-auto Base::local_base() -> Addr &
-{
-  return settings_->local_base_;
-}
-
-auto Base::local_base() const -> const Addr &
-{
-  return settings_->local_base_;
-}
-
-// -----------------------------------------------------------------------------
-
 auto Base::get_local_base_str() const -> std::string
 {
   auto lk = begin_shared(); // read lock
 
   return settings_->local_base_.str();
 }
-// -----------------------------------------------------------------------------
-/*
-void Base::set_is_daemon(bool value)
-{
-  auto lk = begin_unique(); // write lock
-
-  settings_->is_daemon = value;
-}
-*/
 // -----------------------------------------------------------------------------
 
 bool Base::get_is_daemon() const
@@ -307,28 +180,13 @@ bool Base::get_is_daemon() const
 }
 
 // -----------------------------------------------------------------------------
-/*
-void Base::set_search_dir_append(std::string_view new_dir)
-{
-  auto lk = begin_unique(); // write lock
 
-  bool need_append=true;
-  for(auto & item: settings_->backup_dirs)
-  {
-    if(item == new_dir) { need_append=false; break; }
-  }
-
-  if(need_append) settings_->backup_dirs.emplace_back(new_dir);
-}
-*/
-// -----------------------------------------------------------------------------
-
-auto Base::get_serach_dir() const -> std::vector<std::string>
+auto Base::get_serach_dir() const -> VecStr
 {
 
   auto lk = begin_shared(); // read lock
 
-  std::vector<std::string> ret;
+  VecStr ret;
   for(const auto & one_dir: settings_->backup_dirs)
   {
     ret.emplace_back(one_dir);
@@ -337,20 +195,6 @@ auto Base::get_serach_dir() const -> std::vector<std::string>
   return ret;
 }
 
-// -----------------------------------------------------------------------------
-/*
-void Base::set_local_base(std::string_view addr)
-{
-  auto lk = begin_unique(); // write lock
-
-  settings_->local_base_.clear();
-
-  auto [set_addr,set_port] = settings_->local_base_.set_string(addr);
-
-  if(!set_addr) settings_->local_base_.set_family(AF_INET);
-  if(!set_port) settings_->local_base_.set_port(constants::default_tftp_port);
-}
-*/
 // -----------------------------------------------------------------------------
 
 bool Base::load_options(int argc, char* argv[])
