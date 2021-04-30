@@ -4,6 +4,7 @@
 #include "test.h"
 #include "../tftpSrv.h"
 #include "../tftpBase.h"
+//#include "../tftpCommon.h"
 
 namespace tftp_server
 {
@@ -17,6 +18,58 @@ public:
   static size_t indicator_block_;
 private:
   int      socket_;
+
+  template<typename T>
+  auto set_buf_item_raw(
+      tftp::Buf & buf,
+      const tftp::Buf::size_type offset,
+      const T & value)
+          -> std::enable_if_t<std::is_integral_v<T>, tftp::Buf::size_type>
+  {
+    tftp::Buf::size_type ret_size = sizeof(T);
+    if((offset + ret_size) > buf.size())
+    {
+      std::invalid_argument("Offset "+std::to_string(offset)+
+                            " is over buffer size");
+    }
+
+    std::copy(((char *) & value),
+              ((char *) & value) + sizeof(T),
+              buf.data() + offset);
+
+    return ret_size;
+  }
+
+  template<typename T>
+  auto set_buf_cont_str(
+      tftp::Buf & buf,
+      const tftp::Buf::size_type offset,
+      const T & cntnr, bool check_zero_end=false)
+          -> std::enable_if_t<tftp::is_container_v<T>, tftp::Buf::size_type>
+  {
+    auto zero_it = (check_zero_end ?
+        std::find(cntnr.cbegin(), cntnr.cend(), 0) : cntnr.cend());
+    tftp::Buf::size_type new_size = std::distance(cntnr.cbegin(), zero_it);
+
+    if(new_size)
+    {
+      if((offset + new_size + (check_zero_end?1:0)) > buf.size())
+      {
+        throw std::invalid_argument(
+            "Offset "+std::to_string(offset)+
+            " and new item size "+std::to_string(new_size)+
+            " is over buffer size");
+      }
+
+      std::copy(cntnr.cbegin(), zero_it, buf.begin() + offset);
+      if(check_zero_end) buf[offset+new_size++] = 0; // zero end
+    }
+
+    return new_size;
+  }
+
+
+
 public:
 
   test_helper(

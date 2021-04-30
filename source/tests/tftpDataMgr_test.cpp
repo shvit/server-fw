@@ -78,7 +78,7 @@ UNIT_TEST_CASE_BEGIN(main, "rx_tx")
 
       test_data_mgr dm;
       TEST_CHECK_FALSE(dm.check_root_dir());
-      dm.set_root_dir(tmp_dir);
+      dm.settings_->root_dir.assign(tmp_dir);
       TEST_CHECK_TRUE(dm.check_root_dir());
       TEST_CHECK_FALSE(dm.active_files());
       TEST_CHECK_FALSE(dm.active());
@@ -150,8 +150,8 @@ UNIT_TEST_CASE_BEGIN(main, "rx_tx")
       std::string hash{md5_as_str(& file_md5[iter][0])};
 
       test_data_mgr dm_find;
-      dm_find.set_root_dir(tmp_dir);
-      dm_find.set_search_dir(tmp_dir);
+      dm_find.settings_->root_dir.assign(tmp_dir);
+      dm_find.settings_->backup_dirs.push_back(tmp_dir);
       TEST_CHECK_TRUE(init_res = dm_find.init(tftp::SrvReq::read, hash));
 
       if(init_res)
@@ -175,7 +175,7 @@ UNIT_TEST_CASE_BEGIN(main, "rx_tx")
 
       test_data_mgr dm;
       TEST_CHECK_FALSE(dm.check_root_dir());
-      dm.set_root_dir(tmp_dir);
+      dm.settings_->root_dir.assign(tmp_dir);
       TEST_CHECK_TRUE(dm.check_root_dir());
       TEST_CHECK_FALSE(dm.active_files());
       TEST_CHECK_FALSE(dm.active());

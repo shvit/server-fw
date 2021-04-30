@@ -48,7 +48,7 @@ bool Srv::socket_open()
   {
     auto lk = begin_shared();
 
-    socket_ = socket(local_base().family(),
+    socket_ = socket(settings_->local_base_.family(),
                      SOCK_DGRAM,
                      0);
   }
@@ -69,8 +69,8 @@ bool Srv::socket_open()
     auto lk = begin_shared();
 
     bind_result = bind(socket_,
-                       local_base().as_sockaddr_ptr(),
-                       local_base().data_size());
+                       settings_->local_base_.as_sockaddr_ptr(),
+                       settings_->local_base_.data_size());
   }
   if(bind_result != 0)
   {
@@ -193,4 +193,5 @@ void Srv::main_loop()
 }
 
 // -----------------------------------------------------------------------------
+
 } // namespace tftp
