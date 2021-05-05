@@ -13,11 +13,11 @@
 #include "test.h"
 #include "../tftpSmBuf.h"
 
-UNIT_TEST_SUITE_BEGIN(tftp_base)
+UNIT_TEST_SUITE_BEGIN(SmBuf)
 
 //------------------------------------------------------------------------------
 
-UNIT_TEST_CASE_BEGIN(sm_buf_valid, "Check is_valid()")
+UNIT_TEST_CASE_BEGIN(check_valid, "Check is_valid()")
 
   tftp::SmBuf b1;
   const tftp::SmBuf & cb1 = b1;
@@ -43,7 +43,7 @@ UNIT_TEST_CASE_END
 
 //------------------------------------------------------------------------------
 
-UNIT_TEST_CASE_BEGIN(sm_buf_raw, "Check raw()")
+UNIT_TEST_CASE_BEGIN(check_raw, "Check raw()")
 
   tftp::SmBuf b(16,0);
   const tftp::SmBuf & cb = b;
@@ -101,7 +101,7 @@ UNIT_TEST_CASE_END
 
 //------------------------------------------------------------------------------
 
-UNIT_TEST_CASE_BEGIN(sm_buf_get_set, "Check methods: set/get ntoh/raw")
+UNIT_TEST_CASE_BEGIN(check_get_set, "Check methods: set/get ntoh/raw")
 
   tftp::SmBuf b(16,0);
   const tftp::SmBuf & cb = b;
@@ -144,7 +144,7 @@ UNIT_TEST_CASE_END
 
 //------------------------------------------------------------------------------
 
-UNIT_TEST_CASE_BEGIN(sm_buf_str, "Check methods: set/get/eqv string")
+UNIT_TEST_CASE_BEGIN(check_str, "Check methods: set/get/eqv string")
 
   tftp::SmBuf b(32,0);
   const tftp::SmBuf & cb = b;

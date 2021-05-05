@@ -24,15 +24,31 @@ namespace tftp
 // -----------------------------------------------------------------------------
 
 Base::Base():
-    settings_{Settings::create()}
+    Base(nullptr)
 {
 }
 
 // -----------------------------------------------------------------------------
 
-auto Base::operator=(Base && src) -> Base &
+Base::Base(const pSettings & sett):
+    settings_{sett}
 {
-  settings_ = std::move(src.settings_);
+  if(settings_.get() == nullptr)
+  {
+    settings_ = Settings::create();
+  }
+}
+
+// -----------------------------------------------------------------------------
+
+auto Base::operator=(const Base & src) -> Base &
+{
+  if(settings_.get() != src.settings_.get())
+  {
+    auto lk = begin_unique(); // write lock
+
+    settings_ = src.settings_;
+  }
 
   return *this;
 }
@@ -41,6 +57,13 @@ auto Base::operator=(Base && src) -> Base &
 
 Base::~Base()
 {
+}
+
+// -----------------------------------------------------------------------------
+
+auto Base::get_ptr() const -> const pSettings &
+{
+  return settings_;
 }
 
 // -----------------------------------------------------------------------------

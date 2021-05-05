@@ -60,8 +60,13 @@ protected:
   DataMgr      manager_;          ///< Data manager
   uint16_t     error_code_;       ///< First error info - code
   std::string  error_message_;    ///< First error info - message
+  Options      opt_;              ///< TFTP protocol options
 
-  Options      opt_;
+  /** \brief Main constructor
+   *
+   *  \param [in] new_settings Pointer to exist settings
+   */
+  Session(pSettings new_settings);
 
   /** \brief Construct option acknowledge
    *
@@ -177,17 +182,28 @@ protected:
   void push_data(T && value);
 
 public:
-  /** \brief Constructor
+
+  /** \brief Default Constructor
    */
   Session();
 
-  Session(pSettings & new_settings);
+  /** \brief Constructor from base class
+   *
+   *  \param [in] base Base class instance
+   */
+  Session(const Base & base);
 
   // Deny copy
   Session(const Session & ) = delete;
   Session(      Session & ) = delete;
-  Session(      Session &&) = delete;
+  auto operator=(const Session & val) = delete;
+  auto operator=(Session & val) = delete;
 
+  /** \brief Move operator
+   *
+   *  \param [in] val Moved value
+   *  \return Self reference
+   */
   auto operator=(Session && val) -> Session &;
 
   /** \brief Destructor

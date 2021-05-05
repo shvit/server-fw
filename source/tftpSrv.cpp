@@ -149,7 +149,7 @@ void Srv::main_loop()
       L_INF("Receive initial pkt (data size "+std::to_string(bsize)+
               " bytes) from "+client_addr.str());
 
-      tftp::Session sss(this->settings_);
+      tftp::Session sss(*this);
 
       bool ret = sss.prepare(
           client_addr,
@@ -178,7 +178,7 @@ void Srv::main_loop()
             " bytes) from " + client_addr.str());
     }
 
-    // check finished
+    // check finished other sessions
     usleep(1000);
     for(auto it = sessions_.begin(); it != sessions_.end(); ++it)
     {

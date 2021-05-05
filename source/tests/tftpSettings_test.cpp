@@ -12,7 +12,7 @@
 
 using namespace unit_tests;
 
-UNIT_TEST_SUITE_BEGIN(tftp_settings)
+UNIT_TEST_SUITE_BEGIN(Settings)
 
 class tst_Settings: public tftp::Settings
 {

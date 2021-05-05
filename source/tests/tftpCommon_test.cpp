@@ -2,7 +2,7 @@
 #include "../tftpCommon.h"
 #include "test.h"     
 
-UNIT_TEST_SUITE_BEGIN(tftp_common)
+UNIT_TEST_SUITE_BEGIN(Common)
 
 //------------------------------------------------------------------------------
 

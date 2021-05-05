@@ -11,7 +11,7 @@
 
 using namespace unit_tests;
 
-UNIT_TEST_SUITE_BEGIN(tftp_options)
+UNIT_TEST_SUITE_BEGIN(Options)
 
 //------------------------------------------------------------------------------
 

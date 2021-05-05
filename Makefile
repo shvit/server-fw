@@ -25,6 +25,9 @@ all: $(APP_FILE)
 -include $(DEPS)
 
 check: $(TST_FILE)
+	@./$(TST_FILE) --run_test=\!Srv/Case_Srv --run_test=\!DataMgr/Case_main
+
+check_full: $(TST_FILE)
 	@./$(TST_FILE)
 
 directories_obj:
