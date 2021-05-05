@@ -12,7 +12,7 @@
 #include "../tftpSettings.h"
 #include "test.h"
 
-UNIT_TEST_SUITE_BEGIN(tftp_base)
+UNIT_TEST_SUITE_BEGIN(Base)
 
 
 class tst_Base: public tftp::Base
@@ -22,6 +22,7 @@ public:
 };
 
 //------------------------------------------------------------------------------
+
 UNIT_TEST_CASE_BEGIN(main, "")
 
   tst_Base b;

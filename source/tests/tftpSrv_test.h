@@ -6,7 +6,7 @@
 #include "../tftpBase.h"
 //#include "../tftpCommon.h"
 
-namespace tftp_server
+namespace Srv
 {
 //------------------------------------------------------------------------------
 

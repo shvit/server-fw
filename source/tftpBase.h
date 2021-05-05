@@ -66,22 +66,34 @@ protected:
    */
   auto begin_unique() const -> std::unique_lock<std::shared_mutex>;
 
+  /** \brief Constructor from Settings pointer
+   *
+   *  \param [in] src Settings instance
+   */
+  Base(const pSettings & sett);
+
 public:
 
   /** \brief Default constructor
    */
   Base();
 
+  /** \brief Get pointer to Settings instance
+   *
+   *  \return Shared pointer
+   */
+  auto get_ptr() const -> const pSettings &;
+
   /** Destructor
    */
   virtual ~Base();
 
-  /** \brief Move operator
+  /** \brief Copy/move operator
    *
-   *  \param [in,out] src Moved value
+   *  \param [in] src Other Base value
    *  \return Self reference
    */
-  auto operator=(Base && src) -> Base &;
+  auto operator=(const Base & src) -> Base &;
 
   /** \brief Get local base (main server listen address)
    *
@@ -189,7 +201,6 @@ public:
    */
   void out_id(std::ostream & stream) const;
 };
-
 
 // -----------------------------------------------------------------------------
 

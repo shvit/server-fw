@@ -17,7 +17,7 @@
 
 using namespace unit_tests;
 
-UNIT_TEST_SUITE_BEGIN(tftp_addr)
+UNIT_TEST_SUITE_BEGIN(Addr)
 
 //------------------------------------------------------------------------------
 

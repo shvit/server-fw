@@ -1,7 +1,7 @@
 #include "../tftpDataMgr.h"
 #include "test.h"     
 
-UNIT_TEST_SUITE_BEGIN(tftp_data_mgr)
+UNIT_TEST_SUITE_BEGIN(DataMgr)
 
 using namespace unit_tests;
 
@@ -22,7 +22,7 @@ public:
 
 //------------------------------------------------------------------------------
 
-UNIT_TEST_CASE_BEGIN(is_md5_check, "check is_md5()")
+UNIT_TEST_CASE_BEGIN(md5_check, "check is_md5()")
 
 const struct
   {

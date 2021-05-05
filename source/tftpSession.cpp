@@ -26,8 +26,8 @@ namespace tftp
 
 // -----------------------------------------------------------------------------
 
-Session::Session():
-    Base(),
+Session::Session(pSettings new_settings):
+    Base(new_settings),
     my_addr_{},
     cl_addr_{},
     socket_{0},
@@ -50,15 +50,17 @@ Session::Session():
 
 // -----------------------------------------------------------------------------
 
-Session::Session(pSettings & new_settings):
-    Session()
+Session::Session():
+    Session(nullptr)
 {
-  if(new_settings.get() != nullptr)
-  {
-    auto lk = begin_unique(); // write lock
+}
 
-    settings_ = new_settings;
-  }
+// -----------------------------------------------------------------------------
+
+Session::Session(const Base & base):
+    Session(base.get_ptr())
+{
+
 }
 
 // -----------------------------------------------------------------------------
@@ -80,6 +82,7 @@ auto Session::operator=(Session && val) -> Session &
       settings_ = val.settings_;
     }
 
+    my_addr_ = val.my_addr_;
     cl_addr_ = val.cl_addr_;
     socket_        = val.socket_;
     std::swap(buf_tx_, val.buf_tx_);
@@ -91,7 +94,7 @@ auto Session::operator=(Session && val) -> Session &
     oper_wait_     = val.oper_wait_;
     oper_last_block_ = val.oper_last_block_;
     stop_            = val.stop_;
-    finished_.store(val.finished_);// = val.finished_;
+    finished_.store(val.finished_);
     manager_         = std::move(val.manager_);
     error_code_      = val.error_code_;
     std::swap(error_message_, val.error_message_);

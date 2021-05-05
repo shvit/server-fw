@@ -1,13 +1,10 @@
 #include <netinet/in.h> // sockaddr
 
-//#include "../tftpCommon.h"
-//#include "../tftpSrv.h"
-//#include "test.h"
 #include "tftpSrv_test.h"
 
 using namespace unit_tests;
 
-UNIT_TEST_SUITE_BEGIN(tftp_server)
+UNIT_TEST_SUITE_BEGIN(Srv)
 
 // Init global counters for dots indicator show
 
@@ -22,7 +19,7 @@ size_t test_helper::indicator_value_ = 0;
 
 //------------------------------------------------------------------------------
 
-UNIT_TEST_CASE_BEGIN(server, "server main check")
+UNIT_TEST_CASE_BEGIN(Srv, "Server main check")
   // 0 prepare
   std::cout << "long time checks [" << std::flush;
   START_ITER("prepare - create temporary directory");
