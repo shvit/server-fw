@@ -13,7 +13,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    # install dependencies
+    - name: boost
+      run: sudo apt-get update && sudo apt-get install -yq libboost-dev    
+    # build project
     - name: make
       run: make
+    # run lightweight tests
     - name: make check
       run: make check
