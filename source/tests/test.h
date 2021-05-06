@@ -25,7 +25,7 @@ using VecMD5 = std::vector<char[MD5_DIGEST_LENGTH]>;
 namespace unit_tests
 {
   /// Base temp directory preamble
-  constexpr std::string_view local_test_dir ="server_fw_temp";
+  constexpr std::string_view local_test_dir ="server_fw_test_data";
 
   /// Sizes of test files generated in unit-tests
   constexpr std::array<size_t, 10U> file_sizes
@@ -85,17 +85,13 @@ namespace unit_tests
    */
   auto md5_as_str(const char * addr) -> std::string;
 
-
-  // deprecated !
-  extern bool tmp_dir_created;
-  extern std::string tmp_dir;
-
+  /** \brief Delete temp files and directory
+   *
+   *  Using path from 'local_dir'
+   */
   void files_delete();
 
-  bool temp_directory_create();
-
-
-} 
+}
 
 //------------------------------------------------------------------------------
 

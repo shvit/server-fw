@@ -20,10 +20,11 @@ size_t test_helper::indicator_value_ = 0;
 //------------------------------------------------------------------------------
 
 UNIT_TEST_CASE_BEGIN(Srv, "Server main check")
+
   // 0 prepare
+  TEST_CHECK_TRUE(check_local_directory());
+
   std::cout << "long time checks [" << std::flush;
-  START_ITER("prepare - create temporary directory");
-  TEST_CHECK_TRUE(temp_directory_create());
 
   // 1 Init
 
@@ -47,7 +48,7 @@ UNIT_TEST_CASE_BEGIN(Srv, "Server main check")
   const char * tst_arg[]={ "./server_fw",
                            "--syslog", "0",
                            "--ip", addr_str.c_str(),
-                           "--root-dir", tmp_dir.c_str() };
+                           "--root-dir", local_dir.c_str() };
 
   tftp::Srv srv1;
   TEST_CHECK_TRUE(srv1.load_options(
@@ -98,8 +99,12 @@ UNIT_TEST_CASE_BEGIN(Srv, "Server main check")
   th_srv1.join();
   usleep(200000);
 
+  // delete temporary files
+  unit_tests::files_delete();
+
   // end
   std::cout << "]" << std::endl;
+
 UNIT_TEST_CASE_END
 
 //------------------------------------------------------------------------------

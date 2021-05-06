@@ -171,7 +171,6 @@ bool DataMgr::init(
     const std::string & req_fname)
 {
   request_type_ = request_type;
-  //request_name_.assign(req_fname);
 
   bool ret = false;
   Path processed_file;

@@ -25,18 +25,18 @@ all: $(APP_FILE)
 -include $(DEPS)
 
 check: $(TST_FILE)
-	@./$(TST_FILE) --run_test=\!Srv/Case_Srv --run_test=\!DataMgr/Case_main
+	@./$(TST_FILE) --run_test=\!Srv/Case_Srv --run_test=\!DataMgr/Case_files_check
 
 check_full: $(TST_FILE)
 	@./$(TST_FILE)
 
-directories_obj:
+dir_obj:
 	@mkdir -p $(DIR_OBJ)
 
-directories_obj_tst: directories_obj
+dir_obj_tst: dir_obj
 	@mkdir -p $(DIR_OBJ)/$(DIR_TST)
 
-directories_doc:
+dir_doc:
 	@mkdir -p $(DIR_DOC)
 	@mkdir -p $(DIR_LOG)
 
@@ -46,11 +46,11 @@ release: $(APP_FILE)
 	@echo "Strip file '$<'"
 	@strip $(APP_FILE)
 
-$(DIR_OBJ)/%.o: $(DIR_SRC)/%.cpp | directories_obj
+$(DIR_OBJ)/%.o: $(DIR_SRC)/%.cpp | dir_obj
 	@echo "Compile module $@"
 	@$(CXX) -c $(CFLAGS) $< -o $@
 
-$(DIR_OBJ)/$(DIR_TST)/%.o: $(DIR_SRC)/$(DIR_TST)/%.cpp | directories_obj_tst
+$(DIR_OBJ)/$(DIR_TST)/%.o: $(DIR_SRC)/$(DIR_TST)/%.cpp | dir_obj_tst
 	@echo "Compile tests module $@"
 	@$(CXX) -c $(CFLAGS) -Wno-self-assign-overloaded -Wno-self-move $< -o $@
 
@@ -70,7 +70,7 @@ show:
 	@echo "Deps:"
 	@echo "$(strip $(DEPS))"|sed 's/ /\n/g'|sed 's/^/  /'|sort
 
-$(DOC_FILE): $(wildcard $(DIR_SRC)/*) Doxyfile | directories_doc
+$(DOC_FILE): $(wildcard $(DIR_SRC)/*) Doxyfile | dir_doc
 	@echo "Documentation (1/2) prepare ..."
 	@doxygen 1> $(DIR_LOG)/doxygen.log 2>&1
 	@echo "Documentation (2/2) generate ..."
@@ -90,4 +90,4 @@ clean:
 	@rm -rf $(DIR_DOC)
 	@rm -rf test_directory_*
 
-.PHONY: all clean directories_obj directories_obj_tst directories_doc show doc check release install uninstall
+.PHONY: all clean dir_obj dir_obj_tst dir_doc show doc check check_full release install uninstall

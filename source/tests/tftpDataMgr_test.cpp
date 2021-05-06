@@ -26,6 +26,7 @@ UNIT_TEST_CASE_BEGIN(md5_check, "check match_md5()")
   TEST_CHECK_FALSE(test_data_mgr{}.match_md5("2fdf093688bb7cef7c05b 1ffcc71ff4e"));
   TEST_CHECK_FALSE(test_data_mgr{}.match_md5("2fdf093688bb7cef7c05b1ffcc71ff4e.md5"));
   TEST_CHECK_FALSE(test_data_mgr{}.match_md5("172775dbdee46e00a422235475244db6.md5"));
+  TEST_CHECK_FALSE(test_data_mgr{}.match_md5(""));
 
   TEST_CHECK_TRUE (test_data_mgr{}.match_md5("2fdf093688bb7cef7c05b1ffcc71ff4e"));
   TEST_CHECK_TRUE (test_data_mgr{}.match_md5("172775dbdee46e00a422235475244db6"));
@@ -231,6 +232,9 @@ START_ITER("tx() check - read data files by md5");
     }
   }
 }
+
+// delete temporary files
+unit_tests::files_delete();
 
 UNIT_TEST_CASE_END
 

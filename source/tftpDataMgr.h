@@ -59,6 +59,13 @@ protected:
   size_t        file_size_;    ///< File size
   fSetError     set_error_;    ///< Callback error parsing to top level
 
+  /** \brief Default constructor
+   *
+   *  No public construct.
+   *  Construct allowed only from friend Session
+   */
+  DataMgr();
+
   /** \brief Check Firebird
    *
    *  Now disabled. Will work in future
@@ -122,9 +129,6 @@ protected:
 
 public:
 
-  /**  Constructor
-   */
-  DataMgr();
   DataMgr(DataMgr &&) = default;
 
   DataMgr & operator=(DataMgr &&) = default;
@@ -179,14 +183,6 @@ public:
   void set_error_if_first(
       const uint16_t e_cod,
       std::string_view e_msg) const;
-
-  /** \brief Check directory exist
-   *
-   *  Common used method
-   *  \param [in] chk_dir Path
-   *  \return True if exist, or false
-   */
-  //bool check_directory(std::string_view chk_dir) const;
 
   friend class Session;
 };

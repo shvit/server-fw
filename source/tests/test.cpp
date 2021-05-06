@@ -27,15 +27,14 @@ namespace unit_tests
 
   filesystem::path local_dir;
 
+  VecMD5 file_md5(file_sizes.size());
+
 // -----------------------------------------------------------------------------
 
 bool check_local_directory()
 {
-  if(local_dir.empty())
-  {
-    local_dir = filesystem::temp_directory_path();
-    local_dir /= local_test_dir;
-  }
+  local_dir = filesystem::temp_directory_path();
+  local_dir /= local_test_dir;
 
   if(!filesystem::exists(local_dir))
     if(!filesystem::create_directories(local_dir)) return false;
@@ -58,43 +57,13 @@ bool check_local_directory()
 
 // -----------------------------------------------------------------------------
 
-
-  // TFTP tests helper
-
-  bool tmp_dir_created=false;
-
-  std::string tmp_dir{"test_directory_XXXXXX"};
-
-  VecMD5 file_md5(file_sizes.size());
-
-
-  void files_delete()
+ void files_delete()
+{
+  if(filesystem::exists(local_dir))
   {
-    // files
-    for(size_t iter=0;
-        iter < sizeof(file_sizes)/sizeof(file_sizes[0]);
-        ++iter)
-    {
-      std::string curr_file_name{tmp_dir};
-
-      curr_file_name.append("/file")
-                    .append(std::to_string(iter+1))
-                    .append("\0");
-      unlink(curr_file_name.c_str());
-
-      curr_file_name.assign(tmp_dir)
-                    .append("/file")
-                    .append(std::to_string(iter + 1))
-                    .append(".md5\0");
-      unlink(curr_file_name.c_str());
-    }
-
-    // directory
-    if(tmp_dir_created)
-    {
-      TEST_CHECK_TRUE(rmdir(tmp_dir.c_str()) == 0);
-    }
+    filesystem::remove_all(local_dir);
   }
+}
 
 // -----------------------------------------------------------------------------
 
@@ -112,7 +81,7 @@ void fill_buffer(
 
 // -----------------------------------------------------------------------------
 
-std::string md5_as_str(const char * addr)
+auto md5_as_str(const char * addr) -> std::string
 {
   std::stringstream ss;
 
@@ -127,21 +96,7 @@ std::string md5_as_str(const char * addr)
   return ss.str();
 }
 
-// -----------------------------------------------------------------------------
-
-  bool temp_directory_create()
-  {
-    if(!tmp_dir_created)
-    {
-      tmp_dir_created = mkdtemp(const_cast<char*>(tmp_dir.c_str()))!=nullptr;
-    }
-    return tmp_dir_created;
-  }
-
-
-}
-
-//using namespace unit_tests;
+} // namespace unit_tests
 
 // -----------------------------------------------------------------------------
 
@@ -154,6 +109,9 @@ UNIT_TEST_CASE_BEGIN(Finish, "Counter")
 
   // show counter
   std::cout << "Summary checks " << unit_tests::test_counter_check << std::endl;
+
 UNIT_TEST_CASE_END
 
 UNIT_TEST_SUITE_END
+
+// -----------------------------------------------------------------------------
