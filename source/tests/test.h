@@ -12,15 +12,33 @@
 #include <boost/test/unit_test.hpp>
 #include <iostream>
 #include <openssl/md5.h>
+#include <experimental/filesystem>
+
+using namespace std::experimental;
+
+using Path = filesystem::path;
+
 
 //------------------------------------------------------------------------------
 
 namespace unit_tests
 {
 
+  constexpr std::string_view local_test_dir ="server_fw_temp";
+
   extern size_t test_counter_iter;
   extern size_t test_counter_check;
   extern std::string mainMessage;
+
+  /// Temporary local dirctory for tests
+  extern filesystem::path local_dir;
+
+  /** \brief Check variable 'local_dir' and fill it
+   *
+   *  Rule name: local_test_dir + directory separator + Number
+   *  \return True if directory created/exist, else false
+   */
+  bool check_local_directory();
 
   extern bool tmp_dir_created;
   extern std::string tmp_dir;

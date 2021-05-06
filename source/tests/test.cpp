@@ -22,6 +22,41 @@ namespace unit_tests{
   size_t test_counter_check=0; ///< Unit test check counter
   std::string mainMessage(""); ///< Message in "Error when {...}"
 
+  //
+  filesystem::path local_dir;
+
+  bool check_local_directory()
+  {
+    if(local_dir.empty())
+    {
+      local_dir = filesystem::temp_directory_path();
+      local_dir /= local_test_dir;
+    }
+
+    if(!filesystem::exists(local_dir))
+      if(!filesystem::create_directories(local_dir)) return false;
+
+    size_t iter=1U;
+    decltype(local_dir) curr;
+    do
+    {
+      curr = local_dir;
+      curr /= std::to_string(iter++);
+    }
+    while(filesystem::exists(curr));
+
+    local_dir = curr;
+
+    //std::cout << " * local_dir=" << local_dir << std::endl;
+
+    if(filesystem::create_directories(local_dir)) return true;
+
+    throw std::runtime_error("Can't create local temporary directory");
+    //return false;
+  }
+
+
+
   // TFTP tests helper
 
   bool tmp_dir_created=false;

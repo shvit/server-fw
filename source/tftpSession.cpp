@@ -242,14 +242,12 @@ bool Session::init()
   // Data manager init
   if(ret)
   {
-    {
-      manager_.settings_ = settings_;
-      manager_.set_error_ = std::bind(
-          & Session::set_error_if_first,
-          this,
-          std::placeholders::_1,
-          std::placeholders::_2);
-    }
+    manager_.settings_ = settings_;
+    manager_.set_error_ = std::bind(
+        & Session::set_error_if_first,
+        this,
+        std::placeholders::_1,
+        std::placeholders::_2);
 
     ret = manager_.init(opt_.request_type(), opt_.filename());
   }
