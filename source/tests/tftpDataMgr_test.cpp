@@ -8,6 +8,7 @@ using namespace unit_tests;
 class test_data_mgr: public tftp::DataMgr
 {
 public:
+
   using tftp::DataMgr::settings_;
   using tftp::DataMgr::match_md5;
   using tftp::DataMgr::active_files;
