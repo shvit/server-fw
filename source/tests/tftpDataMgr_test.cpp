@@ -9,7 +9,7 @@ class test_data_mgr: public tftp::DataMgr
 {
 public:
 
-  using tftp::DataMgr::fname_;
+  using tftp::DataMgr::request_name_;
   using tftp::DataMgr::settings_;
 
   using tftp::DataMgr::check_root_dir;
@@ -49,7 +49,7 @@ const struct
         ++struct_iter)
     {
       test_data_mgr dm;
-      dm.fname_.assign(tst1_item[struct_iter].name);
+      dm.request_name_.assign(tst1_item[struct_iter].name);
       TEST_CHECK_TRUE(dm.is_md5() == tst1_item[struct_iter].mode_md5);
     }
   }
@@ -156,7 +156,7 @@ UNIT_TEST_CASE_BEGIN(main, "rx_tx")
 
       if(init_res)
       {
-        TEST_CHECK_TRUE(dm_find.fname_ ==
+        TEST_CHECK_TRUE(dm_find.request_name_ ==
             dm_find.get_root_dir()+curr_file_name);
       }
 

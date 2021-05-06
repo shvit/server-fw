@@ -16,13 +16,23 @@
 #define SOURCE_TFTP_DATA_MGR_H_
 
 #include <fstream>
+#include <experimental/filesystem>
 
 #include "tftpCommon.h"
 #include "tftpBase.h"
 
+using namespace std::experimental;
 
 namespace tftp
 {
+
+
+using Path = filesystem::path;
+
+namespace constants
+{
+  const std::string regex_template_md5{"([a-f0-9]{32})"};
+}
 
 // -----------------------------------------------------------------------------
 
@@ -39,10 +49,14 @@ class DataMgr: public Base
 {
 protected:
   // Processing info
-  SrvReq     request_type_; ///< Request type
-  std::string fname_;        ///< Processed file name
-  std::string hash_;         ///< Hash of file (md5)
+  SrvReq      request_type_; ///< Request type
+  std::string request_name_; ///< Request file name
 
+  std::ifstream file_in_;
+  std::ofstream file_out_;
+  size_t file_size_;        ///< File size
+
+  std::string hash_;         ///< Hash of file (md5)
   std::basic_istream<char> * ifs_;      ///< Input data stream
   int                        ifs_mode_; ///< Input mode
   ssize_t                    ifs_size_; ///< Input data size (known)
@@ -96,6 +110,21 @@ protected:
    */
   bool recursive_search_by_md5(const std::string & path);
 
+
+  bool match_md5(const std::string & val) const;
+
+  auto search_by_md5(
+      const Path & path,
+      std::string_view md5sum)
+          -> std::tuple<bool, Path>;
+
+  auto full_search_md5(std::string_view md5sum)
+      -> std::tuple<bool, Path>;
+
+  auto full_search_name(std::string_view name)
+      -> std::tuple<bool, Path>;
+
+
 public:
 
   /**  Constructor
@@ -118,7 +147,7 @@ public:
    *  \param [in] fname Requested file name
    *  \return True if initialize success, else - false
    */
-  bool init(SrvReq request_type, std::string_view fname);
+  bool init(SrvReq request_type, const std::string & fname);
 
   /** \brief Pull data from network (receive)
    *

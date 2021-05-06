@@ -18,7 +18,7 @@ DEPS:=$(OBJ_APP:.o=.d) $(OBJ_TST:.o=.d)
 
 BASE_CFLAGS := $(CFLAGS) -Wall -fPIC -std=c++17 -pthread -pedantic -MMD 
 CFLAGS = $(BASE_CFLAGS) -g -O0
-LDFLAGS += -lstdc++ -lpthread -ldl
+LDFLAGS += -lstdc++ -lpthread -ldl -lstdc++fs
 
 all: $(APP_FILE)
 
