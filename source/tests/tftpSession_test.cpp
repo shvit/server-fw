@@ -1,3 +1,15 @@
+/**
+ * \file tftpSession_test.cpp
+ * \brief Unit-tests for class Session
+ *
+ *  License GPL-3.0
+ *
+ *  \date   07-may-2021
+ *  \author Vitaliy Shirinkin, e-mail: vitaliy.shirinkin@gmail.com
+ *
+ *  \version 0.1
+ */
+
 #include <netinet/in.h>
 
 #include "../tftpCommon.h"
@@ -8,7 +20,12 @@ using namespace unit_tests;
 
 UNIT_TEST_SUITE_BEGIN(Session)
 
-class test_session: public tftp::Session
+//------------------------------------------------------------------------------
+
+/** \brief Helper class for access to Session protected field
+ *
+ */
+class Session_test: public tftp::Session
 {
 public:
   using tftp::Session::opt_;
@@ -40,7 +57,7 @@ UNIT_TEST_CASE_BEGIN(sess_init, "check prepare()")
     't','s','i','z','e',0,'2','0','0','0','1','2','3',0
   };
 
-  test_session s1;
+  Session_test s1;
 
   TEST_CHECK_FALSE(s1.prepare(b_addr, b_pkt, b_pkt.size()));
   TEST_CHECK_TRUE(s1.opt_.request_type() == tftp::SrvReq::unknown);

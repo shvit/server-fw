@@ -39,6 +39,8 @@ class data_mgr;
 
 class Settings;
 
+class Options;
+
 using pSettings = std::shared_ptr<Settings>;
 
 using Buf = std::vector<char>;

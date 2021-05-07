@@ -249,7 +249,7 @@ bool Session::init()
         std::placeholders::_1,
         std::placeholders::_2);
 
-    ret = manager_.init(opt_.request_type(), opt_.filename());
+    ret = manager_.init(opt_);
   }
 
   L_INF("Session initialise is "+(ret ? "SUCCESSFUL" : "FAIL"));

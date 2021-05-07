@@ -1,11 +1,28 @@
+/**
+ * \file tftpDataMgr_test.cpp
+ * \brief Unit-tests for class DataMgr
+ *
+ *  License GPL-3.0
+ *
+ *  \date   07-may-2021
+ *  \author Vitaliy Shirinkin, e-mail: vitaliy.shirinkin@gmail.com
+ *
+ *  \version 0.1
+ */
+
+#include "test.h"
 #include "../tftpDataMgr.h"
-#include "test.h"     
+#include "tftpOptions_test.h"
 
 UNIT_TEST_SUITE_BEGIN(DataMgr)
 
 using namespace unit_tests;
 
-class test_data_mgr: public tftp::DataMgr
+//------------------------------------------------------------------------------
+
+/** \brief Helper class for access to DataMgr protected fields
+ */
+class DataMgr_test: public tftp::DataMgr
 {
 public:
 
@@ -19,19 +36,19 @@ public:
 
 UNIT_TEST_CASE_BEGIN(md5_check, "check match_md5()")
 
-  TEST_CHECK_FALSE(test_data_mgr{}.match_md5("server_fw"));
-  TEST_CHECK_FALSE(test_data_mgr{}.match_md5("server_fw.md5"));
-  TEST_CHECK_FALSE(test_data_mgr{}.match_md5("2fdf093688bb7cef7c05b1ffcc71ff4z"));
-  TEST_CHECK_FALSE(test_data_mgr{}.match_md5("2fdf093688bb7cef7c05b1ffcc71ff4z.md5"));
-  TEST_CHECK_FALSE(test_data_mgr{}.match_md5("2fdf093688bb7cef7c05b 1ffcc71ff4e"));
-  TEST_CHECK_FALSE(test_data_mgr{}.match_md5("2fdf093688bb7cef7c05b1ffcc71ff4e.md5"));
-  TEST_CHECK_FALSE(test_data_mgr{}.match_md5("172775dbdee46e00a422235475244db6.md5"));
-  TEST_CHECK_FALSE(test_data_mgr{}.match_md5(""));
+  TEST_CHECK_FALSE(DataMgr_test{}.match_md5("server_fw"));
+  TEST_CHECK_FALSE(DataMgr_test{}.match_md5("server_fw.md5"));
+  TEST_CHECK_FALSE(DataMgr_test{}.match_md5("2fdf093688bb7cef7c05b1ffcc71ff4z"));
+  TEST_CHECK_FALSE(DataMgr_test{}.match_md5("2fdf093688bb7cef7c05b1ffcc71ff4z.md5"));
+  TEST_CHECK_FALSE(DataMgr_test{}.match_md5("2fdf093688bb7cef7c05b 1ffcc71ff4e"));
+  TEST_CHECK_FALSE(DataMgr_test{}.match_md5("2fdf093688bb7cef7c05b1ffcc71ff4e.md5"));
+  TEST_CHECK_FALSE(DataMgr_test{}.match_md5("172775dbdee46e00a422235475244db6.md5"));
+  TEST_CHECK_FALSE(DataMgr_test{}.match_md5(""));
 
-  TEST_CHECK_TRUE (test_data_mgr{}.match_md5("2fdf093688bb7cef7c05b1ffcc71ff4e"));
-  TEST_CHECK_TRUE (test_data_mgr{}.match_md5("172775dbdee46e00a422235475244db6"));
-  TEST_CHECK_TRUE (test_data_mgr{}.match_md5("00000000000000000000000000000000"));
-  TEST_CHECK_TRUE (test_data_mgr{}.match_md5("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"));
+  TEST_CHECK_TRUE (DataMgr_test{}.match_md5("2fdf093688bb7cef7c05b1ffcc71ff4e"));
+  TEST_CHECK_TRUE (DataMgr_test{}.match_md5("172775dbdee46e00a422235475244db6"));
+  TEST_CHECK_TRUE (DataMgr_test{}.match_md5("00000000000000000000000000000000"));
+  TEST_CHECK_TRUE (DataMgr_test{}.match_md5("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"));
 
 UNIT_TEST_CASE_END
 
@@ -51,7 +68,7 @@ START_ITER("rx() check - store data files");
 
     std::string curr_file_name = "file" + std::to_string(iter+1);
 
-    test_data_mgr dm;
+    DataMgr_test dm;
     dm.settings_->root_dir.assign(local_dir.string());
     TEST_CHECK_FALSE(dm.active_files());
     TEST_CHECK_FALSE(dm.active());
@@ -59,9 +76,11 @@ START_ITER("rx() check - store data files");
     // 1 - create file with data
     bool init_res;
 
-    TEST_CHECK_TRUE(init_res=dm.init(
-        tftp::SrvReq::write,
-        curr_file_name));
+    Options::Options_test opt;
+    opt.request_type_ = tftp::SrvReq::write;
+    opt.filename_ = curr_file_name;
+
+    TEST_CHECK_TRUE(init_res=dm.init(opt));
 
     if(init_res)
     {
@@ -92,9 +111,11 @@ START_ITER("rx() check - store data files");
     }
 
     // 2 - create file .md5
-    TEST_CHECK_TRUE(init_res = dm.init(
-        tftp::SrvReq::write,
-        std::string{curr_file_name}+".md5"));
+    Options::Options_test opt2;
+    opt2.request_type_ = tftp::SrvReq::write;
+    opt2.filename_ = std::string{curr_file_name}+".md5";
+
+    TEST_CHECK_TRUE(init_res = dm.init(opt2));
 
     if(init_res)
     {
@@ -121,10 +142,15 @@ START_ITER("rx() check - store data files");
 
     // 3 - find file by md5 in root server directory
     std::string hash{md5_as_str(& file_md5[iter][0])};
-    test_data_mgr dm_find;
+    DataMgr_test dm_find;
     dm_find.settings_->root_dir.assign(local_dir);
     dm_find.settings_->backup_dirs.push_back(local_dir);
-    TEST_CHECK_TRUE(init_res = dm_find.init(tftp::SrvReq::read, hash));
+
+    Options::Options_test opt3;
+    opt3.request_type_ = tftp::SrvReq::read;
+    opt3.filename_ = hash;
+
+    TEST_CHECK_TRUE(init_res = dm_find.init(opt3));
   }
 }
 
@@ -138,13 +164,18 @@ START_ITER("tx() check - read data files by name");
     std::string curr_file_name{"file"};
     curr_file_name.append(std::to_string(iter+1));
 
-    test_data_mgr dm;
+    DataMgr_test dm;
     dm.settings_->root_dir.assign(local_dir);
     TEST_CHECK_FALSE(dm.active_files());
     TEST_CHECK_FALSE(dm.active());
 
     bool init_res;
-    TEST_CHECK_TRUE(init_res = dm.init(tftp::SrvReq::read, curr_file_name));
+
+    Options::Options_test opt;
+    opt.request_type_ = tftp::SrvReq::read;
+    opt.filename_ = curr_file_name;
+
+    TEST_CHECK_TRUE(init_res = dm.init(opt));
 
     if(init_res)
     {
@@ -190,13 +221,18 @@ START_ITER("tx() check - read data files by md5");
 
     std::string curr_file_name{md5_as_str(& file_md5[iter][0])};
 
-    test_data_mgr dm;
+    DataMgr_test dm;
     dm.settings_->root_dir.assign(local_dir);
     TEST_CHECK_FALSE(dm.active_files());
     TEST_CHECK_FALSE(dm.active());
 
     bool init_res;
-    TEST_CHECK_TRUE(init_res = dm.init(tftp::SrvReq::read, curr_file_name));
+
+    Options::Options_test opt;
+    opt.request_type_ = tftp::SrvReq::read;
+    opt.filename_ = curr_file_name;
+
+    TEST_CHECK_TRUE(init_res = dm.init(opt));
 
     if(init_res)
     {

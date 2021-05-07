@@ -2,6 +2,8 @@
  * \file test.h
  * \brief Unit test base help definitions
  *
+ *  License GPL-3.0
+ *
  *  \date   01-dec-2019
  *  \author Vitaliy Shirinkin, e-mail: vitaliy.shirinkin@gmail.com
  */

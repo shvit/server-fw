@@ -19,6 +19,7 @@
 #include <dlfcn.h>
 
 #include "tftpDataMgr.h"
+#include "tftpOptions.h"
 
 namespace tftp
 {
@@ -38,6 +39,7 @@ DataMgr::DataMgr():
 
 DataMgr::~DataMgr()
 {
+  close();
 }
 
 // -----------------------------------------------------------------------------
@@ -166,11 +168,9 @@ bool DataMgr::match_md5(const std::string & val) const
 
 // -----------------------------------------------------------------------------
 
-bool DataMgr::init(
-    SrvReq request_type,
-    const std::string & req_fname)
+bool DataMgr::init(const Options & opt)
 {
-  request_type_ = request_type;
+  request_type_ = opt.request_type();
 
   bool ret = false;
   Path processed_file;
@@ -188,11 +188,11 @@ bool DataMgr::init(
   {
     case SrvReq::read:
       // ... try find by md5
-      if(match_md5(req_fname)) // name is md5 sum ?
+      if(match_md5(opt.filename())) // name is md5 sum ?
       {
         L_INF("Match file as pure md5 request");
 
-        std::tie(ret, processed_file) = full_search_md5(req_fname);
+        std::tie(ret, processed_file) = full_search_md5(opt.filename());
         if(ret)
         {
           L_INF("Find file via his md5 sum '"+processed_file.string()+"'");
@@ -202,7 +202,7 @@ bool DataMgr::init(
       // ... Try find by filename
       if(!ret)
       {
-        std::tie(ret, processed_file) = full_search_name(req_fname);
+        std::tie(ret, processed_file) = full_search_name(opt.filename());
         if(ret)
         {
           L_INF("Find file via his name '"+processed_file.string()+"'");
@@ -212,7 +212,7 @@ bool DataMgr::init(
       // ... Check result
       if(!ret)
       {
-        L_ERR("File not found '" + req_fname + "'");
+        L_ERR("File not found '" + opt.filename() + "'");
         set_error_if_first(1U, "File not found");
       }
 
@@ -244,7 +244,7 @@ bool DataMgr::init(
     case SrvReq::write:
       // ... Check file exist
       processed_file = get_root_dir();
-      processed_file /= req_fname;
+      processed_file /= opt.filename();
       ret = !filesystem::exists(processed_file);
 
       // ... Result is wrong (file exist)

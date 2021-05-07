@@ -142,11 +142,10 @@ public:
   bool active();
 
   /**  Initialize instance
-   *  \param [in] request_type Type tftp request
-   *  \param [in] fname Requested file name
+   *  \param [in] opt Options of tftp request
    *  \return True if initialize success, else - false
    */
-  bool init(SrvReq request_type, const std::string & fname);
+  bool init(const Options & opt);
 
   /** \brief Pull data from network (receive)
    *

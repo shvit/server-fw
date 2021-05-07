@@ -1,3 +1,14 @@
+/**
+ * \file tftpCommon_test.cpp
+ * \brief Unit-tests for common module
+ *
+ *  License GPL-3.0
+ *
+ *  \date   07-may-2021
+ *  \author Vitaliy Shirinkin, e-mail: vitaliy.shirinkin@gmail.com
+ *
+ *  \version 0.1
+ */
 
 #include "../tftpCommon.h"
 #include "test.h"     
