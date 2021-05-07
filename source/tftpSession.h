@@ -243,7 +243,9 @@ public:
 template<typename T>
 void Session::push_data(T && value)
 {
-  if constexpr (std::is_integral_v<T>)
+  using TT = std::decay_t<T>;
+
+  if constexpr (std::is_integral_v<TT>)
   {
     if((buf_tx_data_size_ + sizeof(T)) <= buf_tx_.size())
     {

@@ -249,10 +249,10 @@ bool Session::init()
         std::placeholders::_1,
         std::placeholders::_2);
 
-    ret = manager_.init(opt_);
+    ret = manager_.init(opt_) || was_error();
   }
 
-  L_INF("Session initialise is "+(ret ? "SUCCESSFUL" : "FAIL"));
+  L_INF("Session initialise is "+(ret ? (was_error() ? "WAS ERROR":"SUCCESSFUL") : "FAIL"));
   return ret;
 }
 
@@ -371,6 +371,7 @@ void Session::run()
      (opt_.request_type() != SrvReq::write))
   {
     L_ERR("Fail request mode");
+    finished_ = true;
     return;
   }
 
@@ -387,6 +388,13 @@ void Session::run()
   // Main loop
   while(!stop_)
   {
+
+    // 0 Processing errors (if was)
+    if(was_error())
+    {
+      construct_error();
+      stop_ = true;
+    }
 
     // 1 tx data if need
     if(!transmit_no_wait()) break;

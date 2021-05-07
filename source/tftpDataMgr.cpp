@@ -39,7 +39,6 @@ DataMgr::DataMgr():
 
 DataMgr::~DataMgr()
 {
-  close();
 }
 
 // -----------------------------------------------------------------------------
@@ -116,7 +115,28 @@ ssize_t DataMgr::tx(
     auto ret_size = static_cast<ssize_t>(file_size_) - (ssize_t)position;
     if(ret_size > 0)
     {
-      file_in_.read(& *buf_begin, buf_size);
+
+
+
+
+      try
+      {
+        file_in_.read(& *buf_begin, buf_size);
+      }
+      catch (const std::system_error & e)
+      {
+        if(file_in_.fail())
+        {
+          L_ERR(std::string{"Error: "}+e.what()+" ("+
+                std::to_string(e.code().value())+")");
+        }
+      }
+
+
+
+
+
+
       if(ret_size > buf_size) ret_size = buf_size;
     }
     return ret_size;
@@ -219,8 +239,8 @@ bool DataMgr::init(const Options & opt)
       // ... Try open
       if(ret)
       {
-        std::ios_base::iostate ex_mask = file_in_.exceptions() | std::ios::failbit;
-        file_in_.exceptions(ex_mask);
+        auto backup_val = file_in_.exceptions();
+        file_in_.exceptions(std::ios::failbit);
         try
         {
           file_in_.open(processed_file, std::ios_base::in | std::ios::binary);
@@ -232,6 +252,9 @@ bool DataMgr::init(const Options & opt)
                 std::to_string(e.code().value())+")");
           set_error_if_first(0U, e.what());
         }
+        file_in_.close();
+        file_in_.exceptions(backup_val);
+        file_in_.open(processed_file, std::ios_base::in | std::ios::binary);
       }
 
       // ... Other
@@ -257,13 +280,11 @@ bool DataMgr::init(const Options & opt)
       // ... File not exist
       if(ret)
       {
-        std::ios_base::iostate ex_mask = file_out_.exceptions() | std::ios::failbit;
-        file_out_.exceptions(ex_mask);
+        file_out_.exceptions(file_out_.exceptions() | std::ios::failbit);
         try
         {
           file_out_.open(processed_file, std::ios_base::out | std::ios::binary);
           file_out_.write(nullptr, 0U);
-
         }
         catch (const std::system_error & e)
         {
@@ -315,7 +336,7 @@ auto DataMgr::search_by_md5(
       file_md5.getline(line1.data(), line1.size(), '\n');
 
       // check md5
-      std::regex regex_md5_sum("([a-f0-9]{32})");
+      std::regex regex_md5_sum(constants::regex_template_md5);
       std::smatch sm_sum;
       if(std::regex_search(line1, sm_sum, regex_md5_sum))
       {
