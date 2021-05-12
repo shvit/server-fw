@@ -44,6 +44,8 @@ namespace tftp
 class Session: public Base
 {
 protected:
+  std::atomic<State> stat_;
+
   Addr         my_addr_;          ///< Self address
   Addr         cl_addr_;          ///< Client socket address buffer
   int          socket_;           ///< Socket
@@ -180,6 +182,8 @@ protected:
 
   template<typename T>
   void push_data(T && value);
+
+  bool switch_to(const State & new_state);
 
 public:
 

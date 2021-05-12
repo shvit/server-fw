@@ -28,6 +28,7 @@ namespace tftp
 
 Session::Session(pSettings new_settings):
     Base(new_settings),
+    stat_{State::need_init},
     my_addr_{},
     cl_addr_{},
     socket_{0},
@@ -81,7 +82,7 @@ auto Session::operator=(Session && val) -> Session &
 
       settings_ = val.settings_;
     }
-
+    stat_.store(val.stat_);
     my_addr_ = val.my_addr_;
     cl_addr_ = val.cl_addr_;
     socket_        = val.socket_;
@@ -103,6 +104,65 @@ auto Session::operator=(Session && val) -> Session &
   }
 
   return *this;
+}
+
+// -----------------------------------------------------------------------------
+
+bool Session::switch_to(const State & new_state)
+{
+  bool ret = (stat_ == new_state);
+
+  if(!ret)
+  {
+    switch(stat_)
+    {
+      case State::need_init:
+        ret = (new_state == State::finish) ||
+              (new_state == State::ack_options) ||
+              (new_state == State::data_tx) ||
+              (new_state == State::ack_tx);
+        break;
+      case State::error_and_stop:
+        ret = (new_state == State::finish);
+        break;
+      case State::ack_options:
+        ret = (new_state == State::data_rx) ||
+              (new_state == State::ack_rx);
+        break;
+      case State::data_tx:
+        ret = (new_state == State::ack_rx);
+        break;
+      case State::data_rx:
+        ret = (new_state == State::ack_tx) ||
+              (new_state == State::retransmit);
+        break;
+      case State::ack_tx:
+        ret = (new_state == State::data_rx);
+        break;
+      case State::ack_rx:
+        ret = (new_state == State::data_tx);
+              (new_state == State::retransmit);
+        break;
+      case State::retransmit:
+        ret = (new_state == State::data_rx) ||
+              (new_state == State::ack_rx);
+        break;
+      case State::finish: // no way switch to other
+        break;
+    }
+  }
+
+  if(ret)
+  {
+    L_DBG("State: "+stat_+" -> "+new_state);
+    stat_.store(new_state);
+  }
+  else
+  {
+    L_WRN("Wrong switch state: "+stat_+" -> "+new_state+" (not switched!)");
+  }
+
+  return ret;
 }
 
 // -----------------------------------------------------------------------------

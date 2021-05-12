@@ -89,6 +89,24 @@ enum class LogLvl: int
 
 // -----------------------------------------------------------------------------
 
+/** \brief SessionState
+ *
+ */
+enum class State: int
+{
+  need_init=0,
+  error_and_stop,
+  ack_options,
+  data_tx,
+  data_rx,
+  ack_tx,
+  ack_rx,
+  retransmit,
+  finish,
+};
+
+// -----------------------------------------------------------------------------
+
 /** \bief Callabck for custom logging message from server
  *
  *  \param [in] Logging level
@@ -209,7 +227,45 @@ constexpr auto to_string(const LogLvl & val) -> std::string_view
   }
 }
 
+constexpr auto to_string(const State & val) -> std::string_view
+{
+  switch(val)
+  {
+    CASE_OPER_TO_STR_VIEW(need_init);
+    CASE_OPER_TO_STR_VIEW(error_and_stop);
+    CASE_OPER_TO_STR_VIEW(ack_options);
+    CASE_OPER_TO_STR_VIEW(data_tx);
+    CASE_OPER_TO_STR_VIEW(data_rx);
+    CASE_OPER_TO_STR_VIEW(ack_tx);
+    CASE_OPER_TO_STR_VIEW(ack_rx);
+    CASE_OPER_TO_STR_VIEW(retransmit);
+    CASE_OPER_TO_STR_VIEW(finish);
+    default: return "UNK_SESS_STATE";
+  }
+}
+
 #undef CASE_OPER_TO_STR_VIEW
+
+// -----------------------------------------------------------------------------
+
+/** \brief Operator+ for use in make logging messages
+ *
+ *  Need conversion function 'to_string(T)'
+ *  \param [in] left Left string type operand
+ *  \param [in] right Right enum type operand
+ *  \return Result string
+ */
+template<typename T>
+auto operator+(std::string_view left, const T & right)
+//    -> std::enable_if_t<std::is_enum_v<T>, std::string>
+    -> std::enable_if_t<
+        !std::is_same_v<decltype(to_string(std::declval<T>())), void>,
+        std::string>
+{
+  std::string ret{left};
+  ret.append(to_string(right));
+  return ret;
+}
 
 // -----------------------------------------------------------------------------
 
