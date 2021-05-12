@@ -130,7 +130,8 @@ bool Session::switch_to(const State & new_state)
               (new_state == State::ack_rx);
         break;
       case State::data_tx:
-        ret = (new_state == State::ack_rx);
+        ret = (new_state == State::ack_rx) ||
+              (new_state == State::error_and_stop);
         break;
       case State::data_rx:
         ret = (new_state == State::ack_tx) ||
@@ -169,7 +170,8 @@ bool Session::switch_to(const State & new_state)
 
 bool Session::is_finished() const
 {
-  return finished_;
+  //return finished_;
+  return (stat_ == State::finish);
 }
 
 // -----------------------------------------------------------------------------
@@ -383,20 +385,21 @@ void  Session::construct_error()
 
 // -----------------------------------------------------------------------------
 
-void Session::construct_data()
+auto Session::construct_data() -> ssize_t
 {
   buf_tx_data_size_ = 0;
 
   push_data((uint16_t) 3U);
   push_data(blk_num_local());
 
-  if(ssize_t tx_data_size = manager_.tx(
-         buf_tx_.begin() + buf_tx_data_size_,
-         buf_tx_.begin() + buf_tx_data_size_ + block_size(),
-         (stage_-1U) * block_size());
-     tx_data_size >= 0)
+  ssize_t ret = manager_.tx(
+      buf_tx_.begin() + buf_tx_data_size_,
+      buf_tx_.begin() + buf_tx_data_size_ + block_size(),
+      (stage_-1U) * block_size());
+
+  if(ret >=0)
   {
-    buf_tx_data_size_ += tx_data_size;
+    buf_tx_data_size_ += ret;
     L_DBG("Construct data pkt block "+std::to_string(stage_)+
             "; data size "+std::to_string(buf_tx_data_size_-4)+" bytes");
   }
@@ -405,8 +408,9 @@ void Session::construct_data()
     L_ERR("Error prepare data");
     buf_tx_data_size_ = 0;
     set_error_if_first(0, "Failed prepare data to send");
-    construct_error();
+    //construct_error();
   }
+  return ret;
 }
 
 // -----------------------------------------------------------------------------
@@ -426,34 +430,100 @@ void Session::run()
 {
   L_INF("Running session");
 
-  // checks
-  if((opt_.request_type() != SrvReq::read) &&
-     (opt_.request_type() != SrvReq::write))
+  if(stat_ == State::need_init)
   {
-    L_ERR("Fail request mode");
-    finished_ = true;
-    return;
+    L_WRN("Session not initialised, need finish");
+    switch_to(State::finish);
+    // TODO:: Make prepare(), init()
   }
 
   // Prepare
-  timeout_reset();
+  //timeout_reset();
+  int win_processed = 0;
   oper_tx_count_   = 0;
-  set_stage_transmit();
+  //set_stage_transmit();
   oper_last_block_ = 0;
   stage_           = 0; // processed block number
   buf_tx_data_size_     = 0;
-  stop_            = false;
-  finished_        = false;
 
   // Main loop
-  while(!stop_)
+  while(!is_finished())
   {
 
+    switch(stat_)
+    {
+      case State::need_init:
+        break; // never do this
+
+      case State::error_and_stop:
+        construct_error();
+        transmit_no_wait();
+        switch_to(State::finish);
+        break;
+
+      case State::ack_options:
+        construct_opt_reply();
+        transmit_no_wait();
+        if(opt_.request_type() == SrvReq::read)
+        {
+          switch_to(State::ack_rx);
+          stage_ = 0U;
+        }
+        if(opt_.request_type() == SrvReq::write)
+        {
+          timeout_reset();
+          switch_to(State::data_rx);
+          stage_ = 1U;
+        }
+        win_processed = 0;
+        break;
+
+      case State::data_tx:
+        {
+          ssize_t sended_size = construct_data();
+          if(sended_size >= 0)
+          {
+            transmit_no_wait();
+            ++stage_;
+
+            if(++win_processed >= opt_.windowsize())
+            {
+              timeout_reset();
+              switch_to(State::ack_rx);
+              win_processed=0;
+            }
+          }
+          else
+          {
+            switch_to(State::error_and_stop);
+          }
+        }
+        break;
+
+      case State::data_rx:
+        break;
+
+      case State::ack_tx:
+        construct_ack();
+        transmit_no_wait();
+        break;
+
+      case State::ack_rx:
+        break;
+
+      case State::retransmit:
+        break;
+
+      case State::finish:
+        break; // never do this
+
+    }
+/*
     // 0 Processing errors (if was)
     if(was_error())
     {
       construct_error();
-      stop_ = true;
+      //stop_ = true;
     }
 
     // 1 tx data if need
@@ -468,15 +538,14 @@ void Session::run()
       L_WRN("Global loop timeout. Break");
       break;
     }
-
+*/
   } // end main loop
 
-  stop_=true; // for exit over break
   socket_close();
   manager_.close();
-  L_INF("Finish session");
 
-  finished_ = true;
+  //finish_run:
+  L_INF("Finish session");
 }
 // -----------------------------------------------------------------------------
 
@@ -525,10 +594,10 @@ void Session::set_stage_transmit() noexcept
 
 bool Session::transmit_no_wait()
 {
-  if(!is_stage_transmit()) return true;
+  //if(!is_stage_transmit()) return true;
 
   bool ret = true;
-
+/*
   // 1 - prepare data for tx
   if(ret && !buf_tx_data_size_)
   {
@@ -554,29 +623,29 @@ bool Session::transmit_no_wait()
         break;
     }
   }
-
+*/
   // 2 - Send data
-  if(ret && buf_tx_data_size_)
+  if(buf_tx_data_size_ > 0U)
   {
-    if(!oper_tx_count_ || !timeout_pass()) // first try send or time is out
-    {
-      if(oper_tx_count_ > get_retransmit_count())
-      {
-        L_ERR("Retransmit count exceeded ("+std::to_string(get_retransmit_count())+
-                "). Break!");
-        ret=false;
-      }
+    //if(!oper_tx_count_ || !timeout_pass()) // first try send or time is out
+    //{
+      //if(oper_tx_count_ > get_retransmit_count())
+      //{
+      //  L_ERR("Retransmit count exceeded ("+std::to_string(get_retransmit_count())+
+      //          "). Break!");
+      //  ret=false;
+      //}
 
-      if(ret) // need send
-      {
+      //if(ret) // need send
+      //{
         auto tx_result_size = sendto(socket_,
                                      buf_tx_.data(),
                                      buf_tx_data_size_,
                                      0,
                                      cl_addr_.as_sockaddr_ptr(),
-                                     cl_addr_.size());
-        ++oper_tx_count_;
-        timeout_reset();
+                                     cl_addr_.data_size());
+        //++oper_tx_count_;
+        //timeout_reset();
         if(tx_result_size < 0) // Fail TX: error
         {
           L_ERR("sendto() error");
@@ -593,20 +662,20 @@ bool Session::transmit_no_wait()
           L_DBG("Success send packet "+std::to_string(buf_tx_data_size_)+
                   " octets");
           buf_tx_data_size_ = 0;
-          set_stage_receive();
+          //set_stage_receive();
 
-          if((opt_.request_type() == SrvReq::write) &&
-             oper_last_block_ &&
-             (oper_last_block_==stage_))
-          {
-            ret = false; // GOOD EXIT
-          }
+          //if((opt_.request_type() == SrvReq::write) &&
+          //   oper_last_block_ &&
+          //   (oper_last_block_==stage_))
+          //{
+          //  ret = false; // GOOD EXIT
+          //}
         }
-      }
-    }
+      //}
+    //}
   }
 
-  if(was_error()) ret = false; // ERROR EXIT
+  ret = ret && !was_error(); // ERROR EXIT
 
   return ret;
 }

@@ -97,7 +97,7 @@ protected:
    *  Fill buffer and set buf_tx_data_size_;
    *  if can't do it then construct error block
    */
-  void construct_data();
+  auto construct_data() -> ssize_t;
 
   /** \brief Construct data block acknowledge
    *
