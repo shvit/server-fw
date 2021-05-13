@@ -501,6 +501,10 @@ void Session::run()
         break;
 
       case State::data_rx:
+        if(receive_no_wait())
+        {
+          switch_to(State::ack_tx);
+        }
         break;
 
       case State::ack_tx:
@@ -594,90 +598,46 @@ void Session::set_stage_transmit() noexcept
 
 bool Session::transmit_no_wait()
 {
-  //if(!is_stage_transmit()) return true;
+  bool ret = false;
 
-  bool ret = true;
-/*
-  // 1 - prepare data for tx
-  if(ret && !buf_tx_data_size_)
-  {
-    if(!stage_) construct_opt_reply();
-
-    switch(opt_.request_type())
-    {
-      case SrvReq::read:
-        if(!stage_ && !buf_tx_data_size_) ++stage_;// if no conf opt -> start tx data
-        if(stage_) construct_data();
-        if((buf_tx_data_size_ < (block_size()+4U)))
-        {
-          oper_last_block_ = stage_;
-          L_DBG("Calculated last tx block "+std::to_string(oper_last_block_));
-        }
-        break;
-      case SrvReq::write:
-        if(!buf_tx_data_size_) construct_ack();
-        break;
-      default:
-        ret=false;
-        L_ERR("Wrong request type. Break!");
-        break;
-    }
-  }
-*/
-  // 2 - Send data
   if(buf_tx_data_size_ > 0U)
   {
-    //if(!oper_tx_count_ || !timeout_pass()) // first try send or time is out
-    //{
-      //if(oper_tx_count_ > get_retransmit_count())
-      //{
-      //  L_ERR("Retransmit count exceeded ("+std::to_string(get_retransmit_count())+
-      //          "). Break!");
-      //  ret=false;
-      //}
+    ssize_t tx_result_size = sendto(
+        socket_,
+        buf_tx_.data(),
+        buf_tx_data_size_,
+        0,
+        cl_addr_.as_sockaddr_ptr(),
+        cl_addr_.data_size());
 
-      //if(ret) // need send
-      //{
-        auto tx_result_size = sendto(socket_,
-                                     buf_tx_.data(),
-                                     buf_tx_data_size_,
-                                     0,
-                                     cl_addr_.as_sockaddr_ptr(),
-                                     cl_addr_.data_size());
-        //++oper_tx_count_;
-        //timeout_reset();
-        if(tx_result_size < 0) // Fail TX: error
-        {
-          L_ERR("sendto() error");
-        }
-        else
-        if(tx_result_size<(ssize_t)buf_tx_data_size_) // Fail TX: send lost
-        {
-          L_ERR("sendto() lost data error: sended "+
-                  std::to_string(tx_result_size)+
-                  " from "+std::to_string(buf_tx_data_size_));
-        }
-        else // Good TX
-        {
-          L_DBG("Success send packet "+std::to_string(buf_tx_data_size_)+
-                  " octets");
-          buf_tx_data_size_ = 0;
-          //set_stage_receive();
+    ret = (tx_result_size == (ssize_t)buf_tx_data_size_);
 
-          //if((opt_.request_type() == SrvReq::write) &&
-          //   oper_last_block_ &&
-          //   (oper_last_block_==stage_))
-          //{
-          //  ret = false; // GOOD EXIT
-          //}
-        }
-      //}
-    //}
+    if(ret) // Good send
+    {
+      L_DBG("Success send packet "+std::to_string(buf_tx_data_size_)+
+            " octets");
+      buf_tx_data_size_ = 0;
+    }
+    else // Fail send
+    {
+      if(tx_result_size < 0)
+      {
+        L_ERR("sendto() error");
+      }
+      else
+      {
+        L_ERR("sendto() lost data error: sended "+
+              std::to_string(tx_result_size)+
+              " from "+std::to_string(buf_tx_data_size_));
+      }
+    }
+  }
+  else
+  {
+    L_ERR("Nothing to send; prepared data size 0 bytes");
   }
 
-  ret = ret && !was_error(); // ERROR EXIT
-
-  return ret;
+  return ret && !was_error();
 }
 
 // -----------------------------------------------------------------------------
@@ -685,18 +645,16 @@ bool Session::transmit_no_wait()
 bool Session::receive_no_wait()
 {
   bool ret = true;
-  std::string rx_msg;
-
-  SmBuf rx_client_sa(sizeof(struct sockaddr_in6), 0);
-  socklen_t  rx_client_size = rx_client_sa.size();
+  Addr rx_client;
+  rx_client.data_size() = rx_client.size();
 
   ssize_t rx_data_size = recvfrom(
       socket_,
       buf_rx_.data(),
       buf_rx_.size(),
       MSG_DONTWAIT,
-      (struct sockaddr *) rx_client_sa.data(),
-      & rx_client_size);
+      rx_client.as_sockaddr_ptr(),
+      & rx_client.data_size());
 
   if(rx_data_size < 0)
   {
@@ -714,96 +672,77 @@ bool Session::receive_no_wait()
   else
   if(rx_data_size > 0)
   {
-    rx_msg.assign("Receive pkt ").
-           append(std::to_string(rx_data_size)).
-           append(" octets");
+    ret=false;
+    uint16_t rx_op  = (rx_data_size > 3) ? buf_rx_.get_ntoh<uint16_t>(0U) : 0U;
+    uint16_t rx_blk = (rx_data_size > 3) ? buf_rx_.get_ntoh<uint16_t>(2U) : 0U;
 
-    if(rx_data_size > 3) // minimal tftp pkt size 4 byte
+    // Make debug message
+    std::string rx_msg = "Rx pkt ["+std::to_string(rx_data_size)+" octets]";
+    switch(rx_op)
     {
-      uint16_t rx_op  = buf_rx_.get_ntoh<uint16_t>(0U);
-      uint16_t rx_blk = buf_rx_.get_ntoh<uint16_t>(2U);
+      case 3U: // DATA
+        rx_msg.append(": DATA blk "+std::to_string(rx_blk)+
+                      "; data size "+std::to_string(rx_data_size));
+        break;
+      case 4U: // ACK
+        rx_msg.append(": ACK blk "+std::to_string(rx_blk));
+        break;
+      case 5U: // ERROR
+        rx_msg.append(": ERROR #"+std::to_string(rx_blk)+
+                      " '"+buf_rx_.get_string(4U)+"'");
+        break;
+      default:
+        rx_msg.append(": FAKE tftp packet");
+        break;
+    }
+    L_DBG(rx_msg);
 
-      switch(rx_op)
+    // Parse packet
+    if((rx_op == 3U) && (stat_ == State::data_rx)) // DATA
+    {
+      ret=true;
+      if(blk_num_local() != rx_blk)
       {
-        case 4U: // ACK --------------------------------------------------------
-          rx_msg.append(": ACK blk ").append(std::to_string(rx_blk));
+        L_WRN("Wrong Data blk! rx #"+std::to_string(rx_blk)+
+                       " need #"+std::to_string(blk_num_local()));
+      }
+      ssize_t stored_data_size =  manager_.rx(
+          buf_rx_.begin() + 2*sizeof(uint16_t),
+          buf_rx_.begin() + rx_data_size,
+          (stage_ - 1) * block_size());
+      if(stored_data_size < 0)
+      {
+        L_ERR("Error stored data");
+        set_error_if_first(0, "Error stored data");
+        ret=false;
+      }
 
-          if((opt_.request_type() == SrvReq::read) &&
-             (rx_blk == blk_num_local()))
-          {
-            L_DBG("OK! "+rx_msg);
-            if(oper_last_block_) ret=false; // GOOD EXIT at end
-            ++stage_;
-            oper_tx_count_ = 0;
-            timeout_reset();
-            set_stage_transmit();
-          }
-          else
-          {
-            L_WRN("WRONG! "+rx_msg);
-          }
-          break;
-        case 3U: // DATA -------------------------------------------------------
-          rx_msg.append(": DATA blk ").append(std::to_string(rx_blk)).
-                 append("; data size ").append(std::to_string(rx_data_size));
-
-          if(bool is_next = (rx_blk == blk_num_local(1U));
-              (opt_.request_type() == SrvReq::write) &&
-              ((rx_blk == blk_num_local(0U)) || // current blk
-                is_next))  // or next blk
-          {
-            L_DBG("OK! "+rx_msg);
-            if(is_next) ++stage_;
-
-            if(stage_)
-            {
-              ssize_t stored_data_size =  manager_.rx(
-                  buf_rx_.begin() + 2*sizeof(uint16_t),
-                  buf_rx_.begin() + rx_data_size,
-                  (stage_ - 1) * block_size());
-              if(stored_data_size < 0)
-              {
-                L_ERR("Error stored data");
-                set_error_if_first(0, "Error stored data");
-                construct_error();
-              }
-            }
-
-            if(rx_data_size < (block_size() + 4))
-            {
-              oper_last_block_ = stage_;
-              L_DBG("Calculated last rx block "+
-                      std::to_string(oper_last_block_));
-            }
-            set_stage_transmit();
-            oper_tx_count_ = 0;
-          }
-          else
-          {
-            L_WRN("WRONG! "+rx_msg);
-          }
-          break;
-        case 5U: // ERROR ------------------------------------------------------
-          L_ERR(": ERROR #"+std::to_string(rx_blk) + " '"+
-                std::string(buf_rx_.cbegin()+2*sizeof(uint16_t),
-                            buf_rx_.cend())+"'"+
-                rx_msg);
-          ret=false;
-          break;
-      } // ---------------------------------------------------------------------
     }
     else
+    if((rx_op == 4U) && (stat_ == State::ack_rx)) // ACK
     {
-      L_WRN("Packet size too small. Skip!");
-    }
-  }
+      ret=true;
+      if(blk_num_local() != rx_blk)
+      {
+        ssize_t delta = (ssize_t)stage_ + (ssize_t)rx_blk - (ssize_t)blk_num_local();
 
-  if(ret && !timeout_pass())
-  {
-    L_DBG("Time is out (oper_tx_count_="+
-            std::to_string(oper_tx_count_)+")");
-    set_stage_transmit();
-    oper_last_block_=0;
+        if(delta >= 0)
+        {
+          stage_ = (ssize_t) delta;
+          L_WRN("Wrong ACK blk! rx #"+std::to_string(rx_blk)+
+                " need #"+std::to_string(blk_num_local())+
+                "; switch to #"+std::to_string(delta));
+        }
+        else
+        {
+          L_ERR("Wrong ACK blk! rx #"+std::to_string(rx_blk)+
+                " need #"+std::to_string(blk_num_local())+
+                "; Can't do it!");
+          ret = false;
+        }
+
+      }
+    }
   }
 
   return ret;
