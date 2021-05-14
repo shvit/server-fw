@@ -62,6 +62,7 @@ protected:
   DataMgr      manager_;          ///< Data manager
   uint16_t     error_code_;       ///< First error info - code
   std::string  error_message_;    ///< First error info - message
+  bool         last_blk_processed_;
   Options      opt_;              ///< TFTP protocol options
 
   /** \brief Main constructor
@@ -178,12 +179,14 @@ protected:
    *  No wait - not blocking.
    *  \return True if continue loop, False for break loop
    */
-  bool receive_no_wait();
+  auto receive_no_wait() -> TripleResult;
 
   template<typename T>
   void push_data(T && value);
 
   bool switch_to(const State & new_state);
+
+  bool is_window_close() const;
 
 public:
 

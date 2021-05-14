@@ -107,6 +107,15 @@ enum class State: int
 
 // -----------------------------------------------------------------------------
 
+enum class TripleResult: int
+{
+  nop=0, // no operation - good state
+  ok,    // ok processed - good state
+  fail,  // fail state
+};
+
+// -----------------------------------------------------------------------------
+
 /** \bief Callabck for custom logging message from server
  *
  *  \param [in] Logging level
@@ -241,6 +250,17 @@ constexpr auto to_string(const State & val) -> std::string_view
     CASE_OPER_TO_STR_VIEW(retransmit);
     CASE_OPER_TO_STR_VIEW(finish);
     default: return "UNK_SESS_STATE";
+  }
+}
+
+constexpr auto to_string(const TripleResult & val) -> std::string_view
+{
+  switch(val)
+  {
+    CASE_OPER_TO_STR_VIEW(nop);
+    CASE_OPER_TO_STR_VIEW(ok);
+    CASE_OPER_TO_STR_VIEW(fail);
+    default: return "UNK_RES";
   }
 }
 

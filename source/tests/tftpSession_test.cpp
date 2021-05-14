@@ -29,9 +29,11 @@ class Session_test: public tftp::Session
 {
 public:
   using tftp::Session::opt_;
+  using tftp::Session::stage_;
   using tftp::Session::cl_addr_;
   using tftp::Session::was_error;
   using tftp::Session::set_error_if_first;
+  using tftp::Session::is_window_close;
 };
 
 //------------------------------------------------------------------------------
@@ -83,6 +85,57 @@ UNIT_TEST_CASE_BEGIN(sess_init, "check prepare()")
   TEST_CHECK_FALSE(s1.was_error());
   s1.set_error_if_first(909U, "Test error");
   TEST_CHECK_TRUE(s1.was_error());
+
+UNIT_TEST_CASE_END
+
+//------------------------------------------------------------------------------
+
+UNIT_TEST_CASE_BEGIN(sess_win, "check windows")
+
+START_ITER("windowsize==1")
+{
+  Session_test s1;
+
+  TEST_CHECK_TRUE(s1.stage_ == 0U);
+  TEST_CHECK_TRUE(s1.opt_.windowsize() == 1U);
+  TEST_CHECK_TRUE(s1.is_window_close());
+  ++s1.stage_;
+  TEST_CHECK_TRUE(s1.is_window_close());
+  ++s1.stage_;
+  TEST_CHECK_TRUE(s1.is_window_close());
+  ++s1.stage_;
+  TEST_CHECK_TRUE(s1.is_window_close());
+  ++s1.stage_;
+  TEST_CHECK_TRUE(s1.is_window_close());
+}
+
+START_ITER("windowsize==5")
+{
+  Session_test s1;
+
+  tftp::Addr b_addr;
+  b_addr.set_family(AF_INET);
+  b_addr.set_port(0x0506);
+  *(b_addr.data() + 4U) = 1;
+  *(b_addr.data() + 5U) = 2;
+  *(b_addr.data() + 6U) = 3;
+  *(b_addr.data() + 7U) = 4;
+  tftp::SmBuf b_pkt
+  {
+    0,1,
+    'a',0,
+    'o','c','t','e','t',0,
+    'w','i','n','d','o','w','s','i','z','e',0,'5',0
+  };
+  s1.prepare(b_addr, b_pkt, b_pkt.size());
+  TEST_CHECK_TRUE(  s1.stage_==0U); TEST_CHECK_TRUE (s1.is_window_close());
+  TEST_CHECK_TRUE(++s1.stage_==1U); TEST_CHECK_FALSE(s1.is_window_close());
+  TEST_CHECK_TRUE(++s1.stage_==2U); TEST_CHECK_FALSE(s1.is_window_close());
+  TEST_CHECK_TRUE(++s1.stage_==3U); TEST_CHECK_FALSE(s1.is_window_close());
+  TEST_CHECK_TRUE(++s1.stage_==4U); TEST_CHECK_FALSE(s1.is_window_close());
+  TEST_CHECK_TRUE(++s1.stage_==5U); TEST_CHECK_TRUE (s1.is_window_close());
+}
+
 
 UNIT_TEST_CASE_END
 

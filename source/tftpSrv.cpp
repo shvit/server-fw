@@ -156,8 +156,8 @@ void Srv::main_loop()
           pkt_buf,
           (size_t) bsize);
 
-      if(ret) ret = sss.init();
-        else L_ERR("Failed prepare session");
+      //if(ret) ret = sss.init();
+      //  else L_ERR("Failed prepare session");
 
       if(ret)
       {

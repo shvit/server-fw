@@ -54,20 +54,37 @@ UNIT_TEST_CASE_BEGIN(common_functions, "Check common functions")
   CHK_TO_STRING(State, retransmit);
   CHK_TO_STRING(State, finish);
 
+  CHK_TO_STRING(TripleResult, nop);
+  CHK_TO_STRING(TripleResult, ok);
+  CHK_TO_STRING(TripleResult, fail);
+
 #undef CHK_TO_STRING
 
   // Check operator+
-  std::string s1= "A"+tftp::State::need_init+"B";
-  TEST_CHECK_TRUE(s1=="Aneed_initB");
+  {
+    std::string s= "A"+tftp::State::need_init+"B";
+    TEST_CHECK_TRUE(s=="Aneed_initB");
+  }
 
-  std::string s2= "C"+tftp::LogLvl::warning+"D";
-  TEST_CHECK_TRUE(s2=="CwarningD");
+  {
+    std::string s= "C"+tftp::LogLvl::warning+"D";
+    TEST_CHECK_TRUE(s=="CwarningD");
+  }
 
-  std::string s3= "E"+tftp::TransfMode::octet+"F";
-  TEST_CHECK_TRUE(s3=="EoctetF");
+  {
+    std::string s= "E"+tftp::TransfMode::octet+"F";
+    TEST_CHECK_TRUE(s=="EoctetF");
+  }
 
-  std::string s4= "G"+tftp::SrvReq::write+"H";
-  TEST_CHECK_TRUE(s4=="GwriteH");
+  {
+    std::string s= "G"+tftp::SrvReq::write+"H";
+    TEST_CHECK_TRUE(s=="GwriteH");
+  }
+
+  {
+    std::string s= "I"+tftp::TripleResult::ok+"J";
+    TEST_CHECK_TRUE(s=="IokJ");
+  }
 
 //
 UNIT_TEST_CASE_END

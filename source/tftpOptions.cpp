@@ -106,6 +106,14 @@ bool Options::was_set_windowsize() const
   return std::get<0>(windowsize_);
 }
 
+bool Options::was_set_any() const
+{
+  return was_set_blksize() ||
+         was_set_timeout() ||
+         was_set_tsize() ||
+         was_set_windowsize();
+}
+
 //------------------------------------------------------------------------------
 
 #define OPT_L_INF(MSG) if(log != nullptr) L_INF(MSG);

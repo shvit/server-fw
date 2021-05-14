@@ -45,6 +45,7 @@ Session::Session(pSettings new_settings):
     manager_{DataMgr{}},
     error_code_{0U},
     error_message_{""},
+    last_blk_processed_{false},
     opt_{}
 {
 }
@@ -99,6 +100,7 @@ auto Session::operator=(Session && val) -> Session &
     manager_         = std::move(val.manager_);
     error_code_      = val.error_code_;
     std::swap(error_message_, val.error_message_);
+    std::swap(last_blk_processed_, val.last_blk_processed_);
 
     std::swap(opt_, val.opt_);
   }
@@ -118,16 +120,19 @@ bool Session::switch_to(const State & new_state)
     {
       case State::need_init:
         ret = (new_state == State::finish) ||
+              (new_state == State::error_and_stop) ||
               (new_state == State::ack_options) ||
               (new_state == State::data_tx) ||
-              (new_state == State::ack_tx);
+              (new_state == State::ack_tx) ;
         break;
       case State::error_and_stop:
         ret = (new_state == State::finish);
         break;
       case State::ack_options:
         ret = (new_state == State::data_rx) ||
-              (new_state == State::ack_rx);
+              (new_state == State::data_tx) ||
+              (new_state == State::ack_rx) ||
+              (new_state == State::ack_tx);
         break;
       case State::data_tx:
         ret = (new_state == State::ack_rx) ||
@@ -138,7 +143,8 @@ bool Session::switch_to(const State & new_state)
               (new_state == State::retransmit);
         break;
       case State::ack_tx:
-        ret = (new_state == State::data_rx);
+        ret = (new_state == State::data_rx) ||
+              (new_state == State::finish);
         break;
       case State::ack_rx:
         ret = (new_state == State::data_tx);
@@ -160,7 +166,8 @@ bool Session::switch_to(const State & new_state)
   }
   else
   {
-    L_WRN("Wrong switch state: "+stat_+" -> "+new_state+" (not switched!)");
+    L_ERR("Wrong switch state: "+stat_+" -> "+new_state+"! Switch to finish");
+    stat_.store(State::finish); // Skip any loop
   }
 
   return ret;
@@ -315,6 +322,7 @@ bool Session::init()
   }
 
   L_INF("Session initialise is "+(ret ? (was_error() ? "WAS ERROR":"SUCCESSFUL") : "FAIL"));
+
   return ret;
 }
 
@@ -430,18 +438,8 @@ void Session::run()
 {
   L_INF("Running session");
 
-  if(stat_ == State::need_init)
-  {
-    L_WRN("Session not initialised, need finish");
-    switch_to(State::finish);
-    // TODO:: Make prepare(), init()
-  }
-
   // Prepare
-  //timeout_reset();
-  int win_processed = 0;
   oper_tx_count_   = 0;
-  //set_stage_transmit();
   oper_last_block_ = 0;
   stage_           = 0; // processed block number
   buf_tx_data_size_     = 0;
@@ -449,48 +447,79 @@ void Session::run()
   // Main loop
   while(!is_finished())
   {
-
     switch(stat_)
     {
       case State::need_init:
-        break; // never do this
+        if(init())
+        {
+          if(was_error())
+          {
+            switch_to(State::error_and_stop);
+          }
+          else
+          {
+            switch_to(State::ack_options);
+          }
+        }
+        else
+        {
+          switch_to(State::finish);
+        }
+        break;
 
       case State::error_and_stop:
-        construct_error();
-        transmit_no_wait();
+        if(was_error())
+        {
+          construct_error();
+          transmit_no_wait();
+        }
         switch_to(State::finish);
         break;
 
       case State::ack_options:
-        construct_opt_reply();
-        transmit_no_wait();
-        if(opt_.request_type() == SrvReq::read)
+        if(opt_.was_set_any())
         {
-          switch_to(State::ack_rx);
-          stage_ = 0U;
+          construct_opt_reply();
+          transmit_no_wait();
         }
-        if(opt_.request_type() == SrvReq::write)
+        timeout_reset();
+        switch(opt_.request_type())
         {
-          timeout_reset();
-          switch_to(State::data_rx);
-          stage_ = 1U;
+          case SrvReq::unknown:
+            switch_to(State::error_and_stop);
+            break;
+          case SrvReq::read:
+            switch_to(State::data_tx);
+            stage_ = 1U;
+            break;
+          case SrvReq::write:
+            if(opt_.was_set_any())
+            {
+              switch_to(State::data_rx);
+              stage_ = 1U;
+            }
+            else
+            {
+              stage_ = 0U;
+              switch_to(State::ack_tx);
+            }
+            break;
         }
-        win_processed = 0;
         break;
 
       case State::data_tx:
         {
-          ssize_t sended_size = construct_data();
-          if(sended_size >= 0)
+          ssize_t data_size = construct_data();
+          if(data_size >= 0)
           {
             transmit_no_wait();
             ++stage_;
+            last_blk_processed_ = (data_size != (ssize_t)block_size());
 
-            if(++win_processed >= opt_.windowsize())
+            if(is_window_close() || last_blk_processed_)
             {
               timeout_reset();
               switch_to(State::ack_rx);
-              win_processed=0;
             }
           }
           else
@@ -501,48 +530,81 @@ void Session::run()
         break;
 
       case State::data_rx:
-        if(receive_no_wait())
+        switch(receive_no_wait())
         {
-          switch_to(State::ack_tx);
+          case TripleResult::nop:
+            if(!timeout_pass(1))
+            {
+              switch_to(State::retransmit);
+            }
+            break;
+          case TripleResult::ok:
+            if(is_window_close())
+            {
+              switch_to(State::ack_tx);
+            }
+            else
+            {
+              ++stage_;
+            }
+            timeout_reset();
+            break;
+          case TripleResult::fail:
+            switch_to(State::error_and_stop);
+            break;
         }
         break;
 
       case State::ack_tx:
         construct_ack();
         transmit_no_wait();
+        ++stage_;
+        if(last_blk_processed_)
+        {
+          switch_to(State::finish);
+        }
+        else
+        {
+          switch_to(State::data_rx);
+          timeout_reset();
+        }
         break;
 
       case State::ack_rx:
+        switch(receive_no_wait())
+        {
+          case TripleResult::nop:
+            if(!timeout_pass(1))
+            {
+              switch_to(State::retransmit);
+            }
+            break;
+          case TripleResult::ok:
+            if(last_blk_processed_)
+            {
+              switch_to(State::finish);
+            }
+            else
+            {
+              switch_to(State::data_tx);
+              ++stage_;
+              timeout_reset();
+            }
+            break;
+          case TripleResult::fail:
+            switch_to(State::error_and_stop);
+            break;
+        }
         break;
 
       case State::retransmit:
+        // TODO: retry send ...
+        timeout_reset();
         break;
 
       case State::finish:
         break; // never do this
-
     }
-/*
-    // 0 Processing errors (if was)
-    if(was_error())
-    {
-      construct_error();
-      //stop_ = true;
-    }
-
-    // 1 tx data if need
-    if(!transmit_no_wait()) break;
-
-    // 2 rx data if exist
-    if(!receive_no_wait()) break;
-
-    // Check emergency exit
-    if(!timeout_pass(2)) // with 2 sec gandicap
-    {
-      L_WRN("Global loop timeout. Break");
-      break;
-    }
-*/
   } // end main loop
 
   socket_close();
@@ -642,13 +704,12 @@ bool Session::transmit_no_wait()
 
 // -----------------------------------------------------------------------------
 
-bool Session::receive_no_wait()
+auto Session::receive_no_wait() -> TripleResult
 {
-  bool ret = true;
   Addr rx_client;
   rx_client.data_size() = rx_client.size();
 
-  ssize_t rx_data_size = recvfrom(
+  ssize_t rx_pkt_size = recvfrom(
       socket_,
       buf_rx_.data(),
       buf_rx_.size(),
@@ -656,99 +717,142 @@ bool Session::receive_no_wait()
       rx_client.as_sockaddr_ptr(),
       & rx_client.data_size());
 
-  if(rx_data_size < 0)
+  if(rx_pkt_size < 0) // Any receive error? - go away
   {
     switch(errno)
     {
       case EAGAIN:  // OK
-        break;
+        return TripleResult::nop;
       default:
-        ret=false;
         L_ERR("Error #"+std::to_string(errno)+
                 " when call recvfrom(). Break loop!");
-        break;
+        return TripleResult::fail;
     }
+  }
+
+  // Extract meta info
+  uint16_t rx_op  = (rx_pkt_size > 3) ? buf_rx_.get_ntoh<uint16_t>(0U) : 0U;
+  uint16_t rx_blk = (rx_pkt_size > 3) ? buf_rx_.get_ntoh<uint16_t>(2U) : 0U;
+  uint16_t rx_data_size = (rx_pkt_size > 3) ?
+      (rx_pkt_size > 0xFFFF ? 0xFFFFU : rx_pkt_size - 4) : 0U;
+
+  // Make debug message
+  std::string rx_msg = "Rx pkt ["+std::to_string(rx_pkt_size)+" octets]";
+  switch(rx_op)
+  {
+    case 3U: // DATA
+      rx_msg.append(": DATA blk "+std::to_string(rx_blk)+
+                    "; data size "+std::to_string(rx_data_size));
+      break;
+    case 4U: // ACK
+      rx_msg.append(": ACK blk "+std::to_string(rx_blk));
+      break;
+    case 5U: // ERROR
+      rx_msg.append(": ERROR #"+std::to_string(rx_blk)+
+                    " '"+buf_rx_.get_string(4U)+"'");
+      break;
+    default:
+      rx_msg.append(": FAKE tftp packet");
+      break;
+  }
+
+  // Check client address is right
+  if(rx_client == cl_addr_)
+  {
+    L_DBG(rx_msg+" from client");
   }
   else
-  if(rx_data_size > 0)
   {
-    ret=false;
-    uint16_t rx_op  = (rx_data_size > 3) ? buf_rx_.get_ntoh<uint16_t>(0U) : 0U;
-    uint16_t rx_blk = (rx_data_size > 3) ? buf_rx_.get_ntoh<uint16_t>(2U) : 0U;
-
-    // Make debug message
-    std::string rx_msg = "Rx pkt ["+std::to_string(rx_data_size)+" octets]";
-    switch(rx_op)
-    {
-      case 3U: // DATA
-        rx_msg.append(": DATA blk "+std::to_string(rx_blk)+
-                      "; data size "+std::to_string(rx_data_size));
-        break;
-      case 4U: // ACK
-        rx_msg.append(": ACK blk "+std::to_string(rx_blk));
-        break;
-      case 5U: // ERROR
-        rx_msg.append(": ERROR #"+std::to_string(rx_blk)+
-                      " '"+buf_rx_.get_string(4U)+"'");
-        break;
-      default:
-        rx_msg.append(": FAKE tftp packet");
-        break;
-    }
-    L_DBG(rx_msg);
-
-    // Parse packet
-    if((rx_op == 3U) && (stat_ == State::data_rx)) // DATA
-    {
-      ret=true;
-      if(blk_num_local() != rx_blk)
-      {
-        L_WRN("Wrong Data blk! rx #"+std::to_string(rx_blk)+
-                       " need #"+std::to_string(blk_num_local()));
-      }
-      ssize_t stored_data_size =  manager_.rx(
-          buf_rx_.begin() + 2*sizeof(uint16_t),
-          buf_rx_.begin() + rx_data_size,
-          (stage_ - 1) * block_size());
-      if(stored_data_size < 0)
-      {
-        L_ERR("Error stored data");
-        set_error_if_first(0, "Error stored data");
-        ret=false;
-      }
-
-    }
-    else
-    if((rx_op == 4U) && (stat_ == State::ack_rx)) // ACK
-    {
-      ret=true;
-      if(blk_num_local() != rx_blk)
-      {
-        ssize_t delta = (ssize_t)stage_ + (ssize_t)rx_blk - (ssize_t)blk_num_local();
-
-        if(delta >= 0)
-        {
-          stage_ = (ssize_t) delta;
-          L_WRN("Wrong ACK blk! rx #"+std::to_string(rx_blk)+
-                " need #"+std::to_string(blk_num_local())+
-                "; switch to #"+std::to_string(delta));
-        }
-        else
-        {
-          L_ERR("Wrong ACK blk! rx #"+std::to_string(rx_blk)+
-                " need #"+std::to_string(blk_num_local())+
-                "; Can't do it!");
-          ret = false;
-        }
-
-      }
-    }
+    L_WRN("Alarm! Intrusion detect from addr "+cl_addr_.str()+
+          " with data: "+rx_msg+". Ignore pkt!");
+    return TripleResult::nop;
   }
 
-  return ret;
+  ssize_t rx_stage = (ssize_t)stage_ +
+                      (ssize_t)rx_blk - (ssize_t)blk_num_local();
+
+  // Parse packet if need and do receive DATA
+  if((rx_op == 3U) && (stat_ == State::data_rx)) // DATA
+  {
+    if(rx_stage < 0)
+    {
+      L_WRN("Wrong Data blk! rx #"+std::to_string(rx_blk)+
+            " need #"+std::to_string(blk_num_local())+
+            "; calculated stage="+std::to_string(rx_stage)+". Break session!");
+      set_error_if_first(0, "Error received number data block");
+      return  TripleResult::fail;
+    }
+
+    if(rx_stage > (ssize_t)(stage_+1U))
+    {
+      L_WRN("Skip (lost) data blocks! rx #"+std::to_string(rx_blk)+
+            " need #"+std::to_string(blk_num_local())+
+            "; calculated stage="+std::to_string(rx_stage)+". Break session!");
+      set_error_if_first(0, "Error received number data block");
+      return  TripleResult::fail;
+    }
+
+    if(blk_num_local() != rx_blk)
+    {
+      L_INF("Switch blk #"+std::to_string(blk_num_local())+
+            " -> #"+std::to_string(rx_blk));
+      stage_ = (size_t) rx_stage;
+    }
+
+    ssize_t stored_data_size =  manager_.rx(
+        buf_rx_.begin() + 2*sizeof(uint16_t),
+        buf_rx_.begin() + rx_pkt_size,
+        (stage_ - 1) * block_size());
+    if(stored_data_size < 0)
+    {
+      L_ERR("Error from store data manager");
+      set_error_if_first(0, "Error when try to store data");
+      return  TripleResult::fail;
+    }
+    last_blk_processed_ = rx_data_size != block_size();
+    return  TripleResult::ok;
+  }
+
+  // Parse packet if need and do receive ACK
+  if((rx_op == 4U) && (stat_ == State::ack_rx)) // ACK
+  {
+    if(rx_stage < 0)
+    {
+      L_WRN("Wrong Data ack! rx #"+std::to_string(rx_blk)+
+            " need #"+std::to_string(blk_num_local())+
+            "; calculated stage="+std::to_string(rx_stage)+". Break session!");
+      set_error_if_first(0, "Error received number ack block");
+      return  TripleResult::fail;
+    }
+
+    if(rx_stage > (ssize_t)(stage_+1U))
+    {
+      L_WRN("Skip (lost) data blocks! rx #"+std::to_string(rx_blk)+
+            " need #"+std::to_string(blk_num_local())+
+            "; calculated stage="+std::to_string(rx_stage)+". Break session!");
+      set_error_if_first(0, "Error received number ack block");
+      return  TripleResult::fail;
+    }
+
+    if(blk_num_local() != rx_blk)
+    {
+      L_INF("Switch blk #"+std::to_string(blk_num_local())+
+            " -> #"+std::to_string(rx_blk));
+      stage_ = (size_t) rx_stage;
+    }
+    return  TripleResult::ok;
+  }
+
+  return TripleResult::nop;
 }
 
 // -----------------------------------------------------------------------------
+
+bool Session::is_window_close() const
+{
+  return (stage_ % (size_t)opt_.windowsize()) == 0U;
+}
+
 
 } // namespace tftp
 
