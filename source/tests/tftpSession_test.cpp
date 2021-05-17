@@ -34,6 +34,7 @@ public:
   using tftp::Session::was_error;
   using tftp::Session::set_error_if_first;
   using tftp::Session::is_window_close;
+  using tftp::Session::step_back_window;
 };
 
 //------------------------------------------------------------------------------
@@ -95,18 +96,13 @@ UNIT_TEST_CASE_BEGIN(sess_win, "check windows")
 START_ITER("windowsize==1")
 {
   Session_test s1;
-
-  TEST_CHECK_TRUE(s1.stage_ == 0U);
+  size_t stage = 0U;
   TEST_CHECK_TRUE(s1.opt_.windowsize() == 1U);
-  TEST_CHECK_TRUE(s1.is_window_close());
-  ++s1.stage_;
-  TEST_CHECK_TRUE(s1.is_window_close());
-  ++s1.stage_;
-  TEST_CHECK_TRUE(s1.is_window_close());
-  ++s1.stage_;
-  TEST_CHECK_TRUE(s1.is_window_close());
-  ++s1.stage_;
-  TEST_CHECK_TRUE(s1.is_window_close());
+  TEST_CHECK_TRUE(s1.is_window_close(stage));
+  TEST_CHECK_TRUE(s1.is_window_close(++stage));
+  TEST_CHECK_TRUE(s1.is_window_close(++stage));
+  TEST_CHECK_TRUE(s1.is_window_close(++stage));
+  TEST_CHECK_TRUE(s1.is_window_close(++stage));
 }
 
 START_ITER("windowsize==5")
@@ -128,14 +124,59 @@ START_ITER("windowsize==5")
     'w','i','n','d','o','w','s','i','z','e',0,'5',0
   };
   s1.prepare(b_addr, b_pkt, b_pkt.size());
-  TEST_CHECK_TRUE(  s1.stage_==0U); TEST_CHECK_TRUE (s1.is_window_close());
-  TEST_CHECK_TRUE(++s1.stage_==1U); TEST_CHECK_FALSE(s1.is_window_close());
-  TEST_CHECK_TRUE(++s1.stage_==2U); TEST_CHECK_FALSE(s1.is_window_close());
-  TEST_CHECK_TRUE(++s1.stage_==3U); TEST_CHECK_FALSE(s1.is_window_close());
-  TEST_CHECK_TRUE(++s1.stage_==4U); TEST_CHECK_FALSE(s1.is_window_close());
-  TEST_CHECK_TRUE(++s1.stage_==5U); TEST_CHECK_TRUE (s1.is_window_close());
+  size_t stage = 0U;
+  TEST_CHECK_TRUE (s1.is_window_close(  stage));
+  TEST_CHECK_FALSE(s1.is_window_close(++stage));
+  TEST_CHECK_FALSE(s1.is_window_close(++stage));
+  TEST_CHECK_FALSE(s1.is_window_close(++stage));
+  TEST_CHECK_FALSE(s1.is_window_close(++stage));
+  TEST_CHECK_TRUE (s1.is_window_close(++stage));
 }
 
+START_ITER("const step_back_window()")
+{
+  Session_test s1;
+  TEST_CHECK_TRUE (s1.step_back_window(0U) == 0U);
+  TEST_CHECK_TRUE (s1.step_back_window(1U) == 1U);
+  TEST_CHECK_TRUE (s1.step_back_window(2U) == 1U);
+  TEST_CHECK_TRUE (s1.step_back_window(3U) == 2U);
+  TEST_CHECK_TRUE (s1.step_back_window(4U) == 3U);
+  TEST_CHECK_TRUE (s1.step_back_window(5U) == 4U);
+  TEST_CHECK_TRUE (s1.step_back_window(65536U) == 65535U);
+}
+
+START_ITER("step_back_window()")
+{
+  Session_test s1;
+
+  tftp::Addr b_addr;
+  b_addr.set_family(AF_INET);
+  tftp::SmBuf b_pkt
+  {
+    0,1,
+    'a',0,
+    'o','c','t','e','t',0,
+    'w','i','n','d','o','w','s','i','z','e',0,'5',0
+  };
+  s1.prepare(b_addr, b_pkt, b_pkt.size());
+  size_t stage;
+
+  s1.step_back_window(stage =     0U); TEST_CHECK_TRUE(stage ==     0U);
+  s1.step_back_window(stage =     1U); TEST_CHECK_TRUE(stage ==     1U);
+  s1.step_back_window(stage =     2U); TEST_CHECK_TRUE(stage ==     1U);
+  s1.step_back_window(stage =     3U); TEST_CHECK_TRUE(stage ==     1U);
+  s1.step_back_window(stage =     4U); TEST_CHECK_TRUE(stage ==     1U);
+  s1.step_back_window(stage =     5U); TEST_CHECK_TRUE(stage ==     5U);
+  s1.step_back_window(stage =     6U); TEST_CHECK_TRUE(stage ==     5U);
+  s1.step_back_window(stage =     7U); TEST_CHECK_TRUE(stage ==     5U);
+  s1.step_back_window(stage =     8U); TEST_CHECK_TRUE(stage ==     5U);
+  s1.step_back_window(stage =     9U); TEST_CHECK_TRUE(stage ==     5U);
+  s1.step_back_window(stage =    10U); TEST_CHECK_TRUE(stage ==    10U);
+  s1.step_back_window(stage =    11U); TEST_CHECK_TRUE(stage ==    10U);
+  s1.step_back_window(stage = 65534U); TEST_CHECK_TRUE(stage == 65530U);
+  s1.step_back_window(stage = 65535U); TEST_CHECK_TRUE(stage == 65535U);
+  s1.step_back_window(stage = 65536U); TEST_CHECK_TRUE(stage == 65535U);
+}
 
 UNIT_TEST_CASE_END
 

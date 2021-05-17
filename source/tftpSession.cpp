@@ -119,11 +119,11 @@ bool Session::switch_to(const State & new_state)
     switch(stat_)
     {
       case State::need_init:
-        ret = (new_state == State::finish) ||
+        ret = (new_state == State::finish        ) ||
               (new_state == State::error_and_stop) ||
-              (new_state == State::ack_options) ||
-              (new_state == State::data_tx) ||
-              (new_state == State::ack_tx) ;
+              (new_state == State::ack_options   ) ||
+              (new_state == State::data_tx       ) ||
+              (new_state == State::ack_tx        );
         break;
       case State::error_and_stop:
         ret = (new_state == State::finish);
@@ -131,8 +131,8 @@ bool Session::switch_to(const State & new_state)
       case State::ack_options:
         ret = (new_state == State::data_rx) ||
               (new_state == State::data_tx) ||
-              (new_state == State::ack_rx) ||
-              (new_state == State::ack_tx);
+              (new_state == State::ack_rx ) ||
+              (new_state == State::ack_tx );
         break;
       case State::data_tx:
         ret = (new_state == State::ack_rx) ||
@@ -147,14 +147,15 @@ bool Session::switch_to(const State & new_state)
               (new_state == State::finish);
         break;
       case State::ack_rx:
-        ret = (new_state == State::data_tx);
+        ret = (new_state == State::data_tx) ||
               (new_state == State::retransmit);
         break;
       case State::retransmit:
-        ret = (new_state == State::data_rx) ||
-              (new_state == State::ack_rx);
+        ret = (new_state == State::data_tx) ||
+              (new_state == State::ack_tx ) ||
+              (new_state == State::error_and_stop);
         break;
-      case State::finish: // no way switch to other
+      case State::finish: // no way to switch
         break;
     }
   }
@@ -444,12 +445,15 @@ void Session::run()
   stage_           = 0; // processed block number
   buf_tx_data_size_     = 0;
 
+  uint16_t retr_count = 0U;
+
+
   // Main loop
   while(!is_finished())
   {
     switch(stat_)
     {
-      case State::need_init:
+      case State::need_init: // ------------------------------------------------
         if(init())
         {
           if(was_error())
@@ -467,7 +471,7 @@ void Session::run()
         }
         break;
 
-      case State::error_and_stop:
+      case State::error_and_stop: // -------------------------------------------
         if(was_error())
         {
           construct_error();
@@ -476,7 +480,7 @@ void Session::run()
         switch_to(State::finish);
         break;
 
-      case State::ack_options:
+      case State::ack_options: // ----------------------------------------------
         if(opt_.was_set_any())
         {
           construct_opt_reply();
@@ -507,7 +511,7 @@ void Session::run()
         }
         break;
 
-      case State::data_tx:
+      case State::data_tx: // --------------------------------------------------
         {
           ssize_t data_size = construct_data();
           if(data_size >= 0)
@@ -516,7 +520,7 @@ void Session::run()
             ++stage_;
             last_blk_processed_ = (data_size != (ssize_t)block_size());
 
-            if(is_window_close() || last_blk_processed_)
+            if(is_window_close(stage_) || last_blk_processed_)
             {
               timeout_reset();
               switch_to(State::ack_rx);
@@ -529,7 +533,7 @@ void Session::run()
         }
         break;
 
-      case State::data_rx:
+      case State::data_rx: // --------------------------------------------------
         switch(receive_no_wait())
         {
           case TripleResult::nop:
@@ -539,7 +543,7 @@ void Session::run()
             }
             break;
           case TripleResult::ok:
-            if(is_window_close())
+            if(is_window_close(stage_))
             {
               switch_to(State::ack_tx);
             }
@@ -555,7 +559,7 @@ void Session::run()
         }
         break;
 
-      case State::ack_tx:
+      case State::ack_tx: // ---------------------------------------------------
         construct_ack();
         transmit_no_wait();
         ++stage_;
@@ -570,7 +574,7 @@ void Session::run()
         }
         break;
 
-      case State::ack_rx:
+      case State::ack_rx: // ---------------------------------------------------
         switch(receive_no_wait())
         {
           case TripleResult::nop:
@@ -597,12 +601,33 @@ void Session::run()
         }
         break;
 
-      case State::retransmit:
-        // TODO: retry send ...
-        timeout_reset();
+      case State::retransmit: // -----------------------------------------------
+        if(++retr_count > get_retransmit_count())
+        {
+          L_WRN("Retransmit count exceeded ("+std::to_string(retr_count)+
+                "); Break session");
+          switch_to(State::error_and_stop);
+        }
+        else
+        {
+          step_back_window(stage_);
+          switch(opt_.request_type())
+          {
+            case SrvReq::unknown:
+              switch_to(State::error_and_stop);
+              break;
+            case SrvReq::read:
+              switch_to(State::data_tx);
+              break;
+            case SrvReq::write:
+              switch_to(State::ack_tx);
+              break;
+          }
+          timeout_reset();
+        }
         break;
 
-      case State::finish:
+      case State::finish: // ---------------------------------------------------
         break; // never do this
     }
   } // end main loop
@@ -848,11 +873,49 @@ auto Session::receive_no_wait() -> TripleResult
 
 // -----------------------------------------------------------------------------
 
-bool Session::is_window_close() const
+bool Session::is_window_close(const size_t & curr_stage) const
 {
-  return (stage_ % (size_t)opt_.windowsize()) == 0U;
+  return (curr_stage % windowsize()) == 0U;
 }
 
+// -----------------------------------------------------------------------------
+
+auto Session::step_back_window(const size_t & curr_stage) const -> size_t
+{
+  size_t new_stage = curr_stage;
+  if(curr_stage > 0U)
+  {
+    if(windowsize() > 1U)
+    {
+      new_stage -= curr_stage % windowsize();
+    }
+    else
+    {
+      --new_stage;
+    }
+
+    if(!new_stage) new_stage = 1U;
+  }
+
+  return new_stage;
+}
+
+// -----------------------------------------------------------------------------
+
+void Session::step_back_window(size_t & curr_stage)
+{
+  curr_stage = step_back_window(const_cast<const size_t &>(curr_stage));
+}
+
+// -----------------------------------------------------------------------------
+
+auto Session::windowsize() const -> size_t
+{
+  if(opt_.windowsize() < 1) return 1U;
+                       else return (size_t)opt_.windowsize();
+}
+
+// -----------------------------------------------------------------------------
 
 } // namespace tftp
 

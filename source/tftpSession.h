@@ -186,7 +186,13 @@ protected:
 
   bool switch_to(const State & new_state);
 
-  bool is_window_close() const;
+  bool is_window_close(const size_t & curr_stage) const;
+
+  auto step_back_window(const size_t & curr_stage) const -> size_t;
+
+  void step_back_window(size_t & curr_stage);
+
+  auto windowsize() const -> size_t;
 
 public:
 
