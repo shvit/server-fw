@@ -756,8 +756,8 @@ auto Session::receive_no_wait() -> TripleResult
   }
 
   // Extract meta info
-  uint16_t rx_op  = (rx_pkt_size > 3) ? buf_rx_.get_ntoh<uint16_t>(0U) : 0U;
-  uint16_t rx_blk = (rx_pkt_size > 3) ? buf_rx_.get_ntoh<uint16_t>(2U) : 0U;
+  uint16_t rx_op  = (rx_pkt_size > 3) ? buf_rx_.get_be<uint16_t>(0U) : 0U;
+  uint16_t rx_blk = (rx_pkt_size > 3) ? buf_rx_.get_be<uint16_t>(2U) : 0U;
   uint16_t rx_data_size = (rx_pkt_size > 3) ?
       (rx_pkt_size > 0xFFFF ? 0xFFFFU : rx_pkt_size - 4) : 0U;
 

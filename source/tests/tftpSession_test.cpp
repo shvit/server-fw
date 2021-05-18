@@ -65,7 +65,7 @@ UNIT_TEST_CASE_BEGIN(sess_init, "check prepare()")
   TEST_CHECK_FALSE(s1.prepare(b_addr, b_pkt, b_pkt.size()));
   TEST_CHECK_TRUE(s1.opt_.request_type() == tftp::SrvReq::unknown);
 
-  b_pkt.set_hton(0U, (int16_t)tftp::SrvReq::write);
+  b_pkt.set_be(0U, (int16_t)tftp::SrvReq::write);
   TEST_CHECK_TRUE (s1.prepare(b_addr, b_pkt, b_pkt.size()));
 
   TEST_CHECK_TRUE(std::equal(s1.cl_addr_.data(),

@@ -262,7 +262,7 @@ void Session::push_data(T && value)
   {
     if((buf_tx_data_size_ + sizeof(T)) <= buf_tx_.size())
     {
-      buf_tx_data_size_ += buf_tx_.set_hton(buf_tx_data_size_, value);
+      buf_tx_data_size_ += buf_tx_.set_be(buf_tx_data_size_, value);
     }
   }
   else

@@ -45,6 +45,10 @@ using pSettings = std::shared_ptr<Settings>;
 
 using Buf = std::vector<char>;
 
+class SmBuf;
+
+class SmBufEx;
+
 // -----------------------------------------------------------------------------
 
 /** \bief Server request enum

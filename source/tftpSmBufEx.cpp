@@ -1,8 +1,15 @@
-/*
- * tftpSmBufEx.cpp
+/**
+ * \file tftpSmBufEx.cpp
+ * \brief Smart buffer class SmBufEx module
  *
- *  Created on: 18 мая 2021 г.
- *      Author: svv
+ *  SmBufEx class for extended network buffer manipulation
+ *
+ *  License GPL-3.0
+ *
+ *  \date   18-may-2021
+ *  \author Vitaliy Shirinkin, e-mail: vitaliy.shirinkin@gmail.com
+ *
+ *  \version 0.1
  */
 
 #include "tftpSmBufEx.h"
@@ -21,6 +28,62 @@ SmBufEx::~SmBufEx()
 auto SmBufEx::data_size() const -> const size_t &
 {
   return data_size_;
+}
+
+//------------------------------------------------------------------------------
+
+void SmBufEx::clear()
+{
+  data_size_ = 0U;
+}
+
+//------------------------------------------------------------------------------
+
+bool SmBufEx::is_bigendian() const
+{
+  return val_int_bigendian_;
+}
+
+//------------------------------------------------------------------------------
+
+bool SmBufEx::is_littleendian() const
+{
+  return !val_int_bigendian_;
+}
+
+//------------------------------------------------------------------------------
+
+bool SmBufEx::is_zeroend() const
+{
+  return val_str_zeroend_;
+}
+
+//------------------------------------------------------------------------------
+
+void SmBufEx::set_bigendian()
+{
+  val_int_bigendian_ = true;
+}
+
+//------------------------------------------------------------------------------
+
+void SmBufEx::set_littleendian()
+{
+  val_int_bigendian_ = false;
+}
+
+//------------------------------------------------------------------------------
+
+void SmBufEx::set_zeroend()
+{
+  val_str_zeroend_ = true;
+}
+
+//------------------------------------------------------------------------------
+
+void SmBufEx::set_not_zeroend()
+{
+  val_str_zeroend_ = false;
 }
 
 //------------------------------------------------------------------------------

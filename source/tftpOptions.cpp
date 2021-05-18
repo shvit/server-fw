@@ -132,7 +132,7 @@ bool Options::buffer_parse(
   size_t curr_pos=0U;
   if(ret)
   {
-    if(auto rq_type = buf.get_ntoh<int16_t>(curr_pos);
+    if(auto rq_type = buf.get_be<int16_t>(curr_pos);
        (ret = ret && ((rq_type == (int16_t)SrvReq::read) ||
                       (rq_type == (int16_t)SrvReq::write))))
     {
