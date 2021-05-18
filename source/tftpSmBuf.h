@@ -25,6 +25,11 @@ namespace tftp
 
 //------------------------------------------------------------------------------
 
+/** \brief Smart buffer with bufer manipulation get/set values
+ *
+ *  Support get/set intergral type (hton/nton/raw) and string
+ *  Need manipulate with offset (start data position)
+ */
 class SmBuf: public Buf
 {
 protected:
@@ -53,6 +58,8 @@ protected:
       const size_t & offset) const;
 
 public:
+
+  virtual ~SmBuf();
 
   /** \brief Check offset and data size with buffer size
    *
