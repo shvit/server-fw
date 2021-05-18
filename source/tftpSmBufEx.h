@@ -22,6 +22,14 @@ namespace tftp
 
 //------------------------------------------------------------------------------
 
+namespace constants
+{
+  constexpr bool default_buf_int_bigendian = true;
+  constexpr bool default_buf_str_zeroend = true;
+}
+
+//------------------------------------------------------------------------------
+
 /** \brief Smart buffer with push data methods
  *
  *  Now support only integer values and string values
@@ -60,8 +68,12 @@ public:
    *  \param [in] buf_size Buffer size to allocate
    *  \param [in] args Variadic values to push buffer
    */
-  template<typename ... Ts>
-  SmBufEx(const size_t & buf_size, Ts && ... args);
+  //template<typename ... Ts>
+  //SmBufEx(const size_t & buf_size, Ts && ... args);
+
+  SmBufEx(const size_t & buf_size, bool is_int_be, bool is_str_zero);
+  SmBufEx(const size_t & buf_size, bool is_int_be);
+  SmBufEx(const size_t & buf_size);
 
   /** \brief Destructor
    */
@@ -123,7 +135,7 @@ public:
 };
 
 //------------------------------------------------------------------------------
-
+/*
 template<typename ... Ts>
 SmBufEx::SmBufEx(const size_t & buf_size, Ts && ... args):
     SmBuf(buf_size),
@@ -133,7 +145,7 @@ SmBufEx::SmBufEx(const size_t & buf_size, Ts && ... args):
 {
   push_data(std::forward<Ts>(args) ...);
 }
-
+*/
 //------------------------------------------------------------------------------
 
 template<typename T>

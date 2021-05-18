@@ -33,20 +33,24 @@ START_ITER("Check can construnct")
   TEST_CHECK_FALSE((std::is_constructible_v<tftp::SmBufEx, void>));
   TEST_CHECK_TRUE ((std::is_constructible_v<tftp::SmBufEx, size_t>));
   TEST_CHECK_TRUE ((std::is_constructible_v<tftp::SmBufEx, int>));
-  TEST_CHECK_TRUE ((std::is_constructible_v<tftp::SmBufEx, size_t, std::string>));
-  TEST_CHECK_TRUE ((std::is_constructible_v<tftp::SmBufEx, size_t, uint16_t, std::string>));
+  TEST_CHECK_FALSE ((std::is_constructible_v<tftp::SmBufEx, size_t, std::string>));
+  TEST_CHECK_FALSE ((std::is_constructible_v<tftp::SmBufEx, size_t, uint16_t, std::string>));
 }
 
 START_ITER("Construnctor without data")
 {
   tftp::SmBufEx b{1024U};
-  TEST_CHECK_TRUE (b.size() == 1024U);
-  TEST_CHECK_TRUE (b.data_size() == 0U);
-  TEST_CHECK_TRUE (b.is_bigendian());
-  TEST_CHECK_FALSE(b.is_littleendian());
-  TEST_CHECK_TRUE (b.is_zeroend());
-}
+  TEST_CHECK_TRUE(b.size() == 1024U);
+  TEST_CHECK_TRUE(b.data_size() == 0U);
+  TEST_CHECK_TRUE(b.is_bigendian() == tftp::constants::default_buf_int_bigendian);
+  TEST_CHECK_TRUE(b.is_littleendian() == !tftp::constants::default_buf_int_bigendian);
+  TEST_CHECK_TRUE(b.is_zeroend() == tftp::constants::default_buf_str_zeroend);
 
+  b.clear();
+  TEST_CHECK_TRUE(b.size() == 1024U);
+  TEST_CHECK_TRUE(b.data_size() == 0U);
+}
+/*
 START_ITER("Construnctor with data (1 chars)")
 {
   tftp::SmBufEx b(20U, 'a','z','c');
@@ -58,6 +62,7 @@ START_ITER("Construnctor with data (1 chars)")
   TEST_CHECK_TRUE (b.is_bigendian());
   TEST_CHECK_FALSE(b.is_littleendian());
   TEST_CHECK_TRUE (b.is_zeroend());
+
   b.clear();
   TEST_CHECK_TRUE(b.size() == 20U);
   TEST_CHECK_TRUE(b.data_size() == 0U);
@@ -77,17 +82,18 @@ START_ITER("Construnctor with data (2) string")
   b.push_data("qwe");
   TEST_CHECK_TRUE(b.size() == 20U);
   TEST_CHECK_TRUE(b.data_size() == 13U);
+
+  b.clear();
+  TEST_CHECK_TRUE(b.size() == 20U);
+  TEST_CHECK_TRUE(b.data_size() == 0U);
 }
 
 START_ITER("Construnctor with data (3) big endian")
 {
   tftp::SmBufEx b(30U, (int32_t) 0x01020304);
   TEST_CHECK_TRUE(b.size() == 30U);
-  //TEST_CHECK_TRUE(b.data_size() == 0U);
   TEST_CHECK_TRUE (b.is_bigendian());
   TEST_CHECK_FALSE(b.is_littleendian());
-  //b.push_data((int32_t) 0x01020304);
-  //TEST_CHECK_TRUE(b.size() == 30U);
   TEST_CHECK_TRUE(b.data_size() == 4U);
   TEST_CHECK_TRUE(b[0U] == '\1');
   TEST_CHECK_TRUE(b[1U] == '\2');
@@ -104,8 +110,12 @@ START_ITER("Construnctor with data (3) big endian")
   TEST_CHECK_TRUE(b[5U] == 0x33);
   TEST_CHECK_TRUE(b[6U] == 0x22);
   TEST_CHECK_TRUE(b[7U] == 0x11);
-}
 
+  b.clear();
+  TEST_CHECK_TRUE(b.size() == 30U);
+  TEST_CHECK_TRUE(b.data_size() == 0U);
+}
+*/
 //
 UNIT_TEST_CASE_END
 

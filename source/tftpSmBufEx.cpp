@@ -19,6 +19,35 @@ namespace tftp
 
 //------------------------------------------------------------------------------
 
+SmBufEx::SmBufEx(const size_t & buf_size, bool is_int_be, bool is_str_zero):
+        SmBuf(buf_size),
+        data_size_{0U},
+        val_int_bigendian_{is_int_be},
+        val_str_zeroend_{is_str_zero}
+
+{
+
+}
+
+//------------------------------------------------------------------------------
+
+SmBufEx::SmBufEx(const size_t & buf_size, bool is_int_be):
+    SmBufEx(buf_size, is_int_be, constants::default_buf_str_zeroend)
+{
+
+}
+
+//------------------------------------------------------------------------------
+
+SmBufEx::SmBufEx(const size_t & buf_size):
+    SmBufEx(buf_size, constants::default_buf_int_bigendian)
+{
+
+}
+
+
+//------------------------------------------------------------------------------
+
 SmBufEx::~SmBufEx()
 {
 }
