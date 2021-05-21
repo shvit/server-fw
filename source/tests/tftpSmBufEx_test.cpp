@@ -196,4 +196,23 @@ UNIT_TEST_CASE_END
 
 //------------------------------------------------------------------------------
 
+UNIT_TEST_CASE_BEGIN(other, "Other checks")
+
+START_ITER("Check data_size_reset()")
+{
+  tftp::SmBufEx b(20U);
+  TEST_CHECK_TRUE(b.data_size() == 0U);
+
+  b.data_size_reset(10U);
+  TEST_CHECK_TRUE(b.size() == 20U);
+  TEST_CHECK_TRUE(b.data_size() == 10U);
+
+  CHK_EXCEPTION__INV_ARG(b.data_size_reset(50U));
+}
+
+//
+UNIT_TEST_CASE_END
+
+//------------------------------------------------------------------------------
+
 UNIT_TEST_SUITE_END

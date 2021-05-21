@@ -14,12 +14,10 @@
  */
 
 #include <regex>
-#include <netinet/in.h> // sockaddr_in6
 #include <unistd.h>
 
 #include "tftpSession.h"
-
-#include <iostream>
+#include "tftpSmBufEx.h"
 
 namespace tftp
 {
@@ -29,23 +27,15 @@ namespace tftp
 Session::Session(pSettings new_settings):
     Base(new_settings),
     stat_{State::need_init},
+    finished_{false},
     my_addr_{},
     cl_addr_{},
     socket_{0},
-    buf_tx_(0xFFFFU, 0),
-    buf_rx_(0xFFFFU, 0),
     stage_{0U},
-    buf_tx_data_size_{0U},
     oper_time_{0},
-    oper_tx_count_{0},
-    oper_wait_{false}, // fist stage is TX
-    oper_last_block_{0U},
-    stop_{false},
-    finished_{false},
     manager_{DataMgr{}},
     error_code_{0U},
     error_message_{""},
-    last_blk_processed_{false},
     opt_{}
 {
 }
@@ -62,7 +52,6 @@ Session::Session():
 Session::Session(const Base & base):
     Session(base.get_ptr())
 {
-
 }
 
 // -----------------------------------------------------------------------------
@@ -77,31 +66,17 @@ auto Session::operator=(Session && val) -> Session &
 {
   if(this != & val)
   {
-    if(settings_.get() != val.settings_.get())
-    {
-      auto lk = begin_unique(); // write lock
-
-      settings_ = val.settings_;
-    }
+    settings_ = val.settings_;
     stat_.store(val.stat_);
-    my_addr_ = val.my_addr_;
-    cl_addr_ = val.cl_addr_;
-    socket_        = val.socket_;
-    std::swap(buf_tx_, val.buf_tx_);
-    std::swap(buf_rx_, val.buf_rx_);
-    stage_         = val.stage_;
-    buf_tx_data_size_   = val.buf_tx_data_size_;
-    oper_time_     = val.oper_time_;
-    oper_tx_count_ = val.oper_tx_count_;
-    oper_wait_     = val.oper_wait_;
-    oper_last_block_ = val.oper_last_block_;
-    stop_            = val.stop_;
     finished_.store(val.finished_);
-    manager_         = std::move(val.manager_);
-    error_code_      = val.error_code_;
+    my_addr_       = val.my_addr_;
+    cl_addr_       = val.cl_addr_;
+    socket_        = val.socket_;
+    stage_         = val.stage_;
+    oper_time_     = val.oper_time_;
+    manager_       = std::move(val.manager_);
+    error_code_    = val.error_code_;
     std::swap(error_message_, val.error_message_);
-    std::swap(last_blk_processed_, val.last_blk_processed_);
-
     std::swap(opt_, val.opt_);
   }
 
@@ -178,13 +153,12 @@ bool Session::switch_to(const State & new_state)
 
 bool Session::is_finished() const
 {
-  //return finished_;
   return (stat_ == State::finish);
 }
 
 // -----------------------------------------------------------------------------
 
-uint16_t Session::block_size() const
+auto Session::block_size() const -> uint16_t
 {
   return opt_.blksize();
 }
@@ -205,9 +179,9 @@ void Session::timeout_reset()
 
 // -----------------------------------------------------------------------------
 
-uint16_t Session::blk_num_local(const uint16_t step) const
+auto Session::blk_num_local(const uint16_t step) const -> uint16_t
 {
-  return ((stage_ + step) & 0x000000000000FFFFU);
+  return ((stage_ + (size_t)step) & 0x000000000000FFFFU);
 }
 
 // -----------------------------------------------------------------------------
@@ -215,7 +189,6 @@ uint16_t Session::blk_num_local(const uint16_t step) const
 void Session::socket_close()
 {
   close(socket_);
-  socket_=0;
 }
 
 // -----------------------------------------------------------------------------
@@ -229,17 +202,13 @@ bool Session::prepare(
 
   bool ret=true;
 
-  {
-    auto lk = begin_shared(); // read lock
-
-    my_addr_ = server_addr();
-  }
+  my_addr_ = server_addr();
   my_addr_.set_port(0);
 
   // Init client remote addr
   cl_addr_ = remote_addr;
 
-  // Parse pkt buffer
+  // Parse request pkt buffer
   ret = ret && opt_.buffer_parse(
       pkt_data,
       pkt_data_size,
@@ -248,16 +217,6 @@ bool Session::prepare(
           this,
           std::placeholders::_1,
           std::placeholders::_2));
-
-
-  // alloc session buffer
-  if(ret)
-  {
-    size_t sess_buf_size_ = (size_t)block_size() + 4U;
-
-    buf_tx_.resize(sess_buf_size_);
-    ret = (buf_tx_.size() == sess_buf_size_);
-  }
 
 
   L_INF("Session prepare is "+(ret ? "SUCCESSFUL" : "FAIL"));
@@ -329,107 +288,100 @@ bool Session::init()
 
 // -----------------------------------------------------------------------------
 
-void Session::construct_opt_reply()
+void Session::construct_opt_reply(SmBufEx & buf)
 {
-  buf_tx_data_size_=0;
+  buf.clear();
 
-  push_data((uint16_t) 6U);
+  buf.push_data((uint16_t) 6U);
 
   if(opt_.was_set_blksize())
   {
-    push_data(constants::name_blksize);
-    push_data(std::to_string(opt_.blksize()));
+    buf.push_data(constants::name_blksize);
+    buf.push_data(std::to_string(opt_.blksize()));
   }
 
   if(opt_.was_set_timeout())
   {
-    push_data(constants::name_timeout);
-    push_data(std::to_string(opt_.timeout()));
+    buf.push_data(constants::name_timeout);
+    buf.push_data(std::to_string(opt_.timeout()));
   }
 
   if(opt_.was_set_tsize())
   {
-    push_data(constants::name_tsize);
-    push_data(std::to_string(opt_.tsize()));
+    buf.push_data(constants::name_tsize);
+    buf.push_data(std::to_string(opt_.tsize()));
   }
   if(opt_.was_set_windowsize())
   {
-    push_data(constants::name_windowsize);
-    push_data(std::to_string(opt_.windowsize()));
+    buf.push_data(constants::name_windowsize);
+    buf.push_data(std::to_string(opt_.windowsize()));
   }
 
-  if(buf_tx_data_size_ < 4)
+  if(buf.data_size() < 4)
   { // Nothing to do
-    buf_tx_data_size_ = 0;
+    buf.clear();
   }
   else
   {
     L_DBG("Construct confirm options pkt "+
-            std::to_string(buf_tx_data_size_)+" octets");
+            std::to_string(buf.data_size())+" octets");
   }
 }
 
 // -----------------------------------------------------------------------------
-void Session::construct_error(
-    const uint16_t e_code,
-    std::string_view e_msg)
+
+void  Session::construct_error(SmBufEx & buf)
 {
-  buf_tx_data_size_=0;
+  if(!was_error())
+  {
+    error_code_ = 0;
+    error_message_ = "Undefined error";
+  }
 
-  push_data((uint16_t) 5U);
-  push_data(e_code);
-  push_data(e_msg);
+  buf.clear();
 
-  L_DBG("Construct error pkt code "+std::to_string(e_code)+
-        " '"+std::string(e_msg)+"'; "+std::to_string(buf_tx_data_size_)+
-        " octets");
+  buf.push_data((uint16_t) 5U, error_code_, error_message_);
+
+  L_DBG("Construct error pkt #"+std::to_string(error_code_)+
+        " '"+std::string(error_message_)+"'; "+
+        std::to_string(buf.data_size())+" octets");
+
+
 }
 
 // -----------------------------------------------------------------------------
-void  Session::construct_error()
+
+void Session::construct_data(SmBufEx & buf)
 {
-  if(error_message_.size()) construct_error(error_code_, error_message_);
-                       else construct_error(0, "Undefined error");
-}
+  buf.clear();
 
-// -----------------------------------------------------------------------------
-
-auto Session::construct_data() -> ssize_t
-{
-  buf_tx_data_size_ = 0;
-
-  push_data((uint16_t) 3U);
-  push_data(blk_num_local());
+  buf.push_data((uint16_t) 3U, blk_num_local());
 
   ssize_t ret = manager_.tx(
-      buf_tx_.begin() + buf_tx_data_size_,
-      buf_tx_.begin() + buf_tx_data_size_ + block_size(),
+      buf.begin() + buf.data_size(),
+      buf.begin() + buf.data_size() + block_size(),
       (stage_-1U) * block_size());
 
   if(ret >=0)
   {
-    buf_tx_data_size_ += ret;
     L_DBG("Construct data pkt block "+std::to_string(stage_)+
-            "; data size "+std::to_string(buf_tx_data_size_-4)+" bytes");
+            "; data size "+std::to_string(ret)+" bytes");
+    buf.data_size_reset(buf.data_size() + ret);
   }
   else // error prepare data
   {
     L_ERR("Error prepare data");
-    buf_tx_data_size_ = 0;
     set_error_if_first(0, "Failed prepare data to send");
-    //construct_error();
   }
-  return ret;
 }
 
 // -----------------------------------------------------------------------------
 
-void Session::construct_ack()
+void Session::construct_ack(SmBufEx & buf)
 {
-  buf_tx_data_size_ = 0;
+  buf.clear();
 
-  push_data((uint16_t)4U);
-  push_data(blk_num_local());
+  buf.push_data((uint16_t)4U, blk_num_local()); // tftp header
 
   L_DBG("Construct ACK pkt block "+std::to_string(blk_num_local()));
 }
@@ -440,12 +392,10 @@ void Session::run()
   L_INF("Running session");
 
   // Prepare
-  oper_tx_count_   = 0;
-  oper_last_block_ = 0;
-  stage_           = 0; // processed block number
-  buf_tx_data_size_     = 0;
-
-  uint16_t retr_count = 0U;
+  bool last_blk_processed_{false};
+  uint16_t retr_count{0U};
+  SmBufEx local_buf{0xFFFFU};
+  stage_ = 0;
 
 
   // Main loop
@@ -474,8 +424,8 @@ void Session::run()
       case State::error_and_stop: // -------------------------------------------
         if(was_error())
         {
-          construct_error();
-          transmit_no_wait();
+          construct_error(local_buf);
+          transmit_no_wait(local_buf);
         }
         switch_to(State::finish);
         break;
@@ -483,8 +433,8 @@ void Session::run()
       case State::ack_options: // ----------------------------------------------
         if(opt_.was_set_any())
         {
-          construct_opt_reply();
-          transmit_no_wait();
+          construct_opt_reply(local_buf);
+          transmit_no_wait(local_buf);
         }
         timeout_reset();
         switch(opt_.request_type())
@@ -513,12 +463,12 @@ void Session::run()
 
       case State::data_tx: // --------------------------------------------------
         {
-          ssize_t data_size = construct_data();
-          if(data_size >= 0)
+          construct_data(local_buf);
+          if(!was_error() && (local_buf.data_size() > 0U))
           {
-            transmit_no_wait();
+            transmit_no_wait(local_buf);
             ++stage_;
-            last_blk_processed_ = (data_size != (ssize_t)block_size());
+            last_blk_processed_ = local_buf.data_size() != (block_size()+4U);
 
             if(is_window_close(stage_) || last_blk_processed_)
             {
@@ -534,7 +484,7 @@ void Session::run()
         break;
 
       case State::data_rx: // --------------------------------------------------
-        switch(receive_no_wait())
+        switch(receive_no_wait(local_buf))
         {
           case TripleResult::nop:
             if(!timeout_pass(1))
@@ -543,6 +493,7 @@ void Session::run()
             }
             break;
           case TripleResult::ok:
+            last_blk_processed_ = local_buf.data_size() != (block_size()+4U);
             if(is_window_close(stage_))
             {
               switch_to(State::ack_tx);
@@ -560,8 +511,8 @@ void Session::run()
         break;
 
       case State::ack_tx: // ---------------------------------------------------
-        construct_ack();
-        transmit_no_wait();
+        construct_ack(local_buf);
+        transmit_no_wait(local_buf);
         ++stage_;
         if(last_blk_processed_)
         {
@@ -575,7 +526,7 @@ void Session::run()
         break;
 
       case State::ack_rx: // ---------------------------------------------------
-        switch(receive_no_wait())
+        switch(receive_no_wait(local_buf))
         {
           case TripleResult::nop:
             if(!timeout_pass(1))
@@ -635,7 +586,6 @@ void Session::run()
   socket_close();
   manager_.close();
 
-  //finish_run:
   L_INF("Finish session");
 }
 // -----------------------------------------------------------------------------
@@ -660,50 +610,26 @@ bool Session::was_error()
 
 // -----------------------------------------------------------------------------
 
-bool Session::is_stage_transmit() const noexcept
-{
-  return !oper_wait_;
-}
-
-// -----------------------------------------------------------------------------
-
-void Session::set_stage_receive() noexcept
-{
-  oper_wait_ = true;
-  L_DBG("OK");
-}
-
-// -----------------------------------------------------------------------------
-
-void Session::set_stage_transmit() noexcept
-{
-  oper_wait_ = false;
-  L_DBG("OK");
-}
-
-// -----------------------------------------------------------------------------
-
-bool Session::transmit_no_wait()
+bool Session::transmit_no_wait(const SmBufEx & buf)
 {
   bool ret = false;
 
-  if(buf_tx_data_size_ > 0U)
+  if(buf.data_size() > 0U)
   {
     ssize_t tx_result_size = sendto(
         socket_,
-        buf_tx_.data(),
-        buf_tx_data_size_,
+        buf.data(),
+        buf.data_size(),
         0,
         cl_addr_.as_sockaddr_ptr(),
         cl_addr_.data_size());
 
-    ret = (tx_result_size == (ssize_t)buf_tx_data_size_);
+    ret = (tx_result_size == (ssize_t)buf.data_size());
 
     if(ret) // Good send
     {
-      L_DBG("Success send packet "+std::to_string(buf_tx_data_size_)+
+      L_DBG("Success send packet "+std::to_string(buf.data_size())+
             " octets");
-      buf_tx_data_size_ = 0;
     }
     else // Fail send
     {
@@ -715,7 +641,7 @@ bool Session::transmit_no_wait()
       {
         L_ERR("sendto() lost data error: sended "+
               std::to_string(tx_result_size)+
-              " from "+std::to_string(buf_tx_data_size_));
+              " from "+std::to_string(buf.data_size()));
       }
     }
   }
@@ -729,15 +655,15 @@ bool Session::transmit_no_wait()
 
 // -----------------------------------------------------------------------------
 
-auto Session::receive_no_wait() -> TripleResult
+auto Session::receive_no_wait(SmBufEx & buf) -> TripleResult
 {
   Addr rx_client;
   rx_client.data_size() = rx_client.size();
 
   ssize_t rx_pkt_size = recvfrom(
       socket_,
-      buf_rx_.data(),
-      buf_rx_.size(),
+      buf.data(),
+      buf.size(),
       MSG_DONTWAIT,
       rx_client.as_sockaddr_ptr(),
       & rx_client.data_size());
@@ -755,11 +681,12 @@ auto Session::receive_no_wait() -> TripleResult
     }
   }
 
+  buf.data_size_reset((size_t) rx_pkt_size);
+
   // Extract meta info
-  uint16_t rx_op  = (rx_pkt_size > 3) ? buf_rx_.get_be<uint16_t>(0U) : 0U;
-  uint16_t rx_blk = (rx_pkt_size > 3) ? buf_rx_.get_be<uint16_t>(2U) : 0U;
-  uint16_t rx_data_size = (rx_pkt_size > 3) ?
-      (rx_pkt_size > 0xFFFF ? 0xFFFFU : rx_pkt_size - 4) : 0U;
+  uint16_t rx_op  = (rx_pkt_size > 3) ? buf.get_be<uint16_t>(0U) : 0U;
+  uint16_t rx_blk = (rx_pkt_size > 3) ? buf.get_be<uint16_t>(2U) : 0U;
+  uint16_t rx_data_size = (rx_pkt_size > 3) ? (uint16_t)(rx_pkt_size - 4) : 0U;
 
   // Make debug message
   std::string rx_msg = "Rx pkt ["+std::to_string(rx_pkt_size)+" octets]";
@@ -774,7 +701,7 @@ auto Session::receive_no_wait() -> TripleResult
       break;
     case 5U: // ERROR
       rx_msg.append(": ERROR #"+std::to_string(rx_blk)+
-                    " '"+buf_rx_.get_string(4U)+"'");
+                    " '"+buf.get_string(4U)+"'");
       break;
     default:
       rx_msg.append(": FAKE tftp packet");
@@ -825,8 +752,8 @@ auto Session::receive_no_wait() -> TripleResult
     }
 
     ssize_t stored_data_size =  manager_.rx(
-        buf_rx_.begin() + 2*sizeof(uint16_t),
-        buf_rx_.begin() + rx_pkt_size,
+        buf.begin() + 2*sizeof(uint16_t),
+        buf.begin() + rx_pkt_size,
         (stage_ - 1) * block_size());
     if(stored_data_size < 0)
     {
@@ -834,7 +761,6 @@ auto Session::receive_no_wait() -> TripleResult
       set_error_if_first(0, "Error when try to store data");
       return  TripleResult::fail;
     }
-    last_blk_processed_ = rx_data_size != block_size();
     return  TripleResult::ok;
   }
 
@@ -880,7 +806,7 @@ bool Session::is_window_close(const size_t & curr_stage) const
 
 // -----------------------------------------------------------------------------
 
-auto Session::step_back_window(const size_t & curr_stage) const -> size_t
+void Session::step_back_window(size_t & curr_stage)
 {
   size_t new_stage = curr_stage;
   if(curr_stage > 0U)
@@ -897,14 +823,7 @@ auto Session::step_back_window(const size_t & curr_stage) const -> size_t
     if(!new_stage) new_stage = 1U;
   }
 
-  return new_stage;
-}
-
-// -----------------------------------------------------------------------------
-
-void Session::step_back_window(size_t & curr_stage)
-{
-  curr_stage = step_back_window(const_cast<const size_t &>(curr_stage));
+  curr_stage = new_stage;
 }
 
 // -----------------------------------------------------------------------------

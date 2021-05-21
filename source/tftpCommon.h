@@ -33,9 +33,9 @@ class Base;
 
 class Srv;
 
-class session;
+class Session;
 
-class data_mgr;
+class DataMgr;
 
 class Settings;
 

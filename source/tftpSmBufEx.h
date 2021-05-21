@@ -130,6 +130,7 @@ public:
    */
   void set_not_zeroend();
 
+  void data_size_reset(size_t new_size);
 };
 
 //------------------------------------------------------------------------------

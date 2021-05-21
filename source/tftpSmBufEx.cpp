@@ -102,5 +102,17 @@ void SmBufEx::set_not_zeroend()
 
 //------------------------------------------------------------------------------
 
+void SmBufEx::data_size_reset(size_t new_size)
+{
+  if(new_size > size())
+  {
+    throw std::invalid_argument("Overflow buffer size when set data size");
+  }
+
+  data_size_ = new_size;
+}
+
+//------------------------------------------------------------------------------
+
 } // namespace tftp
 

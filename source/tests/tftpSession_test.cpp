@@ -133,18 +133,6 @@ START_ITER("windowsize==5")
   TEST_CHECK_TRUE (s1.is_window_close(++stage));
 }
 
-START_ITER("const step_back_window()")
-{
-  Session_test s1;
-  TEST_CHECK_TRUE (s1.step_back_window(0U) == 0U);
-  TEST_CHECK_TRUE (s1.step_back_window(1U) == 1U);
-  TEST_CHECK_TRUE (s1.step_back_window(2U) == 1U);
-  TEST_CHECK_TRUE (s1.step_back_window(3U) == 2U);
-  TEST_CHECK_TRUE (s1.step_back_window(4U) == 3U);
-  TEST_CHECK_TRUE (s1.step_back_window(5U) == 4U);
-  TEST_CHECK_TRUE (s1.step_back_window(65536U) == 65535U);
-}
-
 START_ITER("step_back_window()")
 {
   Session_test s1;
