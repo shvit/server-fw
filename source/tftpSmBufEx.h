@@ -32,10 +32,10 @@ namespace constants
 
 /** \brief Smart buffer with push data methods
  *
- *  Now support only integer values and string values
+ *  Now support only integer values, boolean, char and string values
  *  Calculates pushed data size (actual data size)
- *  Can write integer as big/little endian
- *  Can write string with zero end or not
+ *  Can write integer as big endian (default) or little endian
+ *  Can write string with zero end (default) or without it
  */
 class SmBufEx: public SmBuf
 {
@@ -62,18 +62,16 @@ public:
    */
   SmBufEx() = delete;
 
-  /** \brief Constructor
+  /** \brief Constructor with buffer size and flags: BE, zeroend
    *
-   *  Default value as big endian and zero end string
    *  \param [in] buf_size Buffer size to allocate
-   *  \param [in] args Variadic values to push buffer
+   *  \param [in] is_int_be Flag BE
+   *  \param [in] is_str_zero Flag zero end string
    */
-  //template<typename ... Ts>
-  //SmBufEx(const size_t & buf_size, Ts && ... args);
-
-  SmBufEx(const size_t & buf_size, bool is_int_be, bool is_str_zero);
-  SmBufEx(const size_t & buf_size, bool is_int_be);
-  SmBufEx(const size_t & buf_size);
+  SmBufEx(
+      const size_t & buf_size,
+      bool is_int_be = constants::default_buf_int_bigendian,
+      bool is_str_zero = constants::default_buf_str_zeroend);
 
   /** \brief Destructor
    */
@@ -135,18 +133,6 @@ public:
 };
 
 //------------------------------------------------------------------------------
-/*
-template<typename ... Ts>
-SmBufEx::SmBufEx(const size_t & buf_size, Ts && ... args):
-    SmBuf(buf_size),
-    data_size_{0U},
-    val_int_bigendian_{true},
-    val_str_zeroend_{true}
-{
-  push_data(std::forward<Ts>(args) ...);
-}
-*/
-//------------------------------------------------------------------------------
 
 template<typename T>
 bool SmBufEx::push_item(T && val)
@@ -192,7 +178,7 @@ bool SmBufEx::push_data(Ts && ... args)
 {
   bool ret = true;
 
-  ((ret = ret && push_item(std::forward<Ts>(args))), ...);
+  ((ret = push_item(std::forward<Ts>(args)) && ret), ...);
 
   return ret;
 }
