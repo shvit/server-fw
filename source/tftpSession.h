@@ -49,7 +49,6 @@ protected:
   Addr               cl_addr_;       ///< Client address
   int                socket_;        ///< Socket
   size_t             stage_;         ///< Full (!) number of processed block
-  //time_t             oper_time_;     ///< Last action time (after any TX))
   DataMgr            manager_;       ///< Data manager
   uint16_t           error_code_;    ///< First error info - code
   std::string        error_message_; ///< First error info - message
@@ -92,24 +91,13 @@ protected:
    */
   auto block_size() const -> uint16_t;
 
-  /** \brief Check timeout passed
-   *
-   *  \param gandicap Gandicap for time check in seconds
-   *  \return True if timeout not out, else (time is out) - false
-   */
-  //bool timeout_pass(const time_t gandicap = 0) const;
-
-  /** \brief Reset time counter
-   */
-  //void timeout_reset();
-
   /** \brief Get current tftp block number
    *
    *  Calculate tftp block number as 16-bit value
    *  \param [in] step Step if need calculate next block number; default 0
    *  \return Block number value
    */
-  auto blk_num_local(const uint16_t step = 0) const -> uint16_t;
+  auto blk_num_local() const -> uint16_t;
 
   /** \brief Close session socket
    */

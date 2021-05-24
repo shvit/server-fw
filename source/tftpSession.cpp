@@ -32,7 +32,6 @@ Session::Session(pSettings new_settings):
     cl_addr_{},
     socket_{0},
     stage_{0U},
-    //oper_time_{0},
     manager_{DataMgr{}},
     error_code_{0U},
     error_message_{""},
@@ -73,7 +72,6 @@ auto Session::operator=(Session && val) -> Session &
     cl_addr_       = val.cl_addr_;
     socket_        = val.socket_;
     stage_         = val.stage_;
-    //oper_time_     = val.oper_time_;
     manager_       = std::move(val.manager_);
     error_code_    = val.error_code_;
     std::swap(error_message_, val.error_message_);
@@ -165,23 +163,9 @@ auto Session::block_size() const -> uint16_t
 
 // -----------------------------------------------------------------------------
 
-//bool Session::timeout_pass(const time_t gandicap) const
-//{
-//  return (time(nullptr) - oper_time_) < (opt_.timeout() + gandicap);
-//}
-
-// -----------------------------------------------------------------------------
-
-//void Session::timeout_reset()
-//{
-//  oper_time_ = time(nullptr);
-//}
-
-// -----------------------------------------------------------------------------
-
-auto Session::blk_num_local(const uint16_t step) const -> uint16_t
+auto Session::blk_num_local() const -> uint16_t
 {
-  return ((stage_ + (size_t)step) & 0x000000000000FFFFU);
+  return (stage_ & 0x000000000000FFFFU);
 }
 
 // -----------------------------------------------------------------------------
@@ -395,19 +379,16 @@ void Session::run()
   bool last_blk_processed_{false};
   uint16_t retr_count{0U};
   SmBufEx local_buf{0xFFFFU};
-  stage_ = 0;
   time_t oper_time_{0};
 
-  auto timeout_pass = [&](const time_t gandicap)
-      {
-        return (time(nullptr) - oper_time_) < (opt_.timeout() + gandicap);
-      };
+  auto timeout_pass = [&]()
+      { return (time(nullptr) - oper_time_) < (opt_.timeout() + 1); };
 
-  auto timeout_reset = [&]() { oper_time_ = time(nullptr); };
-
-
+  auto timeout_reset = [&]()
+      { oper_time_ = time(nullptr); };
 
   // Main loop
+  stage_ = 0U;
   while(!is_finished())
   {
     switch(stat_)
@@ -496,7 +477,7 @@ void Session::run()
         switch(receive_no_wait(local_buf))
         {
           case TripleResult::nop:
-            if(!timeout_pass(1))
+            if(!timeout_pass())
             {
               switch_to(State::retransmit);
             }
@@ -538,7 +519,7 @@ void Session::run()
         switch(receive_no_wait(local_buf))
         {
           case TripleResult::nop:
-            if(!timeout_pass(1))
+            if(!timeout_pass())
             {
               switch_to(State::retransmit);
             }
