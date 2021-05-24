@@ -112,6 +112,7 @@ public:
 
   bool was_set_windowsize() const;
 
+  bool was_set_any() const;
 
   // Procesing methods
 

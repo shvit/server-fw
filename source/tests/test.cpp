@@ -17,81 +17,88 @@
 #include <iomanip>
 #include "test.h"
 
-namespace unit_tests{
-  size_t test_counter_iter=0;  ///< Unit test iteration counter
-  size_t test_counter_check=0; ///< Unit test check counter
-  std::string mainMessage(""); ///< Message in "Error when {...}"
+namespace unit_tests
+{
+  size_t test_counter_iter=0U;
 
-  // TFTP tests helper
+  size_t test_counter_check=0U;
 
-  bool tmp_dir_created=false;
-  std::string tmp_dir{"test_directory_XXXXXX"};
-  std::vector<size_t> file_sizes
-      {0U,1U,511U,512U,513U,1023U,1024U,1025U,65535U*512U*2U};
-  std::vector<char[MD5_DIGEST_LENGTH]> file_md5(file_sizes.size());
+  std::string mainMessage("");
 
+  filesystem::path local_dir;
 
-  void files_delete()
+  VecMD5 file_md5(file_sizes.size());
+
+// -----------------------------------------------------------------------------
+
+bool check_local_directory()
+{
+  local_dir = filesystem::temp_directory_path();
+  local_dir /= local_test_dir;
+
+  if(!filesystem::exists(local_dir))
+    if(!filesystem::create_directories(local_dir)) return false;
+
+  size_t iter=1U;
+  decltype(local_dir) curr;
+  do
   {
-    // files
-    for(size_t iter=0;
-        iter < sizeof(file_sizes)/sizeof(file_sizes[0]);
-        ++iter)
-    {
-      std::string curr_file_name{tmp_dir};
-
-      curr_file_name.append("/file")
-                    .append(std::to_string(iter+1))
-                    .append("\0");
-      unlink(curr_file_name.c_str());
-
-      curr_file_name.assign(tmp_dir)
-                    .append("/file")
-                    .append(std::to_string(iter + 1))
-                    .append(".md5\0");
-      unlink(curr_file_name.c_str());
-    }
-
-    // directory
-    if(tmp_dir_created)
-    {
-      TEST_CHECK_TRUE(rmdir(tmp_dir.c_str()) == 0);
-    }
+    curr = local_dir;
+    curr /= std::to_string(iter++);
   }
+  while(filesystem::exists(curr));
 
-  void fill_buffer(char * addr, size_t size, size_t position, size_t file_id)
+  local_dir = curr;
+
+  if(filesystem::create_directories(local_dir)) return true;
+
+  throw std::runtime_error("Can't create local temporary directory");
+}
+
+// -----------------------------------------------------------------------------
+
+ void files_delete()
+{
+  if(filesystem::exists(local_dir))
   {
-    for(size_t iter=0; iter < size; ++iter)
-    {
-      *(addr + iter) = static_cast<uint8_t>((position+iter+file_id)  & 0xFFUL);
-    }
+    filesystem::remove_all(local_dir);
   }
+}
 
-  std::string md5_as_str(const char * addr)
+// -----------------------------------------------------------------------------
+
+void fill_buffer(
+    char * addr,
+    const size_t & size,
+    const size_t & position,
+    const size_t & file_id)
+{
+  for(size_t iter=0; iter < size; ++iter)
   {
-    std::stringstream ss;
+    *(addr + iter) = static_cast<uint8_t>((position+iter+file_id)  & 0xFFUL);
+  }
+}
+
+// -----------------------------------------------------------------------------
+
+auto md5_as_str(const char * addr) -> std::string
+{
+  std::stringstream ss;
+
+  if(addr != nullptr)
+  {
     for(size_t iter=0; iter<MD5_DIGEST_LENGTH; ++iter)
     {
       ss << std::hex << std::setw(2) << std::setfill('0');
       ss << (((uint16_t) *(addr+iter)) & 0x00FFU);
     }
-    return ss.str();
   }
-
-  bool temp_directory_create()
-  {
-    if(!tmp_dir_created)
-    {
-      tmp_dir_created = mkdtemp(const_cast<char*>(tmp_dir.c_str()))!=nullptr;
-    }
-    return tmp_dir_created;
-  }
-
-
+  return ss.str();
 }
 
-using namespace unit_tests;
+} // namespace unit_tests
 
+// -----------------------------------------------------------------------------
 
 UNIT_TEST_SUITE_BEGIN(MainTest)
 
@@ -99,11 +106,12 @@ UNIT_TEST_SUITE_BEGIN(MainTest)
  *
  */
 UNIT_TEST_CASE_BEGIN(Finish, "Counter")
-  // finalize
-  //files_delete();
 
   // show counter
   std::cout << "Summary checks " << unit_tests::test_counter_check << std::endl;
+
 UNIT_TEST_CASE_END
 
 UNIT_TEST_SUITE_END
+
+// -----------------------------------------------------------------------------

@@ -1,13 +1,17 @@
-/*
- * tftpOptions_test.cpp
+/**
+ * \file tftpOptions_test.cpp
+ * \brief Unit-tests for class Options
  *
- *  Created on: 16 апр. 2021 г.
- *      Author: svv
+ *  License GPL-3.0
+ *
+ *  \date   16-apr-2021
+ *  \author Vitaliy Shirinkin, e-mail: vitaliy.shirinkin@gmail.com
+ *
+ *  \version 0.1
  */
 
-#include "../tftpCommon.h"
-#include "../tftpOptions.h"
 #include "test.h"
+#include "tftpOptions_test.h"
 
 using namespace unit_tests;
 
@@ -15,25 +19,13 @@ UNIT_TEST_SUITE_BEGIN(Options)
 
 //------------------------------------------------------------------------------
 
-class Options_test : public tftp::Options
-{
-public:
-  using Options::request_type_;
-  using Options::filename_;
-  using Options::transfer_mode_;
-  using Options::blksize_;
-  using Options::timeout_;
-  using Options::tsize_;
-  using Options::windowsize_;
-};
-
-//------------------------------------------------------------------------------
-
 UNIT_TEST_CASE_BEGIN(opt_base, "Check base operations")
 
-  // default construct
-  Options_test o;
+Options_test o;
+Options_test & ro = o;
+const Options_test & roc = o;
 
+START_ITER("Default constructed")
   TEST_CHECK_TRUE(o.request_type_ == tftp::SrvReq::unknown);
   TEST_CHECK_TRUE(o.transfer_mode_ == tftp::TransfMode::unknown);
   TEST_CHECK_TRUE(o.filename_.size() == 0U);
@@ -56,20 +48,17 @@ UNIT_TEST_CASE_BEGIN(opt_base, "Check base operations")
   TEST_CHECK_TRUE(o.tsize() == tftp::constants::dflt_tsize);
   TEST_CHECK_TRUE(o.windowsize() == tftp::constants::dflt_windowsize);
 
-  // Fill values
 
-  Options_test & ro = o;
-  const Options_test & roc = o;
+// Fill values
+o.blksize_    = {true, 111111};
+o.timeout_    = {true, 222222};
+o.tsize_      = {true, 333333};
+o.windowsize_ = {true, 444444};
+o.request_type_ = tftp::SrvReq::read;
+o.transfer_mode_ = tftp::TransfMode::mail;
+o.filename_ = "name.file";
 
-  o.blksize_    = {true, 111111};
-  o.timeout_    = {true, 222222};
-  o.tsize_      = {true, 333333};
-  o.windowsize_ = {true, 444444};
-  o.request_type_ = tftp::SrvReq::read;
-  o.transfer_mode_ = tftp::TransfMode::mail;
-  o.filename_ = "name.file";
-
-  // Copy/move constructors
+START_ITER("Copy/move constructors")
 
   Options_test o11(o);
   Options_test o12(ro);
@@ -110,7 +99,8 @@ UNIT_TEST_CASE_BEGIN(opt_base, "Check base operations")
 
   TEST_CHECK_TRUE(o.filename_ == "");
 
-  // Copy/move operators
+
+START_ITER("Copy/move operators")
   o = std::move(o14);
   Options_test o21 = o11;
   Options_test o22 = o12;
@@ -156,7 +146,7 @@ UNIT_TEST_CASE_END
 
 UNIT_TEST_CASE_BEGIN(opt_buffer_parse, "Check buffer_parse()")
 
-// Stage 1 - full empty
+START_ITER("Stage 1 - full empty")
 {
   tftp::SmBuf b_pkt;
 
@@ -184,7 +174,7 @@ UNIT_TEST_CASE_BEGIN(opt_buffer_parse, "Check buffer_parse()")
   TEST_CHECK_FALSE(o.was_set_windowsize());
 }
 
-// Stage 2 - filled zero buffer
+START_ITER("Stage 2 - filled zero buffer")
 {
   tftp::SmBuf b_pkt(500U,0);
 
@@ -212,7 +202,7 @@ UNIT_TEST_CASE_BEGIN(opt_buffer_parse, "Check buffer_parse()")
   TEST_CHECK_FALSE(o.was_set_windowsize());
 }
 
-// Stage 3 - fimple, w/o options
+START_ITER("Stage 3 - fimple, w/o options")
 {
   tftp::SmBuf b_pkt
   {
@@ -245,8 +235,7 @@ UNIT_TEST_CASE_BEGIN(opt_buffer_parse, "Check buffer_parse()")
   TEST_CHECK_FALSE(o.was_set_windowsize());
 }
 
-
-// Stage 4 - full data buffer, wrong options
+START_ITER("Stage 4 - full data buffer, wrong options")
 {
   tftp::SmBuf b_pkt
   {
@@ -283,7 +272,7 @@ UNIT_TEST_CASE_BEGIN(opt_buffer_parse, "Check buffer_parse()")
   TEST_CHECK_FALSE(o.was_set_windowsize());
 }
 
-// Stage 4 - full data buffer, good options
+START_ITER("Stage 5 - full data buffer, good options")
 {
   tftp::SmBuf b_pkt
   {

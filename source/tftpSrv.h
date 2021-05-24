@@ -16,6 +16,7 @@
 #define SOURCE_TFTP_SERVER_H_
 
 #include <list>
+#include <thread>
 
 #include "tftpSession.h"
 #include "tftpSmBuf.h"

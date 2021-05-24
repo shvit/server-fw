@@ -106,6 +106,14 @@ bool Options::was_set_windowsize() const
   return std::get<0>(windowsize_);
 }
 
+bool Options::was_set_any() const
+{
+  return was_set_blksize() ||
+         was_set_timeout() ||
+         was_set_tsize() ||
+         was_set_windowsize();
+}
+
 //------------------------------------------------------------------------------
 
 #define OPT_L_INF(MSG) if(log != nullptr) L_INF(MSG);
@@ -124,7 +132,7 @@ bool Options::buffer_parse(
   size_t curr_pos=0U;
   if(ret)
   {
-    if(auto rq_type = buf.get_ntoh<int16_t>(curr_pos);
+    if(auto rq_type = buf.get_be<int16_t>(curr_pos);
        (ret = ret && ((rq_type == (int16_t)SrvReq::read) ||
                       (rq_type == (int16_t)SrvReq::write))))
     {

@@ -30,14 +30,6 @@ int main(int argc, char* argv[])
 
   int exit_code = fake_exit_code;
 
-  //auto logger = [](const tftp::LogLvl level, std::string_view message)
-  //  {
-  //    if((int)level <= LOG_DEBUG)
-  //    {
-  //      std::cout << "<" << tftp::to_string(level) << "> " << message << std::endl; // << std::flush();
-  //    }
-  //  };
-
   openlog("server_fw", LOG_NDELAY, LOG_DAEMON); // LOG_PID
 
   tftp::Srv server;

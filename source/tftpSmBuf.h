@@ -25,6 +25,11 @@ namespace tftp
 
 //------------------------------------------------------------------------------
 
+/** \brief Smart buffer with bufer manipulation get/set values
+ *
+ *  Support get/set intergral type (hton/nton/raw) and string
+ *  Need manipulate with offset (start data position)
+ */
 class SmBuf: public Buf
 {
 protected:
@@ -53,6 +58,8 @@ protected:
       const size_t & offset) const;
 
 public:
+
+  virtual ~SmBuf();
 
   /** \brief Check offset and data size with buffer size
    *
@@ -92,16 +99,25 @@ public:
   auto raw(const size_t & offset) const
       -> std::enable_if_t<std::is_integral_v<T>, const T &>;
 
-  /** \brief Get value from buffer and convert network -> host byte order
+  /** \brief Get big endian value from buffer as host byte order
    *
    *  \param [in] offset Buffer offset (position) in bytes
    *  \return Value type of T
    */
   template<typename T>
-  auto get_ntoh(const size_t & offset) const
+  auto get_be(const size_t & offset) const
       -> std::enable_if_t<std::is_integral_v<T>, T>;
 
-  /** \brief Set value integer type to buffer and convert to network byte order
+  /** \brief Get little endian value from buffer as host byte order
+   *
+   *  \param [in] offset Buffer offset (position) in bytes
+   *  \return Value type of T
+   */
+  template<typename T>
+  auto get_le(const size_t & offset) const
+      -> std::enable_if_t<std::is_integral_v<T>, T>;
+
+  /** \brief Set value integer type to buffer as big endian
    *
    *  Warning: need hard control of type T
    *  \param [in] offset Buffer offset (position) in bytes
@@ -109,20 +125,10 @@ public:
    *  \return Data size passed to buffer
    */
   template<typename T>
-  auto set_hton(const size_t & offset, const T & val)
+  auto set_be(const size_t & offset, const T & val)
       -> std::enable_if_t<std::is_integral_v<T>, ssize_t>;
 
-  /** \brief Get value from buffer (raw, as is memory order)
-   *
-   *  \param [in] offset Buffer offset (position) in bytes
-   *  \return Value type of T
-   */
-  template<typename T>
-  auto get_raw(const size_t & offset) const
-      -> std::enable_if_t<std::is_integral_v<T>, T>;
-
-
-  /** \brief Set value integer type to buffer (raw, as is memory order)
+  /** \brief Set value integer type to buffer as little endian
    *
    *  Warning: need hard control of type T
    *  \param [in] offset Buffer offset (position) in bytes
@@ -130,9 +136,8 @@ public:
    *  \return Data size passed to buffer
    */
   template<typename T>
-  auto set_raw(const size_t & offset, const T & val)
+  auto set_le(const size_t & offset, const T & val)
       -> std::enable_if_t<std::is_integral_v<T>, ssize_t>;
-
 
   /** \brief Get string value from buffer
    *
@@ -221,34 +226,71 @@ auto SmBuf::raw(const size_t & offset) const
 //------------------------------------------------------------------------------
 
 template<typename T>
-auto SmBuf::get_ntoh(const size_t & offset) const
+auto SmBuf::get_be(const size_t & offset) const
     -> std::enable_if_t<std::is_integral_v<T>, T>
 {
   check_offset_type<T>(__PRETTY_FUNCTION__, offset);
 
-  T tmp_val;
-
-  std::copy((SmBuf::const_reverse_iterator)(cbegin()+offset+sizeof(T)),
-            (SmBuf::const_reverse_iterator)(cbegin()+offset),
-            (char *) & tmp_val);
-
-  return tmp_val;
-
+  switch(sizeof(T))
+  {
+    case 1U: return (T)*(cbegin()+offset);
+    case 2U: return (T)be16toh(*((uint16_t*)(data()+offset)));
+    case 4U: return (T)be32toh(*((uint32_t*)(data()+offset)));
+    case 8U: return (T)be64toh(*((uint64_t*)(data()+offset)));
+    default:
+      throw std::invalid_argument(
+          "Wrong integer size ("+std::to_string(sizeof(T))+")");
+  }
 }
 
 //------------------------------------------------------------------------------
 
 template<typename T>
-auto SmBuf::set_hton(const size_t & offset, const T & val)
+auto SmBuf::get_le(const size_t & offset) const
+    -> std::enable_if_t<std::is_integral_v<T>, T>
+{
+  check_offset_type<T>(__PRETTY_FUNCTION__, offset);
+
+  switch(sizeof(T))
+  {
+    case 1U: return (T)*(data()+offset);
+    case 2U: return (T)le16toh(*((uint16_t*)(data()+offset)));
+    case 4U: return (T)le32toh(*((uint32_t*)(data()+offset)));
+    case 8U: return (T)le64toh(*((uint64_t*)(data()+offset)));
+    default:
+      throw std::invalid_argument(
+          "Wrong integer size ("+std::to_string(sizeof(T))+")");
+  }
+}
+
+//------------------------------------------------------------------------------
+
+template<typename T>
+auto SmBuf::set_be(const size_t & offset, const T & val)
     -> std::enable_if_t<std::is_integral_v<T>, ssize_t>
 {
   check_offset_type<T>(__PRETTY_FUNCTION__, offset);
 
   constexpr ssize_t t_size = (ssize_t)sizeof(T);
 
-  std::copy(((char *) & val),
-            ((char *) & val) + t_size,
-            (SmBuf::reverse_iterator)(begin()+offset+t_size));
+  switch(t_size)
+  {
+    case 1U:
+      *(data()+offset) = val;
+      break;
+    case 2U:
+      *((uint16_t*)(data()+offset)) = htobe16((uint16_t)val);
+      break;
+    case 4U:
+      *((uint32_t*)(data()+offset)) = htobe32((uint32_t)val);
+      break;
+    case 8U:
+      *((uint64_t*)(data()+offset)) = htobe64((uint64_t)val);
+      break;
+    default:
+      throw std::invalid_argument(
+          "Wrong integer size ("+std::to_string(t_size)+")");
+  }
 
   return t_size;
 }
@@ -256,34 +298,31 @@ auto SmBuf::set_hton(const size_t & offset, const T & val)
 //------------------------------------------------------------------------------
 
 template<typename T>
-auto SmBuf::get_raw(const size_t & offset) const
-    -> std::enable_if_t<std::is_integral_v<T>, T>
-{
-  check_offset_type<T>(__PRETTY_FUNCTION__, offset);
-
-  T tmp_val;
-
-  std::copy((SmBuf::const_iterator)(cbegin()+offset),
-            (SmBuf::const_iterator)(cbegin()+offset+sizeof(T)),
-            (char *) & tmp_val);
-
-  return tmp_val;
-
-}
-
-//------------------------------------------------------------------------------
-
-template<typename T>
-auto SmBuf::set_raw(const size_t & offset, const T & val)
+auto SmBuf::set_le(const size_t & offset, const T & val)
     -> std::enable_if_t<std::is_integral_v<T>, ssize_t>
 {
   check_offset_type<T>(__PRETTY_FUNCTION__, offset);
 
   constexpr ssize_t t_size = (ssize_t)sizeof(T);
 
-  std::copy(((char *) & val),
-            ((char *) & val) + t_size,
-            (SmBuf::iterator)(begin()+offset));
+  switch(t_size)
+  {
+    case 1U:
+      *(data()+offset) = val;
+      break;
+    case 2U:
+      *((uint16_t*)(data()+offset)) = htole16((uint16_t)val);
+      break;
+    case 4U:
+      *((uint32_t*)(data()+offset)) = htole32((uint32_t)val);
+      break;
+    case 8U:
+      *((uint64_t*)(data()+offset)) = htole64((uint64_t)val);
+      break;
+    default:
+      throw std::invalid_argument(
+          "Wrong integer size ("+std::to_string(t_size)+")");
+  }
 
   return t_size;
 }

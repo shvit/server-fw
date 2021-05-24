@@ -33,15 +33,21 @@ class Base;
 
 class Srv;
 
-class session;
+class Session;
 
-class data_mgr;
+class DataMgr;
 
 class Settings;
+
+class Options;
 
 using pSettings = std::shared_ptr<Settings>;
 
 using Buf = std::vector<char>;
+
+class SmBuf;
+
+class SmBufEx;
 
 // -----------------------------------------------------------------------------
 
@@ -83,6 +89,33 @@ enum class LogLvl: int
   notice  = 5, // LOG_NOTICE  // normal but significant condition
   info    = 6, // LOG_INFO    // informational
   debug   = 7, // LOG_DEBUG   // debug-level messages
+};
+
+// -----------------------------------------------------------------------------
+
+/** \brief SessionState
+ *
+ */
+enum class State: int
+{
+  need_init=0,
+  error_and_stop,
+  ack_options,
+  data_tx,
+  data_rx,
+  ack_tx,
+  ack_rx,
+  retransmit,
+  finish,
+};
+
+// -----------------------------------------------------------------------------
+
+enum class TripleResult: int
+{
+  nop=0, // no operation - good state
+  ok,    // ok processed - good state
+  fail,  // fail state
 };
 
 // -----------------------------------------------------------------------------
@@ -207,7 +240,56 @@ constexpr auto to_string(const LogLvl & val) -> std::string_view
   }
 }
 
+constexpr auto to_string(const State & val) -> std::string_view
+{
+  switch(val)
+  {
+    CASE_OPER_TO_STR_VIEW(need_init);
+    CASE_OPER_TO_STR_VIEW(error_and_stop);
+    CASE_OPER_TO_STR_VIEW(ack_options);
+    CASE_OPER_TO_STR_VIEW(data_tx);
+    CASE_OPER_TO_STR_VIEW(data_rx);
+    CASE_OPER_TO_STR_VIEW(ack_tx);
+    CASE_OPER_TO_STR_VIEW(ack_rx);
+    CASE_OPER_TO_STR_VIEW(retransmit);
+    CASE_OPER_TO_STR_VIEW(finish);
+    default: return "UNK_SESS_STATE";
+  }
+}
+
+constexpr auto to_string(const TripleResult & val) -> std::string_view
+{
+  switch(val)
+  {
+    CASE_OPER_TO_STR_VIEW(nop);
+    CASE_OPER_TO_STR_VIEW(ok);
+    CASE_OPER_TO_STR_VIEW(fail);
+    default: return "UNK_RES";
+  }
+}
+
 #undef CASE_OPER_TO_STR_VIEW
+
+// -----------------------------------------------------------------------------
+
+/** \brief Operator+ for use in make logging messages
+ *
+ *  Need conversion function 'to_string(T)'
+ *  \param [in] left Left string type operand
+ *  \param [in] right Right enum type operand
+ *  \return Result string
+ */
+template<typename T>
+auto operator+(std::string_view left, const T & right)
+//    -> std::enable_if_t<std::is_enum_v<T>, std::string>
+    -> std::enable_if_t<
+        !std::is_same_v<decltype(to_string(std::declval<T>())), void>,
+        std::string>
+{
+  std::string ret{left};
+  ret.append(to_string(right));
+  return ret;
+}
 
 // -----------------------------------------------------------------------------
 

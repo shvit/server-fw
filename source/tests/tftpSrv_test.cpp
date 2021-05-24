@@ -1,3 +1,15 @@
+/**
+ * \file tftpSrv_test.cpp
+ * \brief Unit-tests for class Srv
+ *
+ *  License GPL-3.0
+ *
+ *  \date   07-may-2021
+ *  \author Vitaliy Shirinkin, e-mail: vitaliy.shirinkin@gmail.com
+ *
+ *  \version 0.1
+ */
+
 #include <netinet/in.h> // sockaddr
 
 #include "tftpSrv_test.h"
@@ -6,24 +18,27 @@ using namespace unit_tests;
 
 UNIT_TEST_SUITE_BEGIN(Srv)
 
+//------------------------------------------------------------------------------
+
 // Init global counters for dots indicator show
 
 /// block counter dots printed
-size_t test_helper::indicator_couner_ = 0;
+size_t TestServer::indicator_couner_ = 0;
 
 /// rate dots print (every N bytes)
-size_t test_helper::indicator_block_ = 10*1000*1000;
+size_t TestServer::indicator_block_ = 10*1000*1000;
 
 /// processed bytes counter
-size_t test_helper::indicator_value_ = 0;
+size_t TestServer::indicator_value_ = 0;
 
 //------------------------------------------------------------------------------
 
 UNIT_TEST_CASE_BEGIN(Srv, "Server main check")
+
   // 0 prepare
+  TEST_CHECK_TRUE(check_local_directory());
+
   std::cout << "long time checks [" << std::flush;
-  START_ITER("prepare - create temporary directory");
-  TEST_CHECK_TRUE(temp_directory_create());
 
   // 1 Init
 
@@ -47,7 +62,7 @@ UNIT_TEST_CASE_BEGIN(Srv, "Server main check")
   const char * tst_arg[]={ "./server_fw",
                            "--syslog", "0",
                            "--ip", addr_str.c_str(),
-                           "--root-dir", tmp_dir.c_str() };
+                           "--root-dir", local_dir.c_str() };
 
   tftp::Srv srv1;
   TEST_CHECK_TRUE(srv1.load_options(
@@ -71,7 +86,7 @@ UNIT_TEST_CASE_BEGIN(Srv, "Server main check")
       addr.sin_port   = htobe16(60000U+file_id);
       addr.sin_addr.s_addr   = 0x00000000U;
 
-      test_helper hlpr(
+      TestServer hlpr(
           (char *) & addr,
           sizeof(addr),
           (char *) & srv_addr,
@@ -98,8 +113,12 @@ UNIT_TEST_CASE_BEGIN(Srv, "Server main check")
   th_srv1.join();
   usleep(200000);
 
+  // delete temporary files
+  unit_tests::files_delete();
+
   // end
   std::cout << "]" << std::endl;
+
 UNIT_TEST_CASE_END
 
 //------------------------------------------------------------------------------

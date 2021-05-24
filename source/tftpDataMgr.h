@@ -16,48 +16,55 @@
 #define SOURCE_TFTP_DATA_MGR_H_
 
 #include <fstream>
+#include <experimental/filesystem>
 
 #include "tftpCommon.h"
 #include "tftpBase.h"
 
+using namespace std::experimental;
 
 namespace tftp
 {
 
+/// Alias for filesystem::path
+using Path = filesystem::path;
+
+/// Type of callback function when set error
+using fSetError = std::function<void(const uint16_t, std::string_view)>;
+
+namespace constants
+{
+  /// Template for match MD5 by regex
+  const std::string regex_template_md5{"([a-fA-F0-9]{32})"};
+}
+
 // -----------------------------------------------------------------------------
 
-/** \brief Data maange class
+/** \brief Data manage class
  *
  * Class with file stream operations.
  * Create/close/read/write streams.
  * Check root server directory.
  * In future: Check Firebird connection
- *
  */
 
 class DataMgr: public Base
 {
 protected:
+
   // Processing info
-  SrvReq     request_type_; ///< Request type
-  std::string fname_;        ///< Processed file name
-  std::string hash_;         ///< Hash of file (md5)
+  SrvReq        request_type_; ///< Request type
+  std::ifstream file_in_;      ///< Input file stream
+  std::ofstream file_out_;     ///< Output file stream
+  size_t        file_size_;    ///< File size
+  fSetError     set_error_;    ///< Callback error parsing to top level
 
-  std::basic_istream<char> * ifs_;      ///< Input data stream
-  int                        ifs_mode_; ///< Input mode
-  ssize_t                    ifs_size_; ///< Input data size (known)
-  std::ofstream              ofs_;      ///< Output stream
-
-  /** \brief Callback error parsing to top level
-   */
-  std::function<void(const uint16_t, std::string_view)> set_error_;
-
-  /** \brief Check root directory
+  /** \brief Default constructor
    *
-   *  Check path exist and his type is directory.
-   *  /return True if root directory OK, else - false
+   *  No public construct.
+   *  Construct allowed only from friend Session
    */
-  bool check_root_dir();
+  DataMgr();
 
   /** \brief Check Firebird
    *
@@ -80,27 +87,48 @@ protected:
    */
   bool active_fb_connection();
 
-  /** Check requested filename is md5 sum
+  /** Check requested value is md5 sum
    *
-   *  Match by regex.
-   *  /return 0-no; 1-pure md5; 2-md5 sum file
-   *
+   *  Match by regex used 'regex_template_md5'
+   *  /return True if md5, else - false
    */
-  int is_md5();
+  bool match_md5(const std::string & val) const;
 
-  /** \brief Recursive search file by md5
+  /** \brief Recursive search file by md5 in directory
    *
-   *  If finded OK, then fname_ has full filename with path.
-   *  \param [in] path Start search directory
-   *  \return True if file found, else - false
+   *  If finded OK, then open input file stream
+   *  \param [in] path Root search directory
+   *  \param [in] md5sum Sum of MD5
+   *  \return Tuple<found/not found; Path to real file>
    */
-  bool recursive_search_by_md5(const std::string & path);
+  auto search_by_md5(
+      const Path & path,
+      std::string_view md5sum)
+          -> std::tuple<bool, Path>;
+
+  /** \brief Recursive search file by md5 in ALL directories
+   *
+   *  If finded OK, then open input file stream
+   *  Used main server directory and search directories
+   *  \param [in] path Root search directory
+   *  \param [in] md5sum Sum of MD5
+   *  \return Tuple<found/not found; Path to real file>
+   */
+  auto full_search_md5(std::string_view md5sum)
+      -> std::tuple<bool, Path>;
+
+  /** \brief Recursive search file by name in ALL directories
+   *
+   *  If finded OK, then open input file stream
+   *  Used main server directory and search directories
+   *  \param [in] name Root search directory
+   *  \return Tuple<found/not found; Path to real file>
+   */
+  auto full_search_name(std::string_view name)
+      -> std::tuple<bool, Path>;
 
 public:
 
-  /**  Constructor
-   */
-  DataMgr();
   DataMgr(DataMgr &&) = default;
 
   DataMgr & operator=(DataMgr &&) = default;
@@ -114,11 +142,10 @@ public:
   bool active();
 
   /**  Initialize instance
-   *  \param [in] request_type Type tftp request
-   *  \param [in] fname Requested file name
+   *  \param [in] opt Options of tftp request
    *  \return True if initialize success, else - false
    */
-  bool init(SrvReq request_type, std::string_view fname);
+  bool init(const Options & opt);
 
   /** \brief Pull data from network (receive)
    *
@@ -155,14 +182,6 @@ public:
   void set_error_if_first(
       const uint16_t e_cod,
       std::string_view e_msg) const;
-
-  /** \brief Check directory exist
-   *
-   *  Common used method
-   *  \param [in] chk_dir Path
-   *  \return True if exist, or false
-   */
-  bool check_directory(std::string_view chk_dir) const;
 
   friend class Session;
 };
