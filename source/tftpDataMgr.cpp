@@ -106,18 +106,18 @@ ssize_t DataMgr::tx(
     L_DBG("Generate block (buf size "+std::to_string(buf_size)+
           "; position "+std::to_string(position)+")");
 
-    if(file_in_.tellg() != (ssize_t)position)
+    if(ssize_t curr_pos=file_in_.tellg(); curr_pos != (ssize_t)position)
     {
-      L_WRN("Change read position "+std::to_string(file_in_.tellg())+
-            " -> "+std::to_string(position));
-      file_in_.seekg(position);
+      if(curr_pos >=0)
+      {
+        L_WRN("Change read position "+std::to_string(curr_pos)+
+              " -> "+std::to_string(position));
+      }
+      file_in_.seekg(position, std::ios_base::beg);
     }
     auto ret_size = static_cast<ssize_t>(file_size_) - (ssize_t)position;
     if(ret_size > 0)
     {
-
-
-
 
       try
       {
@@ -131,11 +131,6 @@ ssize_t DataMgr::tx(
                 std::to_string(e.code().value())+")");
         }
       }
-
-
-
-
-
 
       if(ret_size > buf_size) ret_size = buf_size;
     }

@@ -121,7 +121,8 @@ bool Session::switch_to(const State & new_state)
         break;
       case State::ack_rx:
         ret = (new_state == State::data_tx) ||
-              (new_state == State::retransmit);
+              (new_state == State::retransmit) ||
+              (new_state == State::finish);
         break;
       case State::retransmit:
         ret = (new_state == State::data_tx) ||
@@ -457,7 +458,7 @@ void Session::run()
           if(!was_error() && (local_buf.data_size() > 0U))
           {
             transmit_no_wait(local_buf);
-            ++stage_;
+            //++stage_;
             last_blk_processed_ = local_buf.data_size() != (block_size()+4U);
 
             if(is_window_close(stage_) || last_blk_processed_)
@@ -491,8 +492,8 @@ void Session::run()
             else
             {
               ++stage_;
+              timeout_reset();
             }
-            timeout_reset();
             break;
           case TripleResult::fail:
             switch_to(State::error_and_stop);
@@ -551,7 +552,7 @@ void Session::run()
         }
         else
         {
-          step_back_window(stage_);
+          //step_back_window(stage_);
           switch(opt_.request_type())
           {
             case SrvReq::unknown:
