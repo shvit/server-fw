@@ -49,7 +49,7 @@ protected:
   Addr               cl_addr_;       ///< Client address
   int                socket_;        ///< Socket
   size_t             stage_;         ///< Full (!) number of processed block
-  time_t             oper_time_;     ///< Last action time (after any TX))
+  //time_t             oper_time_;     ///< Last action time (after any TX))
   DataMgr            manager_;       ///< Data manager
   uint16_t           error_code_;    ///< First error info - code
   std::string        error_message_; ///< First error info - message
@@ -97,11 +97,11 @@ protected:
    *  \param gandicap Gandicap for time check in seconds
    *  \return True if timeout not out, else (time is out) - false
    */
-  bool timeout_pass(const time_t gandicap = 0) const;
+  //bool timeout_pass(const time_t gandicap = 0) const;
 
   /** \brief Reset time counter
    */
-  void timeout_reset();
+  //void timeout_reset();
 
   /** \brief Get current tftp block number
    *
