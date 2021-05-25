@@ -1,5 +1,5 @@
 /*
- * tftpIDataMgr.cpp
+ * tftpDataMgr.cpp
  *
  *  Created on: 24 мая 2021 г.
  *      Author: svv
@@ -7,14 +7,14 @@
 
 #include <regex>
 
-#include "tftpIDataMgr.h"
+#include "tftpDataMgr.h"
 
 namespace tftp
 {
 
 // -----------------------------------------------------------------------------
 
-IDataMgr::IDataMgr():
+DataMgr::DataMgr():
     request_type_{SrvReq::unknown},
     file_size_{0U},
     set_error_{nullptr}
@@ -23,13 +23,13 @@ IDataMgr::IDataMgr():
 
 // -----------------------------------------------------------------------------
 
-IDataMgr::~IDataMgr()
+DataMgr::~DataMgr()
 {
 }
 
 // -----------------------------------------------------------------------------
 
-void IDataMgr::set_error_if_first(
+void DataMgr::set_error_if_first(
     const uint16_t e_cod,
     std::string_view e_msg) const
 {
@@ -38,7 +38,7 @@ void IDataMgr::set_error_if_first(
 
 // -----------------------------------------------------------------------------
 
-bool IDataMgr::match_md5(const std::string & val) const
+bool DataMgr::match_md5(const std::string & val) const
 {
   std::regex regex_md5_pure(constants::regex_template_md5);
   std::smatch sm;

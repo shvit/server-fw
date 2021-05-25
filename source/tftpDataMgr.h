@@ -1,5 +1,5 @@
 /*
- * tftpIDataMgr.h
+ * tftpDataMgr.h
  *
  *  Created on: 24 мая 2021 г.
  *      Author: svv
@@ -33,7 +33,7 @@ namespace constants
  * Create/close/read/write streams.
  * For use need override abstract methods
  */
-class IDataMgr
+class DataMgr
 {
 protected:
 
@@ -61,11 +61,11 @@ protected:
 
 public:
 
-  IDataMgr();
+  DataMgr();
 
   /** \brief Destructor
    */
-  virtual ~IDataMgr();
+  virtual ~DataMgr();
 
   /** Check active (opened stream) - abstract method
    */

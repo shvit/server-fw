@@ -19,7 +19,7 @@
 
 #include "tftpCommon.h"
 #include "tftpBase.h"
-#include "tftpIDataMgr.h"
+#include "tftpDataMgr.h"
 #include "tftpOptions.h"
 #include "tftpAddr.h"
 
@@ -53,7 +53,7 @@ protected:
   uint16_t           error_code_;    ///< First error info - code
   std::string        error_message_; ///< First error info - message
   Options            opt_;           ///< TFTP protocol options
-  pIDataMgr          file_man_;
+  pDataMgr           file_man_;
 
   /** \brief Main constructor
    *

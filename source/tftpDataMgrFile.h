@@ -2,7 +2,7 @@
  * \file tftpDataMgrFile.h
  * \brief Data manager class for files header
  *
- *  Data manager class header
+ *  Data manager for files
  *
  *  License GPL-3.0
  *
@@ -20,7 +20,7 @@
 
 #include "tftpCommon.h"
 #include "tftpBase.h"
-#include "tftpIDataMgr.h"
+#include "tftpDataMgr.h"
 
 using namespace std::experimental;
 
@@ -34,7 +34,7 @@ using Path = filesystem::path;
 
 /** \brief Data manage streams for files
  */
-class DataMgrFile: public IDataMgr, public Base
+class DataMgrFile: public DataMgr, public Base
 {
 protected:
 

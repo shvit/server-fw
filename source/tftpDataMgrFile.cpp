@@ -1,8 +1,8 @@
 /**
- * \file tftp_data_mgr.cpp
- * \brief Data manager class module
+ * \file tftpDataMgrFile.cpp
+ * \brief Data manager class for files module
  *
- *  Data manager class module
+ *  Data manager for files
  *
  *  License GPL-3.0
  *
@@ -28,7 +28,7 @@ namespace tftp
 // -----------------------------------------------------------------------------
 
 DataMgrFile::DataMgrFile():
-    IDataMgr(),
+    DataMgr(),
     Base(),
     file_in_{},
     file_out_{}

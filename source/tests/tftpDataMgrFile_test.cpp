@@ -1,6 +1,6 @@
 /**
- * \file tftpDataMgr_test.cpp
- * \brief Unit-tests for class DataMgr
+ * \file tftpDataMgrFile_test.cpp
+ * \brief Unit-tests for class DataMgrFile
  *
  *  License GPL-3.0
  *
@@ -14,7 +14,7 @@
 #include "../tftpDataMgrFile.h"
 #include "tftpOptions_test.h"
 
-UNIT_TEST_SUITE_BEGIN(DataMgr)
+UNIT_TEST_SUITE_BEGIN(DataMgrFile)
 
 using namespace unit_tests;
 

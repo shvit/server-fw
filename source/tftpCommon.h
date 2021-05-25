@@ -37,9 +37,9 @@ class Session;
 
 class DataMgr;
 
-class IDataMgr;
+class DataMgr;
 
-using pIDataMgr = std::unique_ptr<IDataMgr>;
+using pDataMgr = std::unique_ptr<DataMgr>;
 
 class Settings;
 
