@@ -19,7 +19,7 @@
 
 #include "tftpCommon.h"
 #include "tftpBase.h"
-#include "tftpDataMgr.h"
+#include "tftpIDataMgr.h"
 #include "tftpOptions.h"
 #include "tftpAddr.h"
 
@@ -49,10 +49,11 @@ protected:
   Addr               cl_addr_;       ///< Client address
   int                socket_;        ///< Socket
   size_t             stage_;         ///< Full (!) number of processed block
-  DataMgr            manager_;       ///< Data manager
+  //DataMgr            manager_;       ///< Data manager
   uint16_t           error_code_;    ///< First error info - code
   std::string        error_message_; ///< First error info - message
   Options            opt_;           ///< TFTP protocol options
+  pIDataMgr          file_man_;
 
   /** \brief Main constructor
    *

@@ -11,7 +11,7 @@
  */
 
 #include "test.h"
-#include "../tftpDataMgr.h"
+#include "../tftpDataMgrFile.h"
 #include "tftpOptions_test.h"
 
 UNIT_TEST_SUITE_BEGIN(DataMgr)
@@ -22,14 +22,13 @@ using namespace unit_tests;
 
 /** \brief Helper class for access to DataMgr protected fields
  */
-class DataMgr_test: public tftp::DataMgr
+class DataMgr_test: public tftp::DataMgrFile
 {
 public:
 
-  using tftp::DataMgr::settings_;
-  using tftp::DataMgr::match_md5;
-  using tftp::DataMgr::active_files;
-  using tftp::DataMgr::active;
+  using tftp::DataMgrFile::settings_;
+  using tftp::DataMgrFile::match_md5;
+  using tftp::DataMgrFile::active;
 };
 
 //------------------------------------------------------------------------------
@@ -60,7 +59,7 @@ UNIT_TEST_CASE_BEGIN(files_check, "check with files operations")
 TEST_CHECK_TRUE(check_local_directory());
 
 // RX
-START_ITER("rx() check - store data files");
+START_ITER("write() check - store data files");
 {
   for(size_t iter=0; iter < file_sizes.size(); ++iter)
   {
@@ -70,7 +69,6 @@ START_ITER("rx() check - store data files");
 
     DataMgr_test dm;
     dm.settings_->root_dir.assign(local_dir.string());
-    TEST_CHECK_FALSE(dm.active_files());
     TEST_CHECK_FALSE(dm.active());
 
     // 1 - create file with data
@@ -80,7 +78,7 @@ START_ITER("rx() check - store data files");
     opt.request_type_ = tftp::SrvReq::write;
     opt.filename_ = curr_file_name;
 
-    TEST_CHECK_TRUE(init_res=dm.init(opt));
+    TEST_CHECK_TRUE(init_res=dm.init(dm.settings_, nullptr, opt));
 
     if(init_res)
     {
@@ -96,17 +94,15 @@ START_ITER("rx() check - store data files");
 
         success_file_rx =
             success_file_rx &&
-            (dm.rx(buff.begin(),
+            (dm.write(buff.begin(),
                    buff.begin()+left_size,
-                   stage*block) == 0);
+                   stage*block) >= 0);
       }
       TEST_CHECK_TRUE(success_file_rx);
 
-      TEST_CHECK_TRUE(dm.active_files());
       TEST_CHECK_TRUE(dm.active());
       dm.close();
 
-      TEST_CHECK_FALSE(dm.active_files());
       TEST_CHECK_FALSE(dm.active());
     }
 
@@ -115,7 +111,7 @@ START_ITER("rx() check - store data files");
     opt2.request_type_ = tftp::SrvReq::write;
     opt2.filename_ = std::string{curr_file_name}+".md5";
 
-    TEST_CHECK_TRUE(init_res = dm.init(opt2));
+    TEST_CHECK_TRUE(init_res = dm.init(dm.settings_, nullptr, opt2));
 
     if(init_res)
     {
@@ -128,15 +124,13 @@ START_ITER("rx() check - store data files");
       std::string md5_file{md5_as_str(& file_md5[iter][0])};
       md5_file.append(" ").append(curr_file_name);
 
-      TEST_CHECK_TRUE(dm.rx(
+      TEST_CHECK_TRUE(dm.write(
           static_cast<tftp::Buf::iterator>(& *md5_file.begin()),
           static_cast<tftp::Buf::iterator>(& *md5_file.end()),
-          0) == 0);
+          0) >= 0);
 
-      TEST_CHECK_TRUE(dm.active_files());
       TEST_CHECK_TRUE(dm.active());
       dm.close();
-      TEST_CHECK_FALSE(dm.active_files());
       TEST_CHECK_FALSE(dm.active());
     }
 
@@ -150,12 +144,12 @@ START_ITER("rx() check - store data files");
     opt3.request_type_ = tftp::SrvReq::read;
     opt3.filename_ = hash;
 
-    TEST_CHECK_TRUE(init_res = dm_find.init(opt3));
+    TEST_CHECK_TRUE(init_res = dm_find.init(dm.settings_, nullptr, opt3));
   }
 }
 
 // 2.1 TX
-START_ITER("tx() check - read data files by name");
+START_ITER("read() check - read data files by name");
 {
   for(size_t iter=0; iter < file_sizes.size(); ++iter)
   {
@@ -166,7 +160,6 @@ START_ITER("tx() check - read data files by name");
 
     DataMgr_test dm;
     dm.settings_->root_dir.assign(local_dir);
-    TEST_CHECK_FALSE(dm.active_files());
     TEST_CHECK_FALSE(dm.active());
 
     bool init_res;
@@ -175,7 +168,7 @@ START_ITER("tx() check - read data files by name");
     opt.request_type_ = tftp::SrvReq::read;
     opt.filename_ = curr_file_name;
 
-    TEST_CHECK_TRUE(init_res = dm.init(opt));
+    TEST_CHECK_TRUE(init_res = dm.init(dm.settings_, nullptr, opt));
 
     if(init_res)
     {
@@ -191,7 +184,7 @@ START_ITER("tx() check - read data files by name");
         fill_buffer(buff_ethalon.data(), left_size, stage * block, iter);
 
         success_tx = success_tx && (
-            dm.tx(buff_checked.begin(),
+            dm.read(buff_checked.begin(),
                   buff_checked.begin()+left_size,
                   stage * block) == (ssize_t)left_size);
 
@@ -202,10 +195,8 @@ START_ITER("tx() check - read data files by name");
         }
       }
 
-      TEST_CHECK_TRUE(dm.active_files());
       TEST_CHECK_TRUE(dm.active());
       dm.close();
-      TEST_CHECK_FALSE(dm.active_files());
       TEST_CHECK_FALSE(dm.active());
       TEST_CHECK_TRUE(success_tx);
     }
@@ -223,7 +214,6 @@ START_ITER("tx() check - read data files by md5");
 
     DataMgr_test dm;
     dm.settings_->root_dir.assign(local_dir);
-    TEST_CHECK_FALSE(dm.active_files());
     TEST_CHECK_FALSE(dm.active());
 
     bool init_res;
@@ -232,7 +222,7 @@ START_ITER("tx() check - read data files by md5");
     opt.request_type_ = tftp::SrvReq::read;
     opt.filename_ = curr_file_name;
 
-    TEST_CHECK_TRUE(init_res = dm.init(opt));
+    TEST_CHECK_TRUE(init_res = dm.init(dm.settings_, nullptr, opt));
 
     if(init_res)
     {
@@ -248,7 +238,7 @@ START_ITER("tx() check - read data files by md5");
         fill_buffer(buff_ethalon.data(), left_size, stage * block, iter);
 
         success_tx = success_tx && (
-            dm.tx(buff_checked.begin(),
+            dm.read(buff_checked.begin(),
                   buff_checked.begin()+left_size,
                   stage * block) == (ssize_t)left_size);
 
@@ -259,10 +249,8 @@ START_ITER("tx() check - read data files by md5");
         }
       }
 
-      TEST_CHECK_TRUE(dm.active_files());
       TEST_CHECK_TRUE(dm.active());
       dm.close();
-      TEST_CHECK_FALSE(dm.active_files());
       TEST_CHECK_FALSE(dm.active());
       TEST_CHECK_TRUE(success_tx);
     }

@@ -37,6 +37,10 @@ class Session;
 
 class DataMgr;
 
+class IDataMgr;
+
+using pIDataMgr = std::unique_ptr<IDataMgr>;
+
 class Settings;
 
 class Options;
@@ -126,6 +130,13 @@ enum class TripleResult: int
  *  \param [in] Message text
  */
 using fLogMsg = std::function<void(const LogLvl, std::string_view)>;
+
+/** \brief Callback for function when set tftp error
+ *
+ *  \param [in] Error code
+ *  \param [in] Error message text
+ */
+using fSetError = std::function<void(const uint16_t, std::string_view)>;
 
 // -----------------------------------------------------------------------------
 

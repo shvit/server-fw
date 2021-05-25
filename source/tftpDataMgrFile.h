@@ -1,6 +1,6 @@
 /**
- * \file tftp_data_mgr.h
- * \brief Data manager class header
+ * \file tftpDataMgrFile.h
+ * \brief Data manager class for files header
  *
  *  Data manager class header
  *
@@ -20,6 +20,7 @@
 
 #include "tftpCommon.h"
 #include "tftpBase.h"
+#include "tftpIDataMgr.h"
 
 using namespace std::experimental;
 
@@ -29,70 +30,17 @@ namespace tftp
 /// Alias for filesystem::path
 using Path = filesystem::path;
 
-/// Type of callback function when set error
-using fSetError = std::function<void(const uint16_t, std::string_view)>;
-
-namespace constants
-{
-  /// Template for match MD5 by regex
-  const std::string regex_template_md5{"([a-fA-F0-9]{32})"};
-}
-
 // -----------------------------------------------------------------------------
 
-/** \brief Data manage class
- *
- * Class with file stream operations.
- * Create/close/read/write streams.
- * Check root server directory.
- * In future: Check Firebird connection
+/** \brief Data manage streams for files
  */
-
-class DataMgr: public Base
+class DataMgrFile: public IDataMgr, public Base
 {
 protected:
 
   // Processing info
-  SrvReq        request_type_; ///< Request type
   std::ifstream file_in_;      ///< Input file stream
   std::ofstream file_out_;     ///< Output file stream
-  size_t        file_size_;    ///< File size
-  fSetError     set_error_;    ///< Callback error parsing to top level
-
-  /** \brief Default constructor
-   *
-   *  No public construct.
-   *  Construct allowed only from friend Session
-   */
-  DataMgr();
-
-  /** \brief Check Firebird
-   *
-   *  Now disabled. Will work in future
-   *  /return True if Firebird client_library/database exist, else - false
-   */
-  bool check_fb();
-
-  /** /brief Check opened files
-   *
-   *  Check input or output stream.
-   *  /return True if exist opened/working streams, else - false
-   */
-  bool active_files() const;
-
-  /** \brief Check opened Firebird connection
-   *
-   *   Now disabled. Will work in future
-   *   /return True if Firebird connection opened, else - false
-   */
-  bool active_fb_connection();
-
-  /** Check requested value is md5 sum
-   *
-   *  Match by regex used 'regex_template_md5'
-   *  /return True if md5, else - false
-   */
-  bool match_md5(const std::string & val) const;
 
   /** \brief Recursive search file by md5 in directory
    *
@@ -129,61 +77,71 @@ protected:
 
 public:
 
-  DataMgr(DataMgr &&) = default;
+  /** \brief Default constructor
+   *
+   *  No public construct.
+   *  Construct allowed only from friend Session
+   */
+  DataMgrFile();
 
-  DataMgr & operator=(DataMgr &&) = default;
+  DataMgrFile(DataMgrFile &&) = default;
+
+  DataMgrFile & operator=(DataMgrFile &&) = default;
 
   /** Destructor
    */
-  virtual ~DataMgr();
+  virtual ~DataMgrFile();
 
   /** Check active (opened streams or Firebird connection)
+   *
+   *  Overrided virtual method for file streams
    */
-  bool active();
+  virtual bool active() const override;
 
-  /**  Initialize instance
-   *  \param [in] opt Options of tftp request
+  /** \brief Initialize streams
+   *
+   *  Overrided virtual method for file streams
+   *  \param [in] sett Settings of tftp server
+   *  \param [in] cb_error Callback for error forward
+   *  \param [in] opt Options of tftp protocol
    *  \return True if initialize success, else - false
    */
-  bool init(const Options & opt);
+  virtual bool init(
+      pSettings & sett,
+      fSetError cb_error,
+      const Options & opt) override;
 
   /** \brief Pull data from network (receive)
    *
+   *  Overrided virtual method for file streams
    *  \param [in] buf_begin Block buffer - begin iterator
    *  \param [in] buf_end Block buffer - end iterator
    *  \param [in] position Position received block
    *  \return 0 on success, -1 on error
    */
-  ssize_t rx(Buf::iterator buf_begin,
-             Buf::iterator buf_end,
-             const Buf::size_type position);
+  virtual auto write(
+      SmBufEx::const_iterator buf_begin,
+      SmBufEx::const_iterator buf_end,
+      const size_t & position) -> ssize_t override;
 
   /** \brief Push data to network (transmit)
    *
+   *  Overrided virtual method for file streams
    *  \param [in] buf_begin Block buffer - begin iterator
    *  \param [in] buf_end Block buffer - end iterator
    *  \param [in] position Position transmitted block
    *  \return Processed size, -1 on error
    */
-  ssize_t tx(Buf::iterator buf_begin,
-             Buf::iterator buf_end,
-             const Buf::size_type position);
+  virtual auto read(
+      SmBufEx::iterator buf_begin,
+      SmBufEx::iterator buf_end,
+      const size_t & position) -> ssize_t override;
 
   /**  Close all opened steams
-   */
-  void close();
-
-  /** \brief Forward error to top level
    *
-   *  Use property set_error_ as callback function, if property set
-   *  \param [in] e_cod Error code
-   *  \param [in] e_msg Error message
+   *  Overrided virtual method for file streams
    */
-  void set_error_if_first(
-      const uint16_t e_cod,
-      std::string_view e_msg) const;
-
-  friend class Session;
+  virtual void close() override;
 };
 
 // -----------------------------------------------------------------------------

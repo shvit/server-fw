@@ -18,144 +18,32 @@
 #include <sys/stat.h>
 #include <dlfcn.h>
 
-#include "tftpDataMgr.h"
+#include "tftpDataMgrFile.h"
 #include "tftpOptions.h"
+#include "tftpSmBufEx.h"
 
 namespace tftp
 {
 
 // -----------------------------------------------------------------------------
 
-DataMgr::DataMgr():
+DataMgrFile::DataMgrFile():
+    IDataMgr(),
     Base(),
-    request_type_{SrvReq::unknown},
     file_in_{},
-    file_out_{},
-    set_error_{nullptr}
+    file_out_{}
 {
 }
 
 // -----------------------------------------------------------------------------
 
-DataMgr::~DataMgr()
+DataMgrFile::~DataMgrFile()
 {
 }
 
 // -----------------------------------------------------------------------------
 
-bool DataMgr::check_fb()
-{
-  // TODO: Check FB connection
-
-  return false;
-}
-
-// -----------------------------------------------------------------------------
-
-ssize_t DataMgr::rx(
-    Buf::iterator buf_begin,
-    Buf::iterator buf_end,
-    const Buf::size_type position)
-{
-  if(request_type_ != SrvReq::write)
-  {
-    throw std::runtime_error(
-        "Wrong use method (can't use rx() when request type != write");
-  }
-
-  if(file_out_.is_open())
-  {
-    if(auto buf_size=std::distance(buf_begin, buf_end); buf_size > 0)
-    {
-      if(file_out_.tellp() != (ssize_t)position)
-      {
-        L_WRN("Change write position "+std::to_string(file_out_.tellp())+
-              " -> "+std::to_string(position));
-        file_out_.seekp(position);
-      }
-      file_out_.write(& *buf_begin, buf_size);
-    }
-  }
-  else
-  {
-    L_ERR("File stream not opened");
-    set_error_if_first(0, "Server write stream not opened");
-    return -1;
-  }
-
-  return 0;
-
-}
-
-// -----------------------------------------------------------------------------
-
-ssize_t DataMgr::tx(
-    Buf::iterator buf_begin,
-    Buf::iterator buf_end,
-    const Buf::size_type position)
-{
-  if(request_type_ != SrvReq::read)
-  {
-    throw std::runtime_error(
-        "Wrong use method (can't use tx() when request type != read");
-  }
-
-  if(file_in_.is_open())
-  {
-    auto buf_size = std::distance(buf_begin, buf_end);
-    L_DBG("Generate block (buf size "+std::to_string(buf_size)+
-          "; position "+std::to_string(position)+")");
-
-    if(ssize_t curr_pos=file_in_.tellg(); curr_pos != (ssize_t)position)
-    {
-      if(curr_pos >=0)
-      {
-        L_WRN("Change read position "+std::to_string(curr_pos)+
-              " -> "+std::to_string(position));
-      }
-      file_in_.seekg(position, std::ios_base::beg);
-    }
-    auto ret_size = static_cast<ssize_t>(file_size_) - (ssize_t)position;
-    if(ret_size > 0)
-    {
-
-      try
-      {
-        file_in_.read(& *buf_begin, buf_size);
-      }
-      catch (const std::system_error & e)
-      {
-        if(file_in_.fail())
-        {
-          L_ERR(std::string{"Error: "}+e.what()+" ("+
-                std::to_string(e.code().value())+")");
-        }
-      }
-
-      if(ret_size > buf_size) ret_size = buf_size;
-    }
-    return ret_size;
-  }
-
-  // not opened
-  L_ERR("File stream not opened");
-  set_error_if_first(0, "Server read stream not opened");
-  return -1;
-}
-
-
-// -----------------------------------------------------------------------------
-
-bool DataMgr::active_fb_connection()
-{
-  // TODO: check active FB connection
-
-  return false;
-}
-
-// -----------------------------------------------------------------------------
-
-bool DataMgr::active_files() const
+bool DataMgrFile::active() const
 {
   return ((request_type_ == SrvReq::read)  && file_in_ .is_open()) ||
          ((request_type_ == SrvReq::write) && file_out_.is_open());
@@ -163,42 +51,18 @@ bool DataMgr::active_files() const
 
 // -----------------------------------------------------------------------------
 
-bool DataMgr::active()
+bool DataMgrFile::init(
+    pSettings & sett,
+    fSetError cb_error,
+    const Options & opt)
 {
-  return active_fb_connection() || active_files();
-}
-
-// -----------------------------------------------------------------------------
-
-bool DataMgr::match_md5(const std::string & val) const
-{
-  std::regex regex_md5_pure(constants::regex_template_md5);
-  std::smatch sm;
-
-  return std::regex_search(val, sm, regex_md5_pure) &&
-         (sm.prefix().str().size() == 0U) &&
-         (sm.suffix().str().size() == 0U);
-
-}
-
-// -----------------------------------------------------------------------------
-
-bool DataMgr::init(const Options & opt)
-{
+  settings_ = sett;
+  set_error_ = cb_error;
   request_type_ = opt.request_type();
 
   bool ret = false;
   Path processed_file;
 
-  // 1 Processed in Firebird (fake - skip)
-  if(check_fb())
-  {
-    // TODO: Search in FB
-
-    if(ret) return true;
-  }
-
-  // 2 Processed in filesystem
   switch(request_type_)
   {
     case SrvReq::read:
@@ -302,19 +166,127 @@ bool DataMgr::init(const Options & opt)
 
 // -----------------------------------------------------------------------------
 
-void DataMgr::close()
+auto DataMgrFile::write(
+    SmBufEx::const_iterator buf_begin,
+    SmBufEx::const_iterator buf_end,
+    const size_t & position) -> ssize_t
 {
-  // TODO: close FB connection
+  if(request_type_ != SrvReq::write)
+  {
+    throw std::runtime_error(
+        "Wrong use method (can't use rx() when request type != write");
+  }
 
-  // files
-  if(file_in_ .is_open()) file_in_ .close();
-  if(file_out_.is_open()) file_out_.close();
+  if(file_out_.is_open())
+  {
+    if(auto buf_size=std::distance(buf_begin, buf_end); buf_size > 0)
+    {
+      ssize_t begin_pos=file_out_.tellp();
+      if(begin_pos != (ssize_t)position)
+      {
+        L_WRN("Change write position "+std::to_string(file_out_.tellp())+
+              " -> "+std::to_string(position));
+        file_out_.seekp(position);
+      }
 
+      begin_pos=file_out_.tellp();
+      if(file_out_.tellp() != (ssize_t)position)
+      {
+        L_ERR("File stream wrong seek position "+std::to_string(position));
+        set_error_if_first(0, "Server write stream seek failed");
+        return -1;
+      }
+
+      file_out_.write(& * buf_begin, buf_size);
+      ssize_t end_pos = file_out_.tellp();
+      if(end_pos < 0)
+      {
+        L_ERR("File stream wrong write at pos "+std::to_string(position));
+        set_error_if_first(0, "Server write stream failed - no writed data");
+        return -1;
+      }
+
+      return end_pos - begin_pos;
+    }
+  }
+  else
+  {
+    L_ERR("File stream not opened");
+    set_error_if_first(0, "Server write stream not opened");
+    return -1;
+  }
+
+  L_WRN("Nothing to write (no data)");
+  return 0;
 }
 
 // -----------------------------------------------------------------------------
 
-auto DataMgr::search_by_md5(
+auto DataMgrFile::read(
+    SmBufEx::iterator buf_begin,
+    SmBufEx::iterator buf_end,
+    const size_t & position) -> ssize_t
+{
+  if(request_type_ != SrvReq::read)
+  {
+    throw std::runtime_error(
+        "Wrong use method (can't use tx() when request type != read");
+  }
+
+  if(file_in_.is_open())
+  {
+    auto buf_size = std::distance(buf_begin, buf_end);
+    L_DBG("Generate block (buf size "+std::to_string(buf_size)+
+          "; position "+std::to_string(position)+")");
+
+    if(ssize_t curr_pos=file_in_.tellg(); curr_pos != (ssize_t)position)
+    {
+      if(curr_pos >=0)
+      {
+        L_WRN("Change read position "+std::to_string(curr_pos)+
+              " -> "+std::to_string(position));
+      }
+      file_in_.seekg(position, std::ios_base::beg);
+    }
+    auto ret_size = static_cast<ssize_t>(file_size_) - (ssize_t)position;
+    if(ret_size > 0)
+    {
+
+      try
+      {
+        file_in_.read(& *buf_begin, buf_size);
+      }
+      catch (const std::system_error & e)
+      {
+        if(file_in_.fail())
+        {
+          L_ERR(std::string{"Error: "}+e.what()+" ("+
+                std::to_string(e.code().value())+")");
+        }
+      }
+
+      if(ret_size > buf_size) ret_size = buf_size;
+    }
+    return ret_size;
+  }
+
+  // not opened
+  L_ERR("File stream not opened");
+  set_error_if_first(0, "Server read stream not opened");
+  return -1;
+}
+
+// -----------------------------------------------------------------------------
+
+void DataMgrFile::close()
+{
+  if(file_in_ .is_open()) file_in_ .close();
+  if(file_out_.is_open()) file_out_.close();
+}
+
+// -----------------------------------------------------------------------------
+
+auto DataMgrFile::search_by_md5(
     const Path & path,
     std::string_view md5sum) -> std::tuple<bool, Path>
 {
@@ -361,7 +333,7 @@ auto DataMgr::search_by_md5(
 
 // -----------------------------------------------------------------------------
 
-auto DataMgr::full_search_md5(std::string_view md5sum)
+auto DataMgrFile::full_search_md5(std::string_view md5sum)
     -> std::tuple<bool, Path>
 {
   // Search in main dir
@@ -390,7 +362,7 @@ auto DataMgr::full_search_md5(std::string_view md5sum)
 
 // -----------------------------------------------------------------------------
 
-auto DataMgr::full_search_name(std::string_view name)
+auto DataMgrFile::full_search_name(std::string_view name)
     -> std::tuple<bool, Path>
 {
   // Search in main dir
@@ -416,16 +388,6 @@ auto DataMgr::full_search_name(std::string_view name)
 
   return {false, Path()};
 }
-
-// -----------------------------------------------------------------------------
-
-void DataMgr::set_error_if_first(
-    const uint16_t e_cod,
-    std::string_view e_msg) const
-{
-  if(set_error_) set_error_(e_cod, e_msg);
-}
-
 // -----------------------------------------------------------------------------
 
 } // namespace tftp
