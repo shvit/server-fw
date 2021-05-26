@@ -18,6 +18,7 @@
 
 #include "tftpSession.h"
 #include "tftpSmBufEx.h"
+#include "tftpDataMgrFile.h"
 
 namespace tftp
 {
@@ -32,10 +33,10 @@ Session::Session(pSettings new_settings):
     cl_addr_{},
     socket_{0},
     stage_{0U},
-    manager_{DataMgr{}},
     error_code_{0U},
     error_message_{""},
-    opt_{}
+    opt_{},
+    file_man_{nullptr}
 {
 }
 
@@ -72,10 +73,10 @@ auto Session::operator=(Session && val) -> Session &
     cl_addr_       = val.cl_addr_;
     socket_        = val.socket_;
     stage_         = val.stage_;
-    manager_       = std::move(val.manager_);
     error_code_    = val.error_code_;
     std::swap(error_message_, val.error_message_);
     std::swap(opt_, val.opt_);
+    std::swap(file_man_, val.file_man_);
   }
 
   return *this;
@@ -256,14 +257,25 @@ bool Session::init()
   // Data manager init
   if(ret)
   {
-    manager_.settings_ = settings_;
-    manager_.set_error_ = std::bind(
-        & Session::set_error_if_first,
-        this,
-        std::placeholders::_1,
-        std::placeholders::_2);
+    // Try 1 - DB
+    // TODO:: init() for DataMgrDB
+    ret = false; // remove it!
 
-    ret = manager_.init(opt_) || was_error();
+    // Try 2 - File
+    if(!ret)
+    {
+      file_man_.release();
+      file_man_ = std::make_unique<DataMgrFile>();
+
+      ret = file_man_->init(
+          settings_,
+          std::bind(
+                  & Session::set_error_if_first,
+                  this,
+                  std::placeholders::_1,
+                  std::placeholders::_2),
+          opt_);
+    }
   }
 
   L_INF("Session initialise is "+(ret ? (was_error() ? "WAS ERROR":"SUCCESSFUL") : "FAIL"));
@@ -342,10 +354,11 @@ void Session::construct_data(SmBufEx & buf)
 
   buf.push_data((uint16_t) 3U, blk_num_local());
 
-  ssize_t ret = manager_.tx(
+  ssize_t ret = file_man_->read(
       buf.begin() + buf.data_size(),
       buf.begin() + buf.data_size() + block_size(),
       (stage_-1U) * block_size());
+
 
   if(ret >=0)
   {
@@ -575,7 +588,7 @@ void Session::run()
   } // end main loop
 
   socket_close();
-  manager_.close();
+  file_man_->close();
 
   L_INF("Finish session");
 }
@@ -743,9 +756,9 @@ auto Session::receive_no_wait(SmBufEx & buf) -> TripleResult
       stage_ = (size_t) rx_stage;
     }
 
-    ssize_t stored_data_size =  manager_.rx(
-        buf.begin() + 2*sizeof(uint16_t),
-        buf.begin() + rx_pkt_size,
+    ssize_t stored_data_size =  file_man_->write(
+        buf.cbegin() + 2*sizeof(uint16_t),
+        buf.cbegin() + rx_pkt_size,
         (stage_ - 1) * block_size());
     if(stored_data_size < 0)
     {
