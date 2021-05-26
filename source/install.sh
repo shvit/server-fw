@@ -30,6 +30,8 @@ do_make_inst_def(){
   fi
 
   echo "[INSTALL] Killing all $NAME instances"
+  sudo service "$NAME" stop
+  sleep 1
   sudo killall -s SIGHUP -q "$NAME" > /dev/null 2>&1
   sleep 1
   echo "[INSTALL] Copying daemon file $DAEMON_FILE_DST"
@@ -56,6 +58,7 @@ do_make_inst_def(){
     echo "SYSLOG=6" >> "$DEF_FILE"
     echo "ROOT_DIR=/mnt/tftp" >> "$DEF_FILE"
     echo "SERACH=/mnt/backup" >> "$DEF_FILE"
+    echo "OWNER_USER=tftp" >> "$DEF_FILE"
     cat "$DEF_FILE"
   fi
 }

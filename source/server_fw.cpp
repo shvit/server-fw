@@ -49,7 +49,7 @@ int main(int argc, char* argv[])
       {
         if(!pid)
         { // daemon code
-          umask(0664);
+          umask(0);
           setsid();
           if(auto ret=chdir("/"); ret != 0)
           {
