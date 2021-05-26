@@ -38,7 +38,6 @@ class DataMgrFile: public DataMgr, public Base
 {
 protected:
 
-  // Processing info
   std::ifstream file_in_;      ///< Input file stream
   std::ofstream file_out_;     ///< Output file stream
 
@@ -92,7 +91,7 @@ public:
    */
   virtual ~DataMgrFile();
 
-  /** Check active (opened streams or Firebird connection)
+  /** Check active (opened stream)
    *
    *  Overrided virtual method for file streams
    */
@@ -114,8 +113,8 @@ public:
   /** \brief Pull data from network (receive)
    *
    *  Overrided virtual method for file streams
-   *  \param [in] buf_begin Block buffer - begin iterator
-   *  \param [in] buf_end Block buffer - end iterator
+   *  \param [in] buf_begin Buffer begin iterator
+   *  \param [in] buf_end Buffer end iterator
    *  \param [in] position Position received block
    *  \return 0 on success, -1 on error
    */
@@ -127,8 +126,8 @@ public:
   /** \brief Push data to network (transmit)
    *
    *  Overrided virtual method for file streams
-   *  \param [in] buf_begin Block buffer - begin iterator
-   *  \param [in] buf_end Block buffer - end iterator
+   *  \param [in] buf_begin Buffer begin iterator
+   *  \param [in] buf_end Buffer end iterator
    *  \param [in] position Position transmitted block
    *  \return Processed size, -1 on error
    */

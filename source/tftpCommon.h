@@ -37,15 +37,15 @@ class Session;
 
 class DataMgr;
 
-class DataMgr;
-
 using pDataMgr = std::unique_ptr<DataMgr>;
+
+class DataMgrFile;
 
 class Settings;
 
-class Options;
-
 using pSettings = std::shared_ptr<Settings>;
+
+class Options;
 
 using Buf = std::vector<char>;
 
@@ -137,6 +137,18 @@ using fLogMsg = std::function<void(const LogLvl, std::string_view)>;
  *  \param [in] Error message text
  */
 using fSetError = std::function<void(const uint16_t, std::string_view)>;
+
+// -----------------------------------------------------------------------------
+
+/** \brief Any common constants
+ */
+namespace constants
+{
+
+  /// Template for match MD5 by regex
+  const std::string regex_template_md5{"([a-fA-F0-9]{32})"};
+
+}
 
 // -----------------------------------------------------------------------------
 

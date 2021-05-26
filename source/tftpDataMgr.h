@@ -1,8 +1,15 @@
-/*
- * tftpDataMgr.h
+/**
+ * \file tftpDataMgr.h
+ * \brief Data manager abstract class header
  *
- *  Created on: 24 мая 2021 г.
- *      Author: svv
+ *  Base data manager class
+ *
+ *  License GPL-3.0
+ *
+ *  \date   24-may-2021
+ *  \author Vitaliy Shirinkin, e-mail: vitaliy.shirinkin@gmail.com
+ *
+ *  \version 0.1
  */
 
 #ifndef SOURCE_TFTPIDATAMGR_H_
@@ -15,14 +22,6 @@
 
 namespace tftp
 {
-
-// -----------------------------------------------------------------------------
-
-namespace constants
-{
-  /// Template for match MD5 by regex
-  const std::string regex_template_md5{"([a-fA-F0-9]{32})"};
-}
 
 // -----------------------------------------------------------------------------
 
@@ -85,9 +84,9 @@ public:
 
   /** \brief Write data stream operations - abstract method
    *
-   *  \param [in] buf_begin Block buffer - begin iterator
-   *  \param [in] buf_end Block buffer - end iterator
-   *  \param [in] position Position received block
+   *  \param [in] buf_begin Buffer begin iterator
+   *  \param [in] buf_end Buffer end iterator
+   *  \param [in] position Position received block (offset)
    *  \return Processed size, -1 on error
    */
   virtual auto write(
@@ -97,9 +96,9 @@ public:
 
   /** \brief Read data stream operations - abstract method
    *
-   *  \param [in] buf_begin Block buffer - begin iterator
-   *  \param [in] buf_end Block buffer - end iterator
-   *  \param [in] position Position transmitted block
+   *  \param [in] buf_begin Buffer begin iterator
+   *  \param [in] buf_end Buffer end iterator
+   *  \param [in] position Position transmitted block (offset)
    *  \return Processed size, -1 on error
    */
   virtual auto read(

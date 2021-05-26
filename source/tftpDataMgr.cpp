@@ -1,8 +1,15 @@
-/*
- * tftpDataMgr.cpp
+/**
+ * \file tftpDataMgr.cpp
+ * \brief Data manager abstract class module
  *
- *  Created on: 24 мая 2021 г.
- *      Author: svv
+ *  Base data manager class
+ *
+ *  License GPL-3.0
+ *
+ *  \date   24-may-2021
+ *  \author Vitaliy Shirinkin, e-mail: vitaliy.shirinkin@gmail.com
+ *
+ *  \version 0.1
  */
 
 #include <regex>
