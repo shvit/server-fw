@@ -347,6 +347,18 @@ bool is_digit_str(std::string_view val);
 
 // -----------------------------------------------------------------------------
 
+/** \brief Get UID by user name
+ *
+ *  If fail, return 0U (root UID)
+ *  \param [in] name User name
+ *  \return UID
+ */
+auto get_uid_by_name(const std::string & name) -> uid_t;
+
+auto get_gid_by_name(const std::string & name) -> gid_t;
+
+// -----------------------------------------------------------------------------
+
 /** \brief Context (current function) with given messagess
  *
  *  Warning! Use only inside methods with base class tftp::Base

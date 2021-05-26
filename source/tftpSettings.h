@@ -15,7 +15,6 @@
 #ifndef SOURCE_TFTPSETTINGS_H_
 #define SOURCE_TFTPSETTINGS_H_
 
-
 #include "tftpCommon.h"
 #include "tftpAddr.h"
 
@@ -33,6 +32,7 @@ namespace constants
   constexpr uint16_t default_retransmit_count = 3U;
   constexpr uint16_t default_fb_dialect       = 3U;
   constexpr int      default_tftp_syslog_lvl  = 6;
+  constexpr int      default_file_chmod       = 0664;
 
   constexpr std::string_view default_fb_lib_name = "libfbclient.so";
 }
@@ -77,6 +77,10 @@ public:
   // protocol
   uint16_t retransmit_count_;
 
+  std::string file_chown_user;
+  std::string file_chown_grp;
+
+  int file_chmod;
 
   /** \brief Public creator
    *

@@ -19,7 +19,9 @@ UNIT_TEST_SUITE_BEGIN(Common)
 
 UNIT_TEST_CASE_BEGIN(common_functions, "Check common functions")
 
-  // Check to_string()
+START_ITER("Check to_string()")
+{
+
 #define CHK_TO_STRING(T,NAME) \
     {\
       constexpr auto s1 = tftp::to_string(tftp::T::NAME);\
@@ -59,8 +61,10 @@ UNIT_TEST_CASE_BEGIN(common_functions, "Check common functions")
   CHK_TO_STRING(TripleResult, fail);
 
 #undef CHK_TO_STRING
+}
 
-  // Check operator+
+START_ITER("Check operator+")
+{
   {
     std::string s= "A"+tftp::State::need_init+"B";
     TEST_CHECK_TRUE(s=="Aneed_initB");
@@ -85,6 +89,18 @@ UNIT_TEST_CASE_BEGIN(common_functions, "Check common functions")
     std::string s= "I"+tftp::TripleResult::ok+"J";
     TEST_CHECK_TRUE(s=="IokJ");
   }
+}
+
+START_ITER("Check get uid/gid by name")
+{
+  TEST_CHECK_TRUE(tftp::get_uid_by_name("root") == 0U);
+  TEST_CHECK_TRUE(tftp::get_uid_by_name("daemon") == 1U);
+  TEST_CHECK_TRUE(tftp::get_uid_by_name("hren_takogo_netu") == 0U);
+
+  TEST_CHECK_TRUE(tftp::get_gid_by_name("root") == 0U);
+  TEST_CHECK_TRUE(tftp::get_gid_by_name("daemon") == 1U);
+  TEST_CHECK_TRUE(tftp::get_gid_by_name("hren_takogo_netu") == 0U);
+}
 
 //
 UNIT_TEST_CASE_END
