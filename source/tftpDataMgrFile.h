@@ -17,6 +17,7 @@
 
 #include <fstream>
 #include <experimental/filesystem>
+//#include <experimental/bits/fs_fwd.h>
 
 #include "tftpCommon.h"
 #include "tftpBase.h"
@@ -30,6 +31,8 @@ namespace tftp
 /// Alias for filesystem::path
 using Path = filesystem::path;
 
+using Perms = filesystem::perms;
+
 // -----------------------------------------------------------------------------
 
 /** \brief Data manage streams for files
@@ -37,9 +40,9 @@ using Path = filesystem::path;
 class DataMgrFile: public DataMgr, public Base
 {
 protected:
-
-  std::ifstream file_in_;      ///< Input file stream
-  std::ofstream file_out_;     ///< Output file stream
+  Path          filename_; ///< File path with name; constructed after init()
+  std::ifstream file_in_;  ///< Input file stream
+  std::ofstream file_out_; ///< Output file stream
 
   /** \brief Recursive search file by md5 in directory
    *

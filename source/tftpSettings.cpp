@@ -226,7 +226,9 @@ void Settings::out_help(std::ostream & stream, std::string_view app) const
   << "  --retransmit <N> Maximum retransmit count if fail" << std::endl
   << "  --file-chuser <user name> Set user owner for created files (default root)" << std::endl
   << "  --file-chgrp <group name> Set group owner for created files (default root)" << std::endl
-  << "  --file-chmod <permissions> Set permissions for created files (default 0664)" << std::endl;
+  << "    Warning: if user/group not exist then use root" << std::endl
+  << "  --file-chmod <permissions> Set permissions for created files (default 0664)" << std::endl
+  << "    Warning: can set only r/w bits - maximum 0666; can't set x-bits and superbits" << std::endl;
 }
 
 // -----------------------------------------------------------------------------

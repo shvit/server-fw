@@ -17,6 +17,8 @@
 #include <regex>
 #include <sys/stat.h>
 #include <dlfcn.h>
+#include <unistd.h>
+#include <system_error>
 
 #include "tftpDataMgrFile.h"
 #include "tftpOptions.h"
@@ -30,6 +32,7 @@ namespace tftp
 DataMgrFile::DataMgrFile():
     DataMgr(),
     Base(),
+    filename_{},
     file_in_{},
     file_out_{}
 {
@@ -61,7 +64,7 @@ bool DataMgrFile::init(
   request_type_ = opt.request_type();
 
   bool ret = false;
-  Path processed_file;
+  //Path processed_file;
 
   switch(request_type_)
   {
@@ -71,20 +74,20 @@ bool DataMgrFile::init(
       {
         L_INF("Match file as pure md5 request");
 
-        std::tie(ret, processed_file) = full_search_md5(opt.filename());
+        std::tie(ret, filename_) = full_search_md5(opt.filename());
         if(ret)
         {
-          L_INF("Find file via his md5 sum '"+processed_file.string()+"'");
+          L_INF("Find file via his md5 sum '"+filename_.string()+"'");
         }
       }
 
       // ... Try find by filename
       if(!ret)
       {
-        std::tie(ret, processed_file) = full_search_name(opt.filename());
+        std::tie(ret, filename_) = full_search_name(opt.filename());
         if(ret)
         {
-          L_INF("Find file via his name '"+processed_file.string()+"'");
+          L_INF("Find file via his name '"+filename_.string()+"'");
         }
       }
 
@@ -102,7 +105,7 @@ bool DataMgrFile::init(
         file_in_.exceptions(std::ios::failbit);
         try
         {
-          file_in_.open(processed_file, std::ios_base::in | std::ios::binary);
+          file_in_.open(filename_, std::ios_base::in | std::ios::binary);
         }
         catch (const std::system_error & e)
         {
@@ -113,26 +116,26 @@ bool DataMgrFile::init(
         }
         file_in_.close();
         file_in_.exceptions(backup_val);
-        file_in_.open(processed_file, std::ios_base::in | std::ios::binary);
+        file_in_.open(filename_, std::ios_base::in | std::ios::binary);
       }
 
       // ... Other
       if(ret)
       {
-        file_size_ = filesystem::file_size(processed_file);
+        file_size_ = filesystem::file_size(filename_);
       }
 
       break;
     case SrvReq::write:
       // ... Check file exist
-      processed_file = get_root_dir();
-      processed_file /= opt.filename();
-      ret = !filesystem::exists(processed_file);
+      filename_ = get_root_dir();
+      filename_ /= opt.filename();
+      ret = !filesystem::exists(filename_);
 
       // ... Result is wrong (file exist)
       if(!ret)
       {
-        L_ERR("File already exists '"+processed_file.string()+"'");
+        L_ERR("File already exists '"+filename_.string()+"'");
         set_error_if_first(6U, "File already exists");
       }
 
@@ -142,7 +145,7 @@ bool DataMgrFile::init(
         file_out_.exceptions(file_out_.exceptions() | std::ios::failbit);
         try
         {
-          file_out_.open(processed_file, std::ios_base::out | std::ios::binary);
+          file_out_.open(filename_, std::ios_base::out | std::ios::binary);
           file_out_.write(nullptr, 0U);
         }
         catch (const std::system_error & e)
@@ -282,6 +285,51 @@ void DataMgrFile::close()
 {
   if(file_in_ .is_open()) file_in_ .close();
   if(file_out_.is_open()) file_out_.close();
+
+  if(request_type_ == SrvReq::write)
+  {
+    // CHOWN
+    Buf err_msg_buf(1024, 0);
+
+    std::string user = get_file_chown_user();
+    std::string grp  = get_file_chown_grp();
+    if((user.size() > 0U) ||
+       (grp.size() > 0U))
+    {
+      L_DBG("Try set chown '"+user+"':'"+grp+"'");
+      auto ret = chown(
+          filename_.c_str(),
+          get_uid_by_name(user),
+          get_gid_by_name(grp));
+      if(ret < 0)
+      {
+        L_WRN("Wrong chown operation:"+
+              std::string{strerror_r(errno,
+                                     err_msg_buf.data(),
+                                     err_msg_buf.size())});
+      }
+    }
+
+    // CHMOD
+    Perms curr_perm = Perms::none;
+    std::string perm_str{"-"};
+    if(get_file_chmod() & S_IRUSR) { curr_perm |= Perms::owner_read; perm_str.append("r"); } else perm_str.append("-");
+    if(get_file_chmod() & S_IWUSR) { curr_perm |= Perms::owner_write; perm_str.append("w"); } else perm_str.append("-");
+    perm_str.append("-");
+    if(get_file_chmod() & S_IRGRP) { curr_perm |= Perms::group_read; perm_str.append("r"); } else perm_str.append("-");
+    if(get_file_chmod() & S_IWGRP) { curr_perm |= Perms::group_write; perm_str.append("w"); } else perm_str.append("-");
+    perm_str.append("-");
+    if(get_file_chmod() & S_IROTH) { curr_perm |= Perms::others_read; perm_str.append("r"); } else perm_str.append("-");
+    if(get_file_chmod() & S_IWOTH) { curr_perm |= Perms::others_write; perm_str.append("w"); } else perm_str.append("-");
+    L_DBG("Try set chmod as '"+perm_str+"'");
+
+    std::error_code e;
+    permissions(filename_, curr_perm, e);
+    if(e.value())
+    {
+      L_WRN("Wrong chmod operation: "+e.message());
+    }
+  }
 }
 
 // -----------------------------------------------------------------------------

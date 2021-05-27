@@ -355,6 +355,12 @@ bool is_digit_str(std::string_view val);
  */
 auto get_uid_by_name(const std::string & name) -> uid_t;
 
+/** \brief Get GID by group name
+ *
+ *  If fail, return 0U (root GID)
+ *  \param [in] name Group name
+ *  \return GID
+ */
 auto get_gid_by_name(const std::string & name) -> gid_t;
 
 // -----------------------------------------------------------------------------
