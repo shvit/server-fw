@@ -12,7 +12,7 @@ You don't operate file names or directories of firmware, no, now only its md5 su
 * one root server directory for server upload (and download)
 * can set many serach directory for server download
 
-## Plans
+## Plans for future
 
 * using Firebird SQL server as main firmware storage
 
@@ -34,20 +34,24 @@ sudo apt-get install libssl-dev
 </pre>
 
 ## How build and use
+
 1. Get sources 
 <pre>
 mkdir server_fw
 git clone git@github.com:shvit/server_fw.git -b master server_fw
 </pre>
+
 2. Make binary file
 <pre>
 cd server_fw
 make release
 </pre>
+
 3. Disable any listening 69 port other executables
 <pre>
 sudo netstat -lup|grep "69\|tftp"
 </pre>
+
 4. Install firmware tftp server
 <p>
 <pre>
@@ -59,6 +63,7 @@ mkdir -p /mnt/tftp
 mkdir -p /mnt/backup
 </pre>
 </p>
+
 5. Copy firmware files to directory  <i>/mnt/tftp</i>  or  <i>/mnt/backup</i>  and make *.md5 files
 <p>
 File in search directory  <i>/mnt/backup</i>  can place in separate nested directory or with unique file names<br>
@@ -68,17 +73,21 @@ md5sum file > file.md5
 </pre>
 </p>
 <p>
-6. Uninstall firmware tftp server
+
+Profit!
+
+## Uninstall
+
+For uninstall <b>server_fw</b>
 <pre>
 make uninstall
 </pre>
 </p>
 
-Profit!
-
 ## License
 
-GNU general public license version 3
+GNU general public license version 3.<br>
+See LICENSE file in root directory.
 
 ## Author
 Vitaliy Shirinkin, Russia, 2019-2021<br>
