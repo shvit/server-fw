@@ -79,8 +79,7 @@ public:
 
   std::string file_chown_user;
   std::string file_chown_grp;
-
-  int file_chmod;
+  int         file_chmod;
 
   /** \brief Public creator
    *

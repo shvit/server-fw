@@ -58,7 +58,9 @@ do_make_inst_def(){
     echo "SYSLOG=6" >> "$DEF_FILE"
     echo "ROOT_DIR=/mnt/tftp" >> "$DEF_FILE"
     echo "SERACH=/mnt/backup" >> "$DEF_FILE"
-    echo "OWNER_USER=tftp" >> "$DEF_FILE"
+    echo "FILE_CHUSER=tftp" >> "$DEF_FILE"
+    echo "FILE_CHGRP=tftp" >> "$DEF_FILE"
+    echo "FILE_CHMOD=0664" >> "$DEF_FILE"
     cat "$DEF_FILE"
   fi
 }

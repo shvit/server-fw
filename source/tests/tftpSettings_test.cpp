@@ -81,7 +81,7 @@ START_ITER("load options IPv4");
     "--retransmit", "59",
     "--file-chuser", "usr1",
     "--file-chgrp", "grp2",
-    "--file-mod", "0766",
+    "--file-chmod", "0766",
   };
 
   Settings_test b;

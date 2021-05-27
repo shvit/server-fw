@@ -48,12 +48,6 @@ d_start() {
 #  wait_rsyslogd
 
   local ARG=""
-  local OPT=""
-
-  # Option: owner user
-  #if [ ! -z "$OWNER_USER" ]; then
-  #  OPT="$OPT --chuid $OWNER_USER"
-  #fi
 
   # IPV4
   if [ ! -z "$IP" ]; then
@@ -83,9 +77,23 @@ d_start() {
     fi
   done
 
+  # File change owner - user
+  if [ ! -z "FILE_CHUSER" ]; then
+    ARG="$ARG --file-chuser $FILE_CHUSER"
+  fi
+  # File change owner - group
+  if [ ! -z "FILE_CHGRP" ]; then
+    ARG="$ARG --file-chgrp $FILE_CHGRP"
+  fi
+  # File change mod
+  if [ ! -z "FILE_CHMOD" ]; then
+    ARG="$ARG --file-chmod $FILE_CHMOD"
+  fi
+
+
   ARG="$ARG --daemon"
   /usr/bin/logger -p 1 "Arguments $NAME: $ARG"
-  start-stop-daemon --start --quiet --oknodo $OPT --exec $DAEMON -- $ARG
+  start-stop-daemon --start --quiet --oknodo --exec $DAEMON -- $ARG
   sleep 1
 }
 

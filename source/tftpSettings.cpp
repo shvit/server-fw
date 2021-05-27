@@ -87,7 +87,7 @@ bool Settings::load_options(int argc, char * argv[])
       { "retransmit", required_argument, NULL,  0  }, // 14
       { "file-chuser",required_argument, NULL,  0  }, // 15
       { "file-chgrp", required_argument, NULL,  0  }, // 16
-      { "file-mod",   required_argument, NULL,  0  }, // 17
+      { "file-chmod", required_argument, NULL,  0  }, // 17
       { NULL,               no_argument, NULL,  0  }  // always last
   };
 
@@ -179,7 +179,7 @@ bool Settings::load_options(int argc, char * argv[])
       case 16: // --file-chgrp
         if(optarg) file_chown_grp.assign(optarg);
         break;
-      case 17: // --file-mod
+      case 17: // --file-chmod
         if(optarg)
         {
           std::string tmp_str{optarg};
@@ -226,7 +226,7 @@ void Settings::out_help(std::ostream & stream, std::string_view app) const
   << "  --retransmit <N> Maximum retransmit count if fail" << std::endl
   << "  --file-chuser <user name> Set user owner for created files (default root)" << std::endl
   << "  --file-chgrp <group name> Set group owner for created files (default root)" << std::endl
-  << "  --file-mod <permissions> Set permissions for created files (default 0664)" << std::endl;
+  << "  --file-chmod <permissions> Set permissions for created files (default 0664)" << std::endl;
 }
 
 // -----------------------------------------------------------------------------
