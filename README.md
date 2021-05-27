@@ -35,8 +35,6 @@ sudo apt-get install llvm clang clang-tools
 sudo apt-get install libssl-dev
 </pre>
 
-
-
 ## How build and use
 1. Get sources 
 <pre>
@@ -57,16 +55,16 @@ sudo netstat -lup|grep "69\|tftp"
 <pre>
 make install
 </pre>
-By default, make root server directory  _/mnt/tftp_  and one search directory _/mnt/backup_
+By default, make root server directory  /mnt/tftp  and one search directory /mnt/backup
 <pre>
-mkdir /mnt/tftp
-mkdir /mnt/backup
+mkdir -p /mnt/tftp
+mkdir -p /mnt/backup
 </pre>
 </p>
-5. Copy firmware files to directory  _/mnt/tftp_  or  _/mnt/backup_  and make *.md5 files
+5. Copy firmware files to directory  <i>/mnt/tftp</i>  or  <i>/mnt/backup</i>  and make *.md5 files
 <p>
-File in search directory  _/mnt/backup_  can place in separate nested directory or with unique file names<br>
-For each  _file_  in search directory make *.md5 file:
+File in search directory  <i>/mnt/backup</i>  can place in separate nested directory or with unique file names<br>
+For each  <i>file</i>  in search directory make *.md5 file:
 <pre>
 md5sum file > file.md5
 </pre>
@@ -87,3 +85,9 @@ GNU general public license version 3
 ## Author
 Vitaliy Shirinkin, Russia, 2019-2021<br>
 e-mail: vitaliy.shirinkin@gmail.com
+
+## History
+
+v0.2 Release with many fixes and futures, 2021
+
+v0.1 First release server_fw, 2019
