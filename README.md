@@ -19,17 +19,15 @@ You don't operate file names or directories of firmware, no, now only its md5 su
 ## Requirements
 
 * Ubuntu 18.04 LTE (newer not tested)
-<p>
-Other GNU Linux distros not tested, sorry
-</p>
+<p>Other GNU Linux distros not tested, sorry</p>
+
 * Clang or GCC as last stable version (using C++17)
-<p>
-For install clang:
-</p>
+<p>For install clang:</p>
 <pre>
 sudo apt-get update
 sudo apt-get install llvm clang clang-tools
 </pre>
+
 * OpenSSL library
 <pre>
 sudo apt-get install libssl-dev
@@ -39,7 +37,7 @@ sudo apt-get install libssl-dev
 1. Get sources 
 <pre>
 mkdir server_fw
-git clone git@github.com:shvit/server\_fw.git -b master server_fw
+git clone git@github.com:shvit/server_fw.git -b master server_fw
 </pre>
 2. Make binary file
 <pre>
@@ -90,4 +88,4 @@ e-mail: vitaliy.shirinkin@gmail.com
 
 v0.2 Release with many fixes and futures, 2021
 
-v0.1 First release server_fw, 2019
+v0.1 First release of <b>server_fw</b>, 2019
