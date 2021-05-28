@@ -1,0 +1,11 @@
+Package: server-fw
+Version: 0.2.0
+Maintainer: Vitaliy Shirinkin <vitaliy.shirinkin@gmail.com>
+Architecture: amd64
+Section: net
+Description: TFTP firmware server
+ TFTP server with recursive search files by md5 checksum (in *.md5 files)
+Depends: libstdc++6 (>= 8.4)
+Installed-Size: 
+Priority: optional
+Origin: https://github.com/shvit/server_fw

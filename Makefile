@@ -1,15 +1,18 @@
-APP=server_fw
-TST=test
+APP:=server_fw
+TST:=test
+VER:=0.2
 
-DIR_SRC=source
-DIR_OBJ=bin
-DIR_TST=tests
-DIR_DOC=doc
-DIR_LOG=$(DIR_DOC)/log
+DIR_SRC:=source
+DIR_OBJ:=bin
+DIR_TST:=tests
+DIR_DOC:=doc
+DIR_LOG:=$(DIR_DOC)/log
+DIR_PKG:=package
 
 APP_FILE:=$(DIR_OBJ)/$(APP)
-TST_FILE="$(DIR_OBJ)/$(TST)"
-DOC_FILE="$(DIR_DOC)/$(APP).pdf"
+TST_FILE:="$(DIR_OBJ)/$(TST)"
+DOC_FILE:="$(DIR_DOC)/$(APP).pdf"
+PKG:=$(APP)_$(VER)-1_amd64.deb
 
 OBJ_APP=$(patsubst $(DIR_SRC)/%.cpp,$(DIR_OBJ)/%.o,$(wildcard $(DIR_SRC)/*.cpp))
 OBJ_TST=$(patsubst $(DIR_SRC)/$(DIR_TST)/%.cpp,$(DIR_OBJ)/$(DIR_TST)/%.o,$(wildcard $(DIR_SRC)/$(DIR_TST)/*.cpp))
@@ -79,15 +82,46 @@ $(DOC_FILE): $(wildcard $(DIR_SRC)/*) Doxyfile | dir_doc
 
 doc: $(DOC_FILE)
 
-install: $(APP_FILE)
-	@sudo $(DIR_SRC)/install.sh allauto
+install: $(PKG)
+	@echo "Installing $(APP) ..."
+	@sudo dpkg -i $(PKG)
 	
 uninstall:
-	@sudo $(DIR_SRC)/install.sh remove
+	@echo "Uninstalling $(APP) ..."
+	@sudo dpkg -r $(subst _,-,$(APP))
+
+deb_pre: clean release
+	@echo "Deb-package prepare files"
+	@# directorties
+	@mkdir -p $(DIR_PKG)
+	@mkdir -p $(DIR_PKG)/etc/default
+	@mkdir -p $(DIR_PKG)/etc/init.d
+	@mkdir -p $(DIR_PKG)/etc/rsyslog.d
+	@mkdir -p $(DIR_PKG)/usr/sbin
+	@# copy files
+	@cp -r $(DIR_SRC)/DEBIAN $(DIR_PKG)
+	@cp $(APP_FILE) $(DIR_PKG)/usr/sbin
+	@mv $(DIR_PKG)/DEBIAN/default $(DIR_PKG)/etc/default/$(APP)
+	@mv $(DIR_PKG)/DEBIAN/rsyslog $(DIR_PKG)/etc/rsyslog.d/$(APP).conf
+	@cp $(DIR_SRC)/daemon.init $(DIR_PKG)/etc/init.d/$(APP)
+
+$(PKG): deb_pre
+ifeq (,$(strip $(shell which md5sum)))
+  $(error "No md5sum found in PATH, consider doing 'sudo apt-get install ucommon-utils'")
+endif
+	@echo "Deb-package calc md5 sums"
+	@cd $(DIR_PKG); md5sum $(patsubst $(DIR_PKG)/%,%,$(shell find $(DIR_PKG) \( -path '$(DIR_PKG)/DEBIAN'  \) -prune -o -type f -print)) > DEBIAN/md5sums
+	@# make deb
+	@echo "Deb-package making result"
+	@fakeroot dpkg-deb --build $(DIR_PKG) > /dev/null
+	@mv $(DIR_PKG).deb $(PKG)
+
+deb: $(PKG)
 
 clean:
 	@rm -rf $(DIR_OBJ)
 	@rm -rf $(DIR_DOC)
-	@rm -rf test_directory_*
+	@rm -rf $(DIR_PKG)
+	@rm -f *.deb
 
-.PHONY: all clean dir_obj dir_obj_tst dir_doc show doc check check_full release install uninstall
+.PHONY: all clean dir_obj dir_obj_tst dir_doc show doc check check_full release install uninstall deb deb_pre

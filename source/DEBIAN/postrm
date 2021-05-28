@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -e
+set -u
+set -E # let shell functions inherit ERR trap
+trap err_handler 1 2 3 15 ERR
+
+function err_handler {
+  local exit_status=${1:-$?}
+  logger -s -p "syslog.err" -t "server-fw.deb" "postrm script '$0' error code $exit_status (line $BASH_LINENO: '$BASH_COMMAND')"
+  exit $exit_status
+}
+
+rm -f /var/log/server_fw.log
+
+exit 0

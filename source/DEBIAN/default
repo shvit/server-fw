@@ -1,0 +1,7 @@
+IP=0.0.0.0:69
+SYSLOG=6
+ROOT_DIR=/mnt/tftp
+SERACH=/mnt/backup
+FILE_CHUSER=tftp
+FILE_CHGRP=tftp
+FILE_CHMOD=0664
