@@ -150,9 +150,7 @@ bool Options::buffer_parse(
   // Init filename
   if(ret)
   {
-    filename_ = std::move(buf.get_string(
-        curr_pos,
-        buf_size-curr_pos));
+    filename_ = buf.get_string(curr_pos, buf_size-curr_pos);
     if((ret = (filename_.size() > 0U)))
     {
       OPT_L_INF("Recognize filename '"+filename_+"'");
@@ -167,9 +165,7 @@ bool Options::buffer_parse(
   // Init TFTP transfer mode
   if(ret)
   {
-    std::string curr_mod = std::move(buf.get_string(
-        curr_pos,
-        buf_size-curr_pos));
+    std::string curr_mod = buf.get_string(curr_pos, buf_size-curr_pos);
     if((ret = (curr_mod.size() > 0U)))
     {
       do_lower(curr_mod);

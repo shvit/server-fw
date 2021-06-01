@@ -1,6 +1,6 @@
 APP:=server-fw
 TST:=test
-VER:=0.2
+VER:=0.2.0
 
 DIR_SRC:=source
 DIR_OBJ:=bin
@@ -13,7 +13,7 @@ APP_FILE:=$(DIR_OBJ)/$(APP)
 TST_FILE:="$(DIR_OBJ)/$(TST)"
 DOC_FILE:="$(DIR_DOC)/$(APP).pdf"
 PKG:=$(APP)_$(VER)-1_amd64.deb
-DIR_PKG_DEB:=debian
+DIR_PKG_DEB:=DEBIAN
 
 OBJ_APP=$(patsubst $(DIR_SRC)/%.cpp,$(DIR_OBJ)/%.o,$(wildcard $(DIR_SRC)/*.cpp))
 OBJ_TST=$(patsubst $(DIR_SRC)/$(DIR_TST)/%.cpp,$(DIR_OBJ)/$(DIR_TST)/%.o,$(wildcard $(DIR_SRC)/$(DIR_TST)/*.cpp))

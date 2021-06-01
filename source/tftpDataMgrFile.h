@@ -81,18 +81,25 @@ public:
 
   /** \brief Default constructor
    *
-   *  No public construct.
-   *  Construct allowed only from friend Session
+   *  No need public construct. Construct allowed only from Session
    */
   DataMgrFile();
 
-  DataMgrFile(DataMgrFile &&) = default;
+  DataMgrFile(const DataMgrFile &) = delete; ///< Deleted/unused
 
-  DataMgrFile & operator=(DataMgrFile &&) = default;
+  DataMgrFile(DataMgrFile &) = delete; ///< Deleted/unused
+
+  DataMgrFile(DataMgrFile &&) = delete; ///< Deleted/unused
+
+  DataMgrFile & operator=(const DataMgrFile &) = delete; ///< Deleted/unused
+
+  DataMgrFile & operator=(DataMgrFile &) = delete; ///< Deleted/unused
+
+  DataMgrFile & operator=(DataMgrFile &&) = delete; ///< Deleted/unused
 
   /** Destructor
    */
-  virtual ~DataMgrFile();
+  virtual ~DataMgrFile() override;
 
   /** Check active (opened stream)
    *
