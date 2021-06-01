@@ -13,6 +13,7 @@ APP_FILE:=$(DIR_OBJ)/$(APP)
 TST_FILE:="$(DIR_OBJ)/$(TST)"
 DOC_FILE:="$(DIR_DOC)/$(APP).pdf"
 PKG:=$(APP)_$(VER)-1_amd64.deb
+DIR_PKG_DEB:=DEBIAN
 
 OBJ_APP=$(patsubst $(DIR_SRC)/%.cpp,$(DIR_OBJ)/%.o,$(wildcard $(DIR_SRC)/*.cpp))
 OBJ_TST=$(patsubst $(DIR_SRC)/$(DIR_TST)/%.cpp,$(DIR_OBJ)/$(DIR_TST)/%.o,$(wildcard $(DIR_SRC)/$(DIR_TST)/*.cpp))
@@ -99,18 +100,18 @@ deb_pre: clean release
 	@mkdir -p $(DIR_PKG)/etc/rsyslog.d
 	@mkdir -p $(DIR_PKG)/usr/sbin
 	@# copy files
-	@cp -r $(DIR_SRC)/DEBIAN $(DIR_PKG)
+	@cp -r $(DIR_SRC)/$(DIR_PKG) $(DIR_PKG)/$(DIR_PKG_DEB)
 	@cp $(APP_FILE) $(DIR_PKG)/usr/sbin
-	@mv $(DIR_PKG)/DEBIAN/default $(DIR_PKG)/etc/default/$(APP)
-	@mv $(DIR_PKG)/DEBIAN/rsyslog $(DIR_PKG)/etc/rsyslog.d/$(APP).conf
-	@cp $(DIR_SRC)/daemon.init $(DIR_PKG)/etc/init.d/$(APP)
+	@mv $(DIR_PKG)/$(DIR_PKG_DEB)/default $(DIR_PKG)/etc/default/$(APP)
+	@mv $(DIR_PKG)/$(DIR_PKG_DEB)/rsyslog $(DIR_PKG)/etc/rsyslog.d/$(APP).conf
+	@mv $(DIR_PKG)/$(DIR_PKG_DEB)/daemon.init $(DIR_PKG)/etc/init.d/$(APP)
 
 $(PKG): deb_pre
 ifeq (,$(strip $(shell which md5sum)))
   $(error "No md5sum found in PATH, consider doing 'sudo apt-get install ucommon-utils'")
 endif
 	@echo "Deb-package calc md5 sums"
-	@cd $(DIR_PKG); md5sum $(patsubst $(DIR_PKG)/%,%,$(shell find $(DIR_PKG) \( -path '$(DIR_PKG)/DEBIAN'  \) -prune -o -type f -print)) > DEBIAN/md5sums
+	@cd $(DIR_PKG); md5sum $(patsubst $(DIR_PKG)/%,%,$(shell find $(DIR_PKG) \( -path '$(DIR_PKG)/$(DIR_PKG_DEB)'  \) -prune -o -type f -print)) > $(DIR_PKG_DEB)/md5sums
 	@# make deb
 	@echo "Deb-package making result"
 	@fakeroot dpkg-deb --build $(DIR_PKG) > /dev/null
