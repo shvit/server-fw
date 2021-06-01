@@ -3,7 +3,7 @@
 ## Intro
 
 This TFTP firmware server wonderful used in embedded firmware development.<br>
-When you have many firmware shapshots for complex testing (regression, functional, etc).<br>
+When you have many firmware snapshots for complex testing (regression, functional, etc).<br>
 You don't operate file names or directories of firmware, no, now only its md5 sums.
 
 ## Futures
@@ -38,14 +38,16 @@ sudo apt-get install libssl-dev
 1. Get sources 
 <pre>
 mkdir server-fw
-git clone git@github.com:shvit/server_fw.git -b master server-fw
+git clone git@github.com:shvit/server-fw.git -b server-fw
 </pre>
 
-2. Make binary file
+2. Make binary file (you can skip this and go to 3)
 <pre>
 cd server-fw
 make release
 </pre>
+Type "bin/server-fw -h" for server settings in help information<br>
+<br>
 
 3. Disable any listening 69 port other executables
 <pre>

@@ -10,7 +10,7 @@ function err_handler {
   exit $exit_status
 }
 
-if [ $(ps -ef|grep -v grep|sbin\/server-fw|wc -l) -ne 0 ]; then
+if [ $(ps -ef|grep -v grep|grep sbin\/server-fw|wc -l) -ne 0 ]; then
   service server-fw stop 
   sleep 1
 fi 

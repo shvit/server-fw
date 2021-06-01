@@ -8,4 +8,4 @@ Description: TFTP firmware server
 Depends: libstdc++6 (>= 8.4)
 Installed-Size: 
 Priority: optional
-Origin: https://github.com/shvit/server_fw
+Origin: https://github.com/shvit/server-fw
