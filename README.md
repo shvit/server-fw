@@ -37,13 +37,13 @@ sudo apt-get install libssl-dev
 
 1. Get sources 
 <pre>
-mkdir server_fw
-git clone git@github.com:shvit/server_fw.git -b master server_fw
+mkdir server-fw
+git clone git@github.com:shvit/server_fw.git -b master server-fw
 </pre>
 
 2. Make binary file
 <pre>
-cd server_fw
+cd server-fw
 make release
 </pre>
 
@@ -78,7 +78,7 @@ Profit!
 
 ## Uninstall
 
-For uninstall <b>server_fw</b>
+For uninstall <b>server-fw</b>
 <pre>
 make uninstall
 </pre>
@@ -97,4 +97,4 @@ e-mail: vitaliy.shirinkin@gmail.com
 
 v0.2 Release with many fixes and futures, 2021
 
-v0.1 First release of <b>server_fw</b>, 2019
+v0.1 First release of <b>server-fw</b>, 2019

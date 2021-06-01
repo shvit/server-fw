@@ -27,7 +27,7 @@ using VecMD5 = std::vector<char[MD5_DIGEST_LENGTH]>;
 namespace unit_tests
 {
   /// Base temp directory preamble
-  constexpr std::string_view local_test_dir ="server_fw_test_data";
+  constexpr std::string_view local_test_dir ="server-fw_test_data";
 
   /// Sizes of test files generated in unit-tests
   constexpr std::array<size_t, 10U> file_sizes

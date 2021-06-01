@@ -10,6 +10,6 @@ function err_handler {
   exit $exit_status
 }
 
-rm -f /var/log/server_fw.log
+rm -f /var/log/server-fw.log
 
 exit 0

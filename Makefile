@@ -1,4 +1,4 @@
-APP:=server_fw
+APP:=server-fw
 TST:=test
 VER:=0.2
 

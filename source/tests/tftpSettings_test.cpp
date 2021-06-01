@@ -63,7 +63,7 @@ START_ITER("load options IPv4");
 {
   const char * tst_args[]=
   {
-    "./server_fw",
+    "./server-fw",
     "--daemon",
     "--syslog", "7",
     "--ip", "1.1.1.1:7777",
@@ -116,7 +116,7 @@ START_ITER("load options IPv6");
 {
   const char * tst_args[]=
   {
-    "./server_fw",
+    "./server-fw",
     "--ip", "[fe80::1]:65000",
     "--root-dir", "/mnt/tftp",
   };

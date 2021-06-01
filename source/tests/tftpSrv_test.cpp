@@ -59,7 +59,7 @@ UNIT_TEST_CASE_BEGIN(Srv, "Server main check")
       listen_addr.cbegin(),
       listen_addr.cend());
 
-  const char * tst_arg[]={ "./server_fw",
+  const char * tst_arg[]={ "./server-fw",
                            "--syslog", "0",
                            "--ip", addr_str.c_str(),
                            "--root-dir", local_dir.c_str() };

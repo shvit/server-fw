@@ -1,2 +1,2 @@
-/etc/default/server_fw
-/etc/rsyslog.d/server_fw.conf
+/etc/default/server-fw
+/etc/rsyslog.d/server-fw.conf

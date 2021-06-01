@@ -35,8 +35,8 @@ public:
 
 UNIT_TEST_CASE_BEGIN(md5_check, "check match_md5()")
 
-  TEST_CHECK_FALSE(DataMgr_test{}.match_md5("server_fw"));
-  TEST_CHECK_FALSE(DataMgr_test{}.match_md5("server_fw.md5"));
+  TEST_CHECK_FALSE(DataMgr_test{}.match_md5("server-fw"));
+  TEST_CHECK_FALSE(DataMgr_test{}.match_md5("server-fw.md5"));
   TEST_CHECK_FALSE(DataMgr_test{}.match_md5("2fdf093688bb7cef7c05b1ffcc71ff4z"));
   TEST_CHECK_FALSE(DataMgr_test{}.match_md5("2fdf093688bb7cef7c05b1ffcc71ff4z.md5"));
   TEST_CHECK_FALSE(DataMgr_test{}.match_md5("2fdf093688bb7cef7c05b 1ffcc71ff4e"));

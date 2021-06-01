@@ -1,5 +1,5 @@
 /**
- * \file server_fw.cpp
+ * \file server-fw.cpp
  * \brief TFTP server application
  *
  *  TFTP server application
@@ -30,7 +30,7 @@ int main(int argc, char* argv[])
 
   int exit_code = fake_exit_code;
 
-  openlog("server_fw", LOG_NDELAY, LOG_DAEMON); // LOG_PID
+  openlog("server-fw", LOG_NDELAY, LOG_DAEMON); // LOG_PID
 
   tftp::Srv server;
 
