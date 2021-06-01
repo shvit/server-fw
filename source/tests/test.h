@@ -2,7 +2,9 @@
  * \file test.h
  * \brief Unit test base help definitions
  *
- *  \date   01-dec-2019
+ *  License GPL-3.0
+ *
+ *  \date 29-may-2021
  *  \author Vitaliy Shirinkin, e-mail: vitaliy.shirinkin@gmail.com
  */
 
@@ -12,34 +14,86 @@
 #include <boost/test/unit_test.hpp>
 #include <iostream>
 #include <openssl/md5.h>
+#include <experimental/filesystem>
+
+using namespace std::experimental;
+
+using Path = filesystem::path;
+
+using VecMD5 = std::vector<char[MD5_DIGEST_LENGTH]>;
 
 //------------------------------------------------------------------------------
 
 namespace unit_tests
 {
+  /// Base temp directory preamble
+  constexpr std::string_view local_test_dir ="server-fw_test_data";
 
-  extern size_t test_counter_iter;
+  /// Sizes of test files generated in unit-tests
+  constexpr std::array<size_t, 10U> file_sizes
+  {
+    0U,
+    1U,
+    511U,
+    512U,
+    513U,
+    1023U,
+    1024U,
+    1025U,
+    67107840U, // 65535 * 1024
+    67108865U, // (65536 * 1024)+1
+  };
+
+  /// Unit-tests global counter checks
   extern size_t test_counter_check;
+
+  /// Unit-tests global iteration counter
+  extern size_t test_counter_iter;
+
   extern std::string mainMessage;
 
-  extern bool tmp_dir_created;
-  extern std::string tmp_dir;
-  extern std::vector<size_t> file_sizes;
-  extern std::vector<char[MD5_DIGEST_LENGTH]> file_md5;
+  /// Temporary local dirctory for tests
+  extern filesystem::path local_dir;
 
-  void files_delete();
+  /// MD5 sum for generated files from 'file_sizes'
+  extern VecMD5 file_md5;
 
-  bool temp_directory_create();
+  /** \brief Check variable 'local_dir' and fill it
+   *
+   *  Rule name: local_test_dir + directory separator + Number
+   *  \return True if directory created/exist, else false
+   */
+  bool check_local_directory();
 
+  /** \brief Common fill test data algorithm
+   *
+   *  \param [in] addr Address of buffer
+   *  \param [in] size Data size for fill
+   *  \param [in] position Offset at buffer
+   *  \param [in] file_id ID of file (number)
+   */
   void fill_buffer(
       char * addr,
-      size_t size,
-      size_t position,
-      size_t file_id);
+      const size_t & size,
+      const size_t & position,
+      const size_t & file_id);
 
-  std::string md5_as_str(const char * addr);
+  /** \brief Convert buffer addr
+   *
+   *  Danger! Buffer size need >= MD5_DIGEST_LENGTH
+   *  For nullptr return ""
+   *  \peram [in] addr Address of buffer
+   *  \return String
+   */
+  auto md5_as_str(const char * addr) -> std::string;
 
-} 
+  /** \brief Delete temp files and directory
+   *
+   *  Using path from 'local_dir'
+   */
+  void files_delete();
+
+}
 
 //------------------------------------------------------------------------------
 

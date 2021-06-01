@@ -1,8 +1,13 @@
-/*
- * tftpBase_test.cpp
+/**
+ * \file tftpBase_test.cpp
+ * \brief TFTP Base class unit-tests
  *
- *  Created on: 13 апр. 2021 г.
- *      Author: svv
+ *  License GPL-3.0
+ *
+ *  \date 29-may-2021
+ *  \author Vitaliy Shirinkin, e-mail: vitaliy.shirinkin@gmail.com
+ *
+ *  \version 0.2
  */
 
 #include <netinet/in.h>
@@ -14,8 +19,9 @@
 
 UNIT_TEST_SUITE_BEGIN(Base)
 
+//------------------------------------------------------------------------------
 
-class tst_Base: public tftp::Base
+class Base_test: public tftp::Base
 {
 public:
   using tftp::Base::settings_;
@@ -25,12 +31,10 @@ public:
 
 UNIT_TEST_CASE_BEGIN(main, "")
 
-  tst_Base b;
+  Base_test b;
 
 START_ITER("Default values")
 {
-  //std::cout << " * '" << b.settings_->retransmit_count_ << "'" << std::endl;
-
   TEST_CHECK_TRUE(b.get_root_dir() == "");
   TEST_CHECK_TRUE(b.get_lib_name_fb() == tftp::constants::default_fb_lib_name);
   TEST_CHECK_FALSE(b.get_is_daemon());

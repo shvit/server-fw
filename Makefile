@@ -1,15 +1,19 @@
-APP=server_fw
-TST=test
+APP:=server-fw
+TST:=test
+VER:=0.2.0
 
-DIR_SRC=source
-DIR_OBJ=bin
-DIR_TST=tests
-DIR_DOC=doc
-DIR_LOG=$(DIR_DOC)/log
+DIR_SRC:=source
+DIR_OBJ:=bin
+DIR_TST:=tests
+DIR_DOC:=doc
+DIR_LOG:=$(DIR_DOC)/log
+DIR_PKG:=package
 
 APP_FILE:=$(DIR_OBJ)/$(APP)
-TST_FILE="$(DIR_OBJ)/$(TST)"
-DOC_FILE="$(DIR_DOC)/$(APP).pdf"
+TST_FILE:="$(DIR_OBJ)/$(TST)"
+DOC_FILE:="$(DIR_DOC)/$(APP).pdf"
+PKG:=$(APP)_$(VER)-1_amd64.deb
+DIR_PKG_DEB:=DEBIAN
 
 OBJ_APP=$(patsubst $(DIR_SRC)/%.cpp,$(DIR_OBJ)/%.o,$(wildcard $(DIR_SRC)/*.cpp))
 OBJ_TST=$(patsubst $(DIR_SRC)/$(DIR_TST)/%.cpp,$(DIR_OBJ)/$(DIR_TST)/%.o,$(wildcard $(DIR_SRC)/$(DIR_TST)/*.cpp))
@@ -18,25 +22,25 @@ DEPS:=$(OBJ_APP:.o=.d) $(OBJ_TST:.o=.d)
 
 BASE_CFLAGS := $(CFLAGS) -Wall -fPIC -std=c++17 -pthread -pedantic -MMD 
 CFLAGS = $(BASE_CFLAGS) -g -O0
-LDFLAGS += -lstdc++ -lpthread -ldl
+LDFLAGS += -lstdc++ -lpthread -ldl -lstdc++fs
 
 all: $(APP_FILE)
 
 -include $(DEPS)
 
 check: $(TST_FILE)
-	@./$(TST_FILE) --run_test=\!Srv/Case_Srv --run_test=\!DataMgr/Case_main
+	@./$(TST_FILE) --run_test=\!Srv/Case_Srv --run_test=\!DataMgr/Case_files_check
 
 check_full: $(TST_FILE)
 	@./$(TST_FILE)
 
-directories_obj:
+dir_obj:
 	@mkdir -p $(DIR_OBJ)
 
-directories_obj_tst: directories_obj
+dir_obj_tst: dir_obj
 	@mkdir -p $(DIR_OBJ)/$(DIR_TST)
 
-directories_doc:
+dir_doc:
 	@mkdir -p $(DIR_DOC)
 	@mkdir -p $(DIR_LOG)
 
@@ -46,11 +50,11 @@ release: $(APP_FILE)
 	@echo "Strip file '$<'"
 	@strip $(APP_FILE)
 
-$(DIR_OBJ)/%.o: $(DIR_SRC)/%.cpp | directories_obj
+$(DIR_OBJ)/%.o: $(DIR_SRC)/%.cpp | dir_obj
 	@echo "Compile module $@"
 	@$(CXX) -c $(CFLAGS) $< -o $@
 
-$(DIR_OBJ)/$(DIR_TST)/%.o: $(DIR_SRC)/$(DIR_TST)/%.cpp | directories_obj_tst
+$(DIR_OBJ)/$(DIR_TST)/%.o: $(DIR_SRC)/$(DIR_TST)/%.cpp | dir_obj_tst
 	@echo "Compile tests module $@"
 	@$(CXX) -c $(CFLAGS) -Wno-self-assign-overloaded -Wno-self-move $< -o $@
 
@@ -70,7 +74,7 @@ show:
 	@echo "Deps:"
 	@echo "$(strip $(DEPS))"|sed 's/ /\n/g'|sed 's/^/  /'|sort
 
-$(DOC_FILE): $(wildcard $(DIR_SRC)/*) Doxyfile | directories_doc
+$(DOC_FILE): $(wildcard $(DIR_SRC)/*) Doxyfile | dir_doc
 	@echo "Documentation (1/2) prepare ..."
 	@doxygen 1> $(DIR_LOG)/doxygen.log 2>&1
 	@echo "Documentation (2/2) generate ..."
@@ -79,15 +83,46 @@ $(DOC_FILE): $(wildcard $(DIR_SRC)/*) Doxyfile | directories_doc
 
 doc: $(DOC_FILE)
 
-install: $(APP_FILE)
-	@sudo $(DIR_SRC)/install.sh allauto
+install: $(PKG)
+	@echo "Installing $(APP) ..."
+	@sudo dpkg -i $(PKG)
 	
 uninstall:
-	@sudo $(DIR_SRC)/install.sh remove
+	@echo "Uninstalling $(APP) ..."
+	@sudo dpkg -r $(subst _,-,$(APP))
+
+deb_pre: clean release
+	@echo "Deb-package prepare files"
+	@# directorties
+	@mkdir -p $(DIR_PKG)
+	@mkdir -p $(DIR_PKG)/etc/default
+	@mkdir -p $(DIR_PKG)/etc/init.d
+	@mkdir -p $(DIR_PKG)/etc/rsyslog.d
+	@mkdir -p $(DIR_PKG)/usr/sbin
+	@# copy files
+	@cp -r $(DIR_SRC)/$(DIR_PKG) $(DIR_PKG)/$(DIR_PKG_DEB)
+	@cp $(APP_FILE) $(DIR_PKG)/usr/sbin
+	@mv $(DIR_PKG)/$(DIR_PKG_DEB)/default $(DIR_PKG)/etc/default/$(APP)
+	@mv $(DIR_PKG)/$(DIR_PKG_DEB)/rsyslog $(DIR_PKG)/etc/rsyslog.d/$(APP).conf
+	@mv $(DIR_PKG)/$(DIR_PKG_DEB)/daemon.init $(DIR_PKG)/etc/init.d/$(APP)
+
+$(PKG): deb_pre
+ifeq (,$(strip $(shell which md5sum)))
+  $(error "No md5sum found in PATH, consider doing 'sudo apt-get install ucommon-utils'")
+endif
+	@echo "Deb-package calc md5 sums"
+	@cd $(DIR_PKG); md5sum $(patsubst $(DIR_PKG)/%,%,$(shell find $(DIR_PKG) \( -path '$(DIR_PKG)/$(DIR_PKG_DEB)'  \) -prune -o -type f -print)) > $(DIR_PKG_DEB)/md5sums
+	@# make deb
+	@echo "Deb-package making result"
+	@fakeroot dpkg-deb --build $(DIR_PKG) > /dev/null
+	@mv $(DIR_PKG).deb $(PKG)
+
+deb: $(PKG)
 
 clean:
 	@rm -rf $(DIR_OBJ)
 	@rm -rf $(DIR_DOC)
-	@rm -rf test_directory_*
+	@rm -rf $(DIR_PKG)
+	@rm -f *.deb
 
-.PHONY: all clean directories_obj directories_obj_tst directories_doc show doc check release install uninstall
+.PHONY: all clean dir_obj dir_obj_tst dir_doc show doc check check_full release install uninstall deb deb_pre

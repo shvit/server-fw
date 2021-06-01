@@ -6,15 +6,16 @@
  *
  *  License GPL-3.0
  *
- *  \date   06-apr-2021
+ *  \date 29-may-2021
  *  \author Vitaliy Shirinkin, e-mail: vitaliy.shirinkin@gmail.com
  *
- *  \version 0.1
+ *  \version 0.2
  */
 
 #include <getopt.h>
 #include <syslog.h>
 #include <iostream>
+#include <regex>
 
 #include "tftpSettings.h"
 
@@ -44,7 +45,10 @@ Settings::Settings():
   dialect{constants::default_fb_dialect},
   use_syslog{constants::default_tftp_syslog_lvl},
   log_{nullptr},
-  retransmit_count_{constants::default_retransmit_count}
+  retransmit_count_{constants::default_retransmit_count},
+  file_chown_user{},
+  file_chown_grp{},
+  file_chmod{constants::default_file_chmod}
 {
   local_base_.set_family(AF_INET);
   local_base_.set_port(constants::default_tftp_port);
@@ -81,6 +85,9 @@ bool Settings::load_options(int argc, char * argv[])
       { "fb-dialect", required_argument, NULL,  0  }, // 12
       { "daemon",           no_argument, NULL,  0  }, // 13
       { "retransmit", required_argument, NULL,  0  }, // 14
+      { "file-chuser",required_argument, NULL,  0  }, // 15
+      { "file-chgrp", required_argument, NULL,  0  }, // 16
+      { "file-chmod", required_argument, NULL,  0  }, // 17
       { NULL,               no_argument, NULL,  0  }  // always last
   };
 
@@ -166,6 +173,20 @@ bool Settings::load_options(int argc, char * argv[])
           } catch (...) { };
         }
         break;
+      case 15: // --file-chuser
+        if(optarg) file_chown_user.assign(optarg);
+        break;
+      case 16: // --file-chgrp
+        if(optarg) file_chown_grp.assign(optarg);
+        break;
+      case 17: // --file-chmod
+        if(optarg)
+        {
+          std::string tmp_str{optarg};
+          std::size_t * pos=nullptr;
+          file_chmod = std::stoi(tmp_str, pos, 8);
+        }
+        break;
 
       } // case (for long option)
       break;
@@ -202,16 +223,22 @@ void Settings::out_help(std::ostream & stream, std::string_view app) const
   << "  --fb-role <role> Firebird access role" << std::endl
   << "  --fb-dialect <1...3> Firebird server dialect (default " << constants::default_fb_dialect << ")" << std::endl
   << "  --daemon Run as daemon" << std::endl
-  << "  --retransmit <N> Maximum retransmit count if fail" << std::endl;
+  << "  --retransmit <N> Maximum retransmit count if fail" << std::endl
+  << "  --file-chuser <user name> Set user owner for created files (default root)" << std::endl
+  << "  --file-chgrp <group name> Set group owner for created files (default root)" << std::endl
+  << "    Warning: if user/group not exist then use root" << std::endl
+  << "  --file-chmod <permissions> Set permissions for created files (default 0664)" << std::endl
+  << "    Warning: can set only r/w bits - maximum 0666; can't set x-bits and superbits" << std::endl;
 }
 
 // -----------------------------------------------------------------------------
 
 void Settings::out_id(std::ostream & stream) const
 {
-  stream << "Simple tftp firmware server 'server_fw' licensed GPL-3.0" << std::endl
+  stream << "Simple tftp firmware server 'server-fw' v0.2 licensed GPL-3.0" << std::endl
   << "(c) 2019-2021 Vitaliy.V.Shirinkin, e-mail: vitaliy.shirinkin@gmail.com" << std::endl;
 }
 
+// -----------------------------------------------------------------------------
 
 } // namespace tftp

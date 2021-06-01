@@ -1,150 +1,45 @@
 /**
- * \file tftp_data_mgr.h
- * \brief Data manager class header
+ * \file tftpDataMgr.h
+ * \brief Data manager abstract class header
  *
- *  Data manager class header
+ *  Base data manager class
  *
  *  License GPL-3.0
  *
- *  \date   01-dec-2019
+ *  \date 29-may-2021
  *  \author Vitaliy Shirinkin, e-mail: vitaliy.shirinkin@gmail.com
  *
- *  \version 0.1
+ *  \version 0.2
  */
 
-#ifndef SOURCE_TFTP_DATA_MGR_H_
-#define SOURCE_TFTP_DATA_MGR_H_
-
-#include <fstream>
+#ifndef SOURCE_TFTPIDATAMGR_H_
+#define SOURCE_TFTPIDATAMGR_H_
 
 #include "tftpCommon.h"
 #include "tftpBase.h"
 
+#include "tftpSmBufEx.h"
 
 namespace tftp
 {
 
 // -----------------------------------------------------------------------------
 
-/** \brief Data maange class
- *
- * Class with file stream operations.
- * Create/close/read/write streams.
- * Check root server directory.
- * In future: Check Firebird connection
- *
- */
 
-class DataMgr: public Base
+/** \brief Data manage abstract class
+ *
+ * Class with file/database stream operations.
+ * Create/close/read/write streams.
+ * For use need override abstract methods
+ */
+class DataMgr
 {
 protected:
+
   // Processing info
-  SrvReq     request_type_; ///< Request type
-  std::string fname_;        ///< Processed file name
-  std::string hash_;         ///< Hash of file (md5)
-
-  std::basic_istream<char> * ifs_;      ///< Input data stream
-  int                        ifs_mode_; ///< Input mode
-  ssize_t                    ifs_size_; ///< Input data size (known)
-  std::ofstream              ofs_;      ///< Output stream
-
-  /** \brief Callback error parsing to top level
-   */
-  std::function<void(const uint16_t, std::string_view)> set_error_;
-
-  /** \brief Check root directory
-   *
-   *  Check path exist and his type is directory.
-   *  /return True if root directory OK, else - false
-   */
-  bool check_root_dir();
-
-  /** \brief Check Firebird
-   *
-   *  Now disabled. Will work in future
-   *  /return True if Firebird client_library/database exist, else - false
-   */
-  bool check_fb();
-
-  /** /brief Check opened files
-   *
-   *  Check input or output stream.
-   *  /return True if exist opened/working streams, else - false
-   */
-  bool active_files() const;
-
-  /** \brief Check opened Firebird connection
-   *
-   *   Now disabled. Will work in future
-   *   /return True if Firebird connection opened, else - false
-   */
-  bool active_fb_connection();
-
-  /** Check requested filename is md5 sum
-   *
-   *  Match by regex.
-   *  /return 0-no; 1-pure md5; 2-md5 sum file
-   *
-   */
-  int is_md5();
-
-  /** \brief Recursive search file by md5
-   *
-   *  If finded OK, then fname_ has full filename with path.
-   *  \param [in] path Start search directory
-   *  \return True if file found, else - false
-   */
-  bool recursive_search_by_md5(const std::string & path);
-
-public:
-
-  /**  Constructor
-   */
-  DataMgr();
-  DataMgr(DataMgr &&) = default;
-
-  DataMgr & operator=(DataMgr &&) = default;
-
-  /** Destructor
-   */
-  virtual ~DataMgr();
-
-  /** Check active (opened streams or Firebird connection)
-   */
-  bool active();
-
-  /**  Initialize instance
-   *  \param [in] request_type Type tftp request
-   *  \param [in] fname Requested file name
-   *  \return True if initialize success, else - false
-   */
-  bool init(SrvReq request_type, std::string_view fname);
-
-  /** \brief Pull data from network (receive)
-   *
-   *  \param [in] buf_begin Block buffer - begin iterator
-   *  \param [in] buf_end Block buffer - end iterator
-   *  \param [in] position Position received block
-   *  \return 0 on success, -1 on error
-   */
-  ssize_t rx(Buf::iterator buf_begin,
-             Buf::iterator buf_end,
-             const Buf::size_type position);
-
-  /** \brief Push data to network (transmit)
-   *
-   *  \param [in] buf_begin Block buffer - begin iterator
-   *  \param [in] buf_end Block buffer - end iterator
-   *  \param [in] position Position transmitted block
-   *  \return Processed size, -1 on error
-   */
-  ssize_t tx(Buf::iterator buf_begin,
-             Buf::iterator buf_end,
-             const Buf::size_type position);
-
-  /**  Close all opened steams
-   */
-  void close();
+  SrvReq        request_type_; ///< Request type
+  size_t        file_size_;    ///< File size
+  fSetError     set_error_;    ///< Callback error parsing to top level
 
   /** \brief Forward error to top level
    *
@@ -156,19 +51,69 @@ public:
       const uint16_t e_cod,
       std::string_view e_msg) const;
 
-  /** \brief Check directory exist
+  /** Check requested value is md5 sum
    *
-   *  Common used method
-   *  \param [in] chk_dir Path
-   *  \return True if exist, or false
+   *  Match by regex used 'regex_template_md5'
+   *  /return True if md5, else - false
    */
-  bool check_directory(std::string_view chk_dir) const;
+  bool match_md5(const std::string & val) const;
 
-  friend class Session;
+public:
+
+  DataMgr();
+
+  /** \brief Destructor
+   */
+  virtual ~DataMgr();
+
+  /** Check active (opened stream) - abstract method
+   */
+  virtual bool active() const = 0;
+
+  /** \brief Initialize streams - abstract method
+   *
+   *  \param [in] sett Settings of tftp server
+   *  \param [in] cb_error Callback for error forward
+   *  \param [in] opt Options of tftp protocol
+   *  \return True on success, else - false
+   */
+  virtual bool init(
+      pSettings & sett,
+      fSetError cb_error,
+      const Options & opt) = 0;
+
+  /** \brief Write data stream operations - abstract method
+   *
+   *  \param [in] buf_begin Buffer begin iterator
+   *  \param [in] buf_end Buffer end iterator
+   *  \param [in] position Position received block (offset)
+   *  \return Processed size, -1 on error
+   */
+  virtual auto write(
+      SmBufEx::const_iterator buf_begin,
+      SmBufEx::const_iterator buf_end,
+      const size_t & position) -> ssize_t = 0;
+
+  /** \brief Read data stream operations - abstract method
+   *
+   *  \param [in] buf_begin Buffer begin iterator
+   *  \param [in] buf_end Buffer end iterator
+   *  \param [in] position Position transmitted block (offset)
+   *  \return Processed size, -1 on error
+   */
+  virtual auto read(
+      SmBufEx::iterator buf_begin,
+      SmBufEx::iterator buf_end,
+      const size_t & position) -> ssize_t = 0;
+
+  /**  Close all opened steams - abstract method
+   */
+  virtual void close() = 0;
+
 };
 
 // -----------------------------------------------------------------------------
 
 } // namespace tftp
 
-#endif /* SOURCE_TFTP_DATA_MGR_H_ */
+#endif /* SOURCE_TFTPIDATAMGR_H_ */

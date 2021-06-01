@@ -6,10 +6,10 @@
  *
  *  License GPL-3.0
  *
- *  \date   05-apr-2021
+ *  \date 29-may-2021
  *  \author Vitaliy Shirinkin, e-mail: vitaliy.shirinkin@gmail.com
  *
- *  \version 0.1
+ *  \version 0.2
  */
 
 #ifndef SOURCE_TFTPBASE_H_
@@ -200,6 +200,28 @@ public:
    *  \param [out] stream Output stream
    */
   void out_id(std::ostream & stream) const;
+
+  /** \brief get chmod value
+   *
+   *  Safe use
+   *  \return Value
+   */
+  int get_file_chmod() const;
+
+  /** \brief get chown user value
+   *
+   *  Safe use
+   *  \return User name
+   */
+  auto get_file_chown_user() const -> std::string;
+
+  /** \brief get chown group value
+   *
+   *  Safe use
+   *  \return Group name
+   */
+  auto get_file_chown_grp() const -> std::string;
+
 };
 
 // -----------------------------------------------------------------------------

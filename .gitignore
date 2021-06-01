@@ -3,4 +3,5 @@
 .settings/
 bin/
 doc/
-test_directory_*
+package/
+*.deb

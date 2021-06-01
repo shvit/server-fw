@@ -6,10 +6,10 @@
  *
  *  License GPL-3.0
  *
- *  \date   05-apr-2021
+ *  \date 29-may-2021
  *  \author Vitaliy Shirinkin, e-mail: vitaliy.shirinkin@gmail.com
  *
- *  \version 0.1
+ *  \version 0.2
  */
 
 #include <unistd.h>
@@ -246,5 +246,27 @@ void Base::out_id(std::ostream & stream) const
 }
 
 // -----------------------------------------------------------------------------
+
+int Base::get_file_chmod() const
+{
+  auto lk = begin_shared(); // read lock
+
+  return settings_->file_chmod;
+}
+
+auto Base::get_file_chown_user() const -> std::string
+{
+  auto lk = begin_shared(); // read lock
+
+  return std::string{settings_->file_chown_user};
+}
+
+auto Base::get_file_chown_grp() const -> std::string
+{
+  auto lk = begin_shared(); // read lock
+
+  return std::string{settings_->file_chown_grp};
+}
+
 
 } // namespace tftp

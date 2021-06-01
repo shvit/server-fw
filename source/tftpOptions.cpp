@@ -4,10 +4,10 @@
  *
  *  License GPL-3.0
  *
- *  \date   16-apr-2021
+ *  \date 29-may-2021
  *  \author Vitaliy Shirinkin, e-mail: vitaliy.shirinkin@gmail.com
  *
- *  \version 0.1
+ *  \version 0.2
  */
 
 #include "tftpCommon.h"
@@ -106,6 +106,14 @@ bool Options::was_set_windowsize() const
   return std::get<0>(windowsize_);
 }
 
+bool Options::was_set_any() const
+{
+  return was_set_blksize() ||
+         was_set_timeout() ||
+         was_set_tsize() ||
+         was_set_windowsize();
+}
+
 //------------------------------------------------------------------------------
 
 #define OPT_L_INF(MSG) if(log != nullptr) L_INF(MSG);
@@ -124,7 +132,7 @@ bool Options::buffer_parse(
   size_t curr_pos=0U;
   if(ret)
   {
-    if(auto rq_type = buf.get_ntoh<int16_t>(curr_pos);
+    if(auto rq_type = buf.get_be<int16_t>(curr_pos);
        (ret = ret && ((rq_type == (int16_t)SrvReq::read) ||
                       (rq_type == (int16_t)SrvReq::write))))
     {
@@ -142,9 +150,7 @@ bool Options::buffer_parse(
   // Init filename
   if(ret)
   {
-    filename_ = std::move(buf.get_string(
-        curr_pos,
-        buf_size-curr_pos));
+    filename_ = buf.get_string(curr_pos, buf_size-curr_pos);
     if((ret = (filename_.size() > 0U)))
     {
       OPT_L_INF("Recognize filename '"+filename_+"'");
@@ -159,9 +165,7 @@ bool Options::buffer_parse(
   // Init TFTP transfer mode
   if(ret)
   {
-    std::string curr_mod = std::move(buf.get_string(
-        curr_pos,
-        buf_size-curr_pos));
+    std::string curr_mod = buf.get_string(curr_pos, buf_size-curr_pos);
     if((ret = (curr_mod.size() > 0U)))
     {
       do_lower(curr_mod);

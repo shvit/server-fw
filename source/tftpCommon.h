@@ -6,10 +6,10 @@
  *
  *  License GPL-3.0
  *
- *  \date   01-dec-2019
+ *  \date 29-may-2021
  *  \author Vitaliy Shirinkin, e-mail: vitaliy.shirinkin@gmail.com
  *
- *  \version 0.1
+ *  \version 0.2
  */
 
 #ifndef SOURCE_TFTP_COMMON_H_
@@ -33,15 +33,25 @@ class Base;
 
 class Srv;
 
-class session;
+class Session;
 
-class data_mgr;
+class DataMgr;
+
+using pDataMgr = std::unique_ptr<DataMgr>;
+
+class DataMgrFile;
 
 class Settings;
 
 using pSettings = std::shared_ptr<Settings>;
 
+class Options;
+
 using Buf = std::vector<char>;
+
+class SmBuf;
+
+class SmBufEx;
 
 // -----------------------------------------------------------------------------
 
@@ -87,12 +97,58 @@ enum class LogLvl: int
 
 // -----------------------------------------------------------------------------
 
+/** \brief SessionState
+ *
+ */
+enum class State: int
+{
+  need_init=0,
+  error_and_stop,
+  ack_options,
+  data_tx,
+  data_rx,
+  ack_tx,
+  ack_rx,
+  retransmit,
+  finish,
+};
+
+// -----------------------------------------------------------------------------
+
+enum class TripleResult: int
+{
+  nop=0, // no operation - good state
+  ok,    // ok processed - good state
+  fail,  // fail state
+};
+
+// -----------------------------------------------------------------------------
+
 /** \bief Callabck for custom logging message from server
  *
  *  \param [in] Logging level
  *  \param [in] Message text
  */
 using fLogMsg = std::function<void(const LogLvl, std::string_view)>;
+
+/** \brief Callback for function when set tftp error
+ *
+ *  \param [in] Error code
+ *  \param [in] Error message text
+ */
+using fSetError = std::function<void(const uint16_t, std::string_view)>;
+
+// -----------------------------------------------------------------------------
+
+/** \brief Any common constants
+ */
+namespace constants
+{
+
+  /// Template for match MD5 by regex
+  const std::string regex_template_md5{"([a-fA-F0-9]{32})"};
+
+}
 
 // -----------------------------------------------------------------------------
 
@@ -207,7 +263,56 @@ constexpr auto to_string(const LogLvl & val) -> std::string_view
   }
 }
 
+constexpr auto to_string(const State & val) -> std::string_view
+{
+  switch(val)
+  {
+    CASE_OPER_TO_STR_VIEW(need_init);
+    CASE_OPER_TO_STR_VIEW(error_and_stop);
+    CASE_OPER_TO_STR_VIEW(ack_options);
+    CASE_OPER_TO_STR_VIEW(data_tx);
+    CASE_OPER_TO_STR_VIEW(data_rx);
+    CASE_OPER_TO_STR_VIEW(ack_tx);
+    CASE_OPER_TO_STR_VIEW(ack_rx);
+    CASE_OPER_TO_STR_VIEW(retransmit);
+    CASE_OPER_TO_STR_VIEW(finish);
+    default: return "UNK_SESS_STATE";
+  }
+}
+
+constexpr auto to_string(const TripleResult & val) -> std::string_view
+{
+  switch(val)
+  {
+    CASE_OPER_TO_STR_VIEW(nop);
+    CASE_OPER_TO_STR_VIEW(ok);
+    CASE_OPER_TO_STR_VIEW(fail);
+    default: return "UNK_RES";
+  }
+}
+
 #undef CASE_OPER_TO_STR_VIEW
+
+// -----------------------------------------------------------------------------
+
+/** \brief Operator+ for use in make logging messages
+ *
+ *  Need conversion function 'to_string(T)'
+ *  \param [in] left Left string type operand
+ *  \param [in] right Right enum type operand
+ *  \return Result string
+ */
+template<typename T>
+auto operator+(std::string_view left, const T & right)
+//    -> std::enable_if_t<std::is_enum_v<T>, std::string>
+    -> std::enable_if_t<
+        !std::is_same_v<decltype(to_string(std::declval<T>())), void>,
+        std::string>
+{
+  std::string ret{left};
+  ret.append(to_string(right));
+  return ret;
+}
 
 // -----------------------------------------------------------------------------
 
@@ -239,6 +344,24 @@ void do_lower(std::string & val);
  *  \return True if string has digits only (len >= 1), else - false
  */
 bool is_digit_str(std::string_view val);
+
+// -----------------------------------------------------------------------------
+
+/** \brief Get UID by user name
+ *
+ *  If fail, return 0U (root UID)
+ *  \param [in] name User name
+ *  \return UID
+ */
+auto get_uid_by_name(const std::string & name) -> uid_t;
+
+/** \brief Get GID by group name
+ *
+ *  If fail, return 0U (root GID)
+ *  \param [in] name Group name
+ *  \return GID
+ */
+auto get_gid_by_name(const std::string & name) -> gid_t;
 
 // -----------------------------------------------------------------------------
 

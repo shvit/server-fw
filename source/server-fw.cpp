@@ -1,15 +1,15 @@
 /**
- * \file server_fw.cpp
+ * \file server-fw.cpp
  * \brief TFTP server application
  *
  *  TFTP server application
  *
  *  License GPL-3.0
  *
- *  \date   01-dec-2019
+ *  \date 29-may-2021
  *  \author Vitaliy Shirinkin, e-mail: vitaliy.shirinkin@gmail.com
  *
- *  \version 0.1
+ *  \version 0.2
  */
 
 #include <stdio.h>
@@ -30,15 +30,7 @@ int main(int argc, char* argv[])
 
   int exit_code = fake_exit_code;
 
-  //auto logger = [](const tftp::LogLvl level, std::string_view message)
-  //  {
-  //    if((int)level <= LOG_DEBUG)
-  //    {
-  //      std::cout << "<" << tftp::to_string(level) << "> " << message << std::endl; // << std::flush();
-  //    }
-  //  };
-
-  openlog("server_fw", LOG_NDELAY, LOG_DAEMON); // LOG_PID
+  openlog("server-fw", LOG_NDELAY, LOG_DAEMON); // LOG_PID
 
   tftp::Srv server;
 
@@ -57,7 +49,7 @@ int main(int argc, char* argv[])
       {
         if(!pid)
         { // daemon code
-          umask(0664);
+          umask(0);
           setsid();
           if(auto ret=chdir("/"); ret != 0)
           {

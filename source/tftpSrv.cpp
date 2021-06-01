@@ -6,10 +6,10 @@
  *
  *  License GPL-3.0
  *
- *  \date   01-dec-2019
+ *  \date 29-may-2021
  *  \author Vitaliy Shirinkin, e-mail: vitaliy.shirinkin@gmail.com
  *
- *  \version 0.1
+ *  \version 0.2
  */
 
 #include <string.h>
@@ -155,9 +155,6 @@ void Srv::main_loop()
           client_addr,
           pkt_buf,
           (size_t) bsize);
-
-      if(ret) ret = sss.init();
-        else L_ERR("Failed prepare session");
 
       if(ret)
       {

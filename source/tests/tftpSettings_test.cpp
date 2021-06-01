@@ -1,10 +1,14 @@
-/*
- * tftpSettings_test.cpp
+/**
+ * \file tftpSettings_test.cpp
+ * \brief Unit-tests for class Settings
  *
- *  Created on: 29 апр. 2021 г.
- *      Author: svv
+ *  License GPL-3.0
+ *
+ *  \date 29-may-2021
+ *  \author Vitaliy Shirinkin, e-mail: vitaliy.shirinkin@gmail.com
+ *
+ *  \version 0.2
  */
-
 
 #include "../tftpCommon.h"
 #include "../tftpSettings.h"
@@ -14,19 +18,24 @@ using namespace unit_tests;
 
 UNIT_TEST_SUITE_BEGIN(Settings)
 
-class tst_Settings: public tftp::Settings
+//------------------------------------------------------------------------------
+
+/** \brief Helper class for unit-test access to Settings protected field
+ */
+class Settings_test: public tftp::Settings
 {
 public:
   using Settings::Settings;
 };
 
+//------------------------------------------------------------------------------
 
 UNIT_TEST_CASE_BEGIN(parse_arg, "Parse CMD arguments")
 
 // 1
 START_ITER("default options");
 {
-  tst_Settings b;
+  Settings_test b;
   TEST_CHECK_FALSE(b.is_daemon);
   TEST_CHECK_TRUE(b.use_syslog == tftp::constants::default_tftp_syslog_lvl);
   TEST_CHECK_TRUE(b.local_base_.family() == AF_INET);
@@ -46,6 +55,7 @@ START_ITER("default options");
   TEST_CHECK_TRUE(b.role == "");
   TEST_CHECK_TRUE(b.dialect == 3U);
   TEST_CHECK_TRUE(b.retransmit_count_ == tftp::constants::default_retransmit_count);
+  TEST_CHECK_TRUE(b.file_chmod == tftp::constants::default_file_chmod);
 }
 
 // 2
@@ -53,7 +63,7 @@ START_ITER("load options IPv4");
 {
   const char * tst_args[]=
   {
-    "./server_fw",
+    "./server-fw",
     "--daemon",
     "--syslog", "7",
     "--ip", "1.1.1.1:7777",
@@ -68,10 +78,13 @@ START_ITER("load options IPv4");
     "--fb-dialect", "3",
     "--lib-dir", "/tmp/libs",
     "--lib-name", "fbclient",
-    "--retransmit", "59"
+    "--retransmit", "59",
+    "--file-chuser", "usr1",
+    "--file-chgrp", "grp2",
+    "--file-chmod", "0766",
   };
 
-  tst_Settings b;
+  Settings_test b;
   b.load_options(sizeof(tst_args)/sizeof(tst_args[0]),
                  const_cast<char **>(tst_args));
   TEST_CHECK_TRUE(b.is_daemon);
@@ -93,6 +106,9 @@ START_ITER("load options IPv4");
   TEST_CHECK_TRUE(b.role == "none");
   TEST_CHECK_TRUE(b.dialect == 3U);
   TEST_CHECK_TRUE(b.retransmit_count_ == 59U);
+  TEST_CHECK_TRUE(b.file_chown_user == "usr1");
+  TEST_CHECK_TRUE(b.file_chown_grp == "grp2");
+  TEST_CHECK_TRUE(b.file_chmod == 0766);
 }
 
 // 3
@@ -100,12 +116,12 @@ START_ITER("load options IPv6");
 {
   const char * tst_args[]=
   {
-    "./server_fw",
+    "./server-fw",
     "--ip", "[fe80::1]:65000",
     "--root-dir", "/mnt/tftp",
   };
 
-  tst_Settings b;
+  Settings_test b;
   b.load_options(sizeof(tst_args)/sizeof(tst_args[0]),
                  const_cast<char **>(tst_args));
   TEST_CHECK_FALSE(b.is_daemon);

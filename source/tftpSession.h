@@ -6,23 +6,20 @@
  *
  *  License GPL-3.0
  *
- *  \date   01-dec-2019
+ *  \date 29-may-2021
  *  \author Vitaliy Shirinkin, e-mail: vitaliy.shirinkin@gmail.com
  *
- *  \version 0.1
+ *  \version 0.2
  */
 
 #ifndef SOURCE_TFTP_SESSION_H_
 #define SOURCE_TFTP_SESSION_H_
 
 #include <atomic>
-#include <thread>
-#include <map>
-#include <optional>
 
 #include "tftpCommon.h"
+#include "tftpBase.h"
 #include "tftpDataMgr.h"
-#include "tftpSmBuf.h"
 #include "tftpOptions.h"
 #include "tftpAddr.h"
 
@@ -44,23 +41,19 @@ namespace tftp
 class Session: public Base
 {
 protected:
-  Addr         my_addr_;          ///< Self address
-  Addr         cl_addr_;          ///< Client socket address buffer
-  int          socket_;           ///< Socket
-  SmBuf        buf_tx_;           ///< Session buffer for TX operations
-  SmBuf        buf_rx_;           ///< Session buffer for RX operations
-  size_t       stage_;            ///< Stage
-  size_t       buf_tx_data_size_; ///< TX data size
-  time_t       oper_time_;        ///< Last remembered action time
-  uint16_t     oper_tx_count_;    ///< Transmit try count
-  bool         oper_wait_;        ///< Flag r/w state (mode)
-  size_t       oper_last_block_;  ///< Last (finish) block number
-  bool         stop_;             ///< Break loop request (when error, etc.)
-  std::atomic_bool finished_;     ///< External use flag: true when session finished
-  DataMgr      manager_;          ///< Data manager
-  uint16_t     error_code_;       ///< First error info - code
-  std::string  error_message_;    ///< First error info - message
-  Options      opt_;              ///< TFTP protocol options
+
+  // Properties
+  std::atomic<State> stat_;          ///< State machine
+  std::atomic_bool   finished_;      ///< Flag: true when session finished
+  Addr               my_addr_;       ///< Self server address
+  Addr               cl_addr_;       ///< Client address
+  int                socket_;        ///< Socket
+  size_t             stage_;         ///< Full (!) number of processed block
+  //DataMgr            manager_;       ///< Data manager
+  uint16_t           error_code_;    ///< First error info - code
+  std::string        error_message_; ///< First error info - message
+  Options            opt_;           ///< TFTP protocol options
+  pDataMgr           file_man_;
 
   /** \brief Main constructor
    *
@@ -70,56 +63,34 @@ protected:
 
   /** \brief Construct option acknowledge
    *
-   *  Construct tftp packet payload as option acknowledge
+   *  \param [in,out] buf Buffer for data packet
    */
-  void construct_opt_reply();
+  void construct_opt_reply(SmBufEx & buf);
 
   /** \brief Construct error block
    *
-   *  Construct tftp packet payload as error block
-   *  \param [in] e_code Error code
-   *  \param [in] e_msg Error message
+   *  Default use: code=0, message="Undefined error"
+   *  \param [in,out] buf Buffer for data packet
    */
-  void construct_error(const uint16_t e_code, std::string_view e_msg);
-
-  /** \brief Construct error block
-   *
-   *  Construct tftp packet payload as error block
-   *  Use error settings; default use {0, "Undefined error"}
-   */
-  void construct_error();
+  void construct_error(SmBufEx & buf);
 
   /** \brief Construct data block
    *
-   *  Construct tftp packet payload as data block
-   *  Fill buffer and set buf_tx_data_size_;
-   *  if can't do it then construct error block
+   *  \param [in,out] buf Buffer for data packet
    */
-  void construct_data();
+  void construct_data(SmBufEx & buf);
 
   /** \brief Construct data block acknowledge
    *
-   *  Construct tftp packet payload as acknowledge
-   *  Fill buffer and set buf_tx_data_size_
+   *  \param [in,out] buf Buffer for data packet
    */
-  void construct_ack();
+  void construct_ack(SmBufEx & buf);
 
   /** \brief Get tftp block size
    *
    *  \return Block size value
    */
-  uint16_t block_size() const;
-
-  /** \brief Check timeout passed
-   *
-   *  \param gandicap Gandicap for time check in seconds
-   *  \return True if timeout not out, else (time is out) - false
-   */
-  bool timeout_pass(const time_t gandicap = 0) const;
-
-  /** \brief Reset time counter
-   */
-  void timeout_reset();
+  auto block_size() const -> uint16_t;
 
   /** \brief Get current tftp block number
    *
@@ -127,7 +98,7 @@ protected:
    *  \param [in] step Step if need calculate next block number; default 0
    *  \return Block number value
    */
-  uint16_t blk_num_local(const uint16_t step = 0) const;
+  auto blk_num_local() const -> uint16_t;
 
   /** \brief Close session socket
    */
@@ -150,36 +121,44 @@ protected:
    */
   bool was_error();
 
-  /** \brief Check current stage is transmit
-   *
-   *  \return True if current stage is transmit, else return false
-   */
-  bool is_stage_transmit() const noexcept;
-
-  /** \brief Switch current stage to receive
-   */
-  void set_stage_receive() noexcept;
-
-  /** \brief Switch current stage to transmit
-   */
-  void set_stage_transmit() noexcept;
-
   /** \brief Try to receive packet if need
    *
    *  No wait - not blocking.
    *  \return True if continue loop, False for break loop
    */
-  bool transmit_no_wait();
+  bool transmit_no_wait(const SmBufEx & buf);
 
   /** \brief Try to receive packet if exist
    *
    *  No wait - not blocking.
    *  \return True if continue loop, False for break loop
    */
-  bool receive_no_wait();
+  auto receive_no_wait(SmBufEx & buf) -> TripleResult;
 
-  template<typename T>
-  void push_data(T && value);
+  /** \brief Switch state machine no new state
+   *
+   *  \param [in] new_state New state
+   *  \return True if success, else - false
+   */
+  bool switch_to(const State & new_state);
+
+  /** \brief Check current window is closed
+   *
+   *  \return True if closed window, else - false
+   */
+  bool is_window_close(const size_t & curr_stage) const;
+
+  /** \brief Step back one windowsize
+   *
+   *  \param [in,out] curr_stage Current full block number
+   */
+  void step_back_window(size_t & curr_stage);
+
+  /** \brief Option windowsize with type size_t
+   *
+   *  \return Value
+   */
+  auto windowsize() const -> size_t;
 
 public:
 
@@ -223,48 +202,27 @@ public:
       const SmBuf  & pkt_data,
       const size_t & pkt_data_size);
 
+  /** \brief Initialize sockets and bind port
+   *
+   *  Need call prepare() before use!
+   *  \return True if success, else - false
+   */
   bool init();
 
   /** \brief Main session loop
+   *
+   *  Need call prepare() and init() before use!
    */
   void run();
 
   /** \brief Checker finished session
    *
-   *   For external use
+   *  For external use (outside)
    *  \return Value from protected atomic value 'finished_'
    */
   bool is_finished() const;
 
 };
-
-// -----------------------------------------------------------------------------
-
-template<typename T>
-void Session::push_data(T && value)
-{
-  if constexpr (std::is_integral_v<T>)
-  {
-    if((buf_tx_data_size_ + sizeof(T)) <= buf_tx_.size())
-    {
-      buf_tx_data_size_ += buf_tx_.set_hton(buf_tx_data_size_, value);
-    }
-  }
-  else
-  if constexpr (std::is_constructible_v<std::string, T>)
-  {
-    std::string tmp_str{std::forward<T>(value)};
-
-    if((buf_tx_data_size_ + tmp_str.size()) <= buf_tx_.size())
-    {
-      buf_tx_data_size_ += buf_tx_.set_string(buf_tx_data_size_, tmp_str, true);
-    }
-  }
-  else // Never do it!
-  {
-    assert(false); // Wrong use push_data() - Does't support pushed type
-  }
-}
 
 // -----------------------------------------------------------------------------
 

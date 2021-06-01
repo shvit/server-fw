@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+USERNAME="tftp"
+set -e
+set -u
+set -E # let shell functions inherit ERR trap
+trap err_handler 1 2 3 15 ERR
+
+function err_handler {
+  local exit_status=${1:-$?}
+  logger -s -p "syslog.err" -t "server-fw.deb" "postinst script '$0' error code $exit_status (line $BASH_LINENO: '$BASH_COMMAND')"
+  exit $exit_status
+}
+
+if [ $(cat /etc/passwd|grep "^$USERNAME"|wc -l)  -eq 0 ]; then
+  sudo adduser --system --home /mnt/tftp --shell /usr/sbin/nologin --no-create-home --group $USERNAME 1> /dev/null 2>&1
+fi
+
+if [ $(ps -ef|grep -v grep|grep rsyslog|wc -l) -ne 0 ]; then
+  service rsyslog restart 
+  sleep 1
+fi 
+
+if [ $(netstat -lupn|grep :69|wc -l) -ne 0 ]; then
+  echo "Need stop listening 69 port apploications:"
+  netstat -lupn|grep :69
+  exit 1
+fi 
+
+systemctl --system daemon-reload >/dev/null || true
+sleep 2
+
+service server-fw start 
+sleep 1
+
+exit 0

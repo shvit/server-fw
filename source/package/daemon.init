@@ -3,7 +3,7 @@ if [ true != "$INIT_D_SCRIPT_SOURCED" ] ; then
     set "$0" "$@"; INIT_D_SCRIPT_SOURCED=true . /lib/init/init-d-script
 fi
 ### BEGIN INIT INFO
-# Provides:          server_fw
+# Provides:          server-fw
 # Required-Start:    $local_fs $remote_fs $syslog $network
 # Required-Stop:     $local_fs $remote_fs $syslog $network
 # Default-Start:     2 3 4 5
@@ -16,7 +16,7 @@ fi
 # Author: Vitaliy Shirinkin <vitaliy.shirinkin@gmail.com>
 # 2019
 
-NAME="server_fw"
+NAME="server-fw"
 DESC="tftp firmware server"
 
 DAEMON="/usr/sbin/$NAME"
@@ -76,6 +76,20 @@ d_start() {
       ARG="$ARG --search $dir"
     fi
   done
+
+  # File change owner - user
+  if [ ! -z "FILE_CHUSER" ]; then
+    ARG="$ARG --file-chuser $FILE_CHUSER"
+  fi
+  # File change owner - group
+  if [ ! -z "FILE_CHGRP" ]; then
+    ARG="$ARG --file-chgrp $FILE_CHGRP"
+  fi
+  # File change mod
+  if [ ! -z "FILE_CHMOD" ]; then
+    ARG="$ARG --file-chmod $FILE_CHMOD"
+  fi
+
 
   ARG="$ARG --daemon"
   /usr/bin/logger -p 1 "Arguments $NAME: $ARG"

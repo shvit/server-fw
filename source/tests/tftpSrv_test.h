@@ -1,16 +1,27 @@
+/**
+ * \file tftpSrv_test.h
+ * \brief Unit-tests for class Srv header file
+ *
+ *  License GPL-3.0
+ *
+ *  \date 29-may-2021
+ *  \author Vitaliy Shirinkin, e-mail: vitaliy.shirinkin@gmail.com
+ *
+ *  \version 0.2
+ */
+
 #ifndef SOURCE_TESTS_TFTPSRV_TEST_H_
 #define SOURCE_TESTS_TFTPSRV_TEST_H_
 
 #include "test.h"
 #include "../tftpSrv.h"
 #include "../tftpBase.h"
-//#include "../tftpCommon.h"
 
 namespace Srv
 {
 //------------------------------------------------------------------------------
 
-class test_helper: public tftp::Base
+class TestServer: public tftp::Base
 {
 public:
   static size_t indicator_value_;
@@ -68,11 +79,9 @@ private:
     return new_size;
   }
 
-
-
 public:
 
-  test_helper(
+  TestServer(
       char * loc_addr,
       size_t loc_size,
       char * srv_addr,
@@ -134,7 +143,7 @@ public:
     }
   };
 
-  ~test_helper() { if(socket_ > 0) close(socket_); };
+  ~TestServer() { if(socket_ > 0) close(socket_); };
 
   uint16_t             blk_size;
   tftp::Buf            a_local_;   // addr local (source)

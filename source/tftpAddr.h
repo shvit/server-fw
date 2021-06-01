@@ -4,10 +4,10 @@
  *
  *  License GPL-3.0
  *
- *  \date   22-apr-2021
+ *  \date 29-may-2021
  *  \author Vitaliy Shirinkin, e-mail: vitaliy.shirinkin@gmail.com
  *
- *  \version 0.1
+ *  \version 0.2
  */
 
 #ifndef SOURCE_TFTPADDR_H_

@@ -6,15 +6,18 @@
  *
  *  License GPL-3.0
  *
- *  \date   06-nov-2019
+ *  \date 29-may-2021
  *  \author Vitaliy Shirinkin, e-mail: vitaliy.shirinkin@gmail.com
  *
- *  \version 0.1
+ *  \version 0.2
  */
 
 #include <string>
 #include <arpa/inet.h>
 #include <numeric>
+#include <pwd.h>
+#include <grp.h>
+#include <unistd.h>
 
 #include "tftpCommon.h"
 
@@ -90,6 +93,52 @@ bool is_digit_str(std::string_view val)
       val.cend(),
       true,
       [](bool l, auto & c){ return l && std::isdigit(c); });
+}
+
+// -----------------------------------------------------------------------------
+
+auto get_uid_by_name(const std::string & name) -> uid_t
+{
+  auto bufsize = sysconf(_SC_GETPW_R_SIZE_MAX);
+  if(bufsize < 0) bufsize = 16384;
+
+  struct passwd pwd;
+  struct passwd *result;
+  Buf buffer(bufsize, 0);
+
+  getpwnam_r(
+      name.c_str(),
+      & pwd,
+      buffer.data(),
+      bufsize,
+      &result);
+
+  if(result == nullptr) return 0U;
+
+  return pwd.pw_uid;
+}
+
+// -----------------------------------------------------------------------------
+
+auto get_gid_by_name(const std::string & name) -> gid_t
+{
+  auto bufsize = sysconf(_SC_GETGR_R_SIZE_MAX);
+  if(bufsize < 0) bufsize = 16384;
+
+  struct group grp;
+  struct group *result;
+  Buf buffer(bufsize, 0);
+
+  getgrnam_r(
+      name.c_str(),
+      & grp,
+      buffer.data(),
+      bufsize,
+      &result);
+
+  if(result == nullptr) return 0U;
+
+  return grp.gr_gid;
 }
 
 // -----------------------------------------------------------------------------

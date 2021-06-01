@@ -4,10 +4,10 @@
  *
  *  License GPL-3.0
  *
- *  \date   13-apr-2021
+ *  \date 29-may-2021
  *  \author Vitaliy Shirinkin, e-mail: vitaliy.shirinkin@gmail.com
  *
- *  \version 0.1
+ *  \version 0.2
  */
 
 #include "test.h"
@@ -109,35 +109,35 @@ UNIT_TEST_CASE_BEGIN(check_get_set, "Check methods: set/get ntoh/raw")
   b.raw<int64_t>(0) = 0x0f0e0d0c0b0a0908;
 
   // ntoh
-  TEST_CHECK_TRUE( b.get_ntoh< int16_t>(0) == ( int16_t)0x0809);
-  TEST_CHECK_TRUE( b.get_ntoh< int16_t>(1) == ( int16_t)0x090a);
-  TEST_CHECK_TRUE(cb.get_ntoh< int16_t>(2) == ( int16_t)0x0a0b);
-  TEST_CHECK_TRUE(cb.get_ntoh< int16_t>(3) == ( int16_t)0x0b0c);
+  TEST_CHECK_TRUE( b.get_be< int16_t>(0) == ( int16_t)0x0809);
+  TEST_CHECK_TRUE( b.get_be< int16_t>(1) == ( int16_t)0x090a);
+  TEST_CHECK_TRUE(cb.get_be< int16_t>(2) == ( int16_t)0x0a0b);
+  TEST_CHECK_TRUE(cb.get_be< int16_t>(3) == ( int16_t)0x0b0c);
 
-  TEST_CHECK_TRUE(cb.get_ntoh< int32_t>(4) == ( int32_t)0x0c0d0e0f);
-  TEST_CHECK_TRUE(cb.get_ntoh< int64_t>(0) == ( int64_t)0x08090a0b0c0d0e0f);
+  TEST_CHECK_TRUE(cb.get_be< int32_t>(4) == ( int32_t)0x0c0d0e0f);
+  TEST_CHECK_TRUE(cb.get_be< int64_t>(0) == ( int64_t)0x08090a0b0c0d0e0f);
 
-  b.set_hton(0, (int16_t)0x1234);
-  TEST_CHECK_TRUE(b.get_ntoh< int16_t>(0U) == ( int16_t)0x1234);
-  TEST_CHECK_TRUE(b.get_ntoh< int16_t>(2U) == ( int16_t)0x0a0b);
-  b.set_hton(2, (int16_t)0x5678);
-  TEST_CHECK_TRUE(b.get_ntoh< int32_t>(0) == ( int32_t)0x12345678);
-  b.set_hton(4, (int32_t)0x90abcdef);
-  TEST_CHECK_TRUE(cb.get_ntoh< int64_t>(0) == ( int64_t)0x1234567890abcdef);
+  b.set_be(0, (int16_t)0x1234);
+  TEST_CHECK_TRUE(b.get_be< int16_t>(0U) == ( int16_t)0x1234);
+  TEST_CHECK_TRUE(b.get_be< int16_t>(2U) == ( int16_t)0x0a0b);
+  b.set_be(2, (int16_t)0x5678);
+  TEST_CHECK_TRUE(b.get_be< int32_t>(0) == ( int32_t)0x12345678);
+  b.set_be(4, (int32_t)0x90abcdef);
+  TEST_CHECK_TRUE(cb.get_be< int64_t>(0) == ( int64_t)0x1234567890abcdef);
 
   // raw
-  TEST_CHECK_TRUE(b.set_raw(0, (int64_t) 0x0f0e0d0c0b0a0908) == (ssize_t)sizeof(int64_t));
+  TEST_CHECK_TRUE(b.set_le(0, (int64_t) 0x0f0e0d0c0b0a0908) == (ssize_t)sizeof(int64_t));
 
-  TEST_CHECK_TRUE(cb.get_raw< int16_t>(0) == ( int16_t)0x0908);
-  TEST_CHECK_TRUE(cb.get_raw< int16_t>(1) == ( int16_t)0x0a09);
-  TEST_CHECK_TRUE(cb.get_raw< int16_t>(2) == ( int16_t)0x0b0a);
-  TEST_CHECK_TRUE(cb.get_raw< int16_t>(3) == ( int16_t)0x0c0b);
+  TEST_CHECK_TRUE(cb.get_le< int16_t>(0) == ( int16_t)0x0908);
+  TEST_CHECK_TRUE(cb.get_le< int16_t>(1) == ( int16_t)0x0a09);
+  TEST_CHECK_TRUE(cb.get_le< int16_t>(2) == ( int16_t)0x0b0a);
+  TEST_CHECK_TRUE(cb.get_le< int16_t>(3) == ( int16_t)0x0c0b);
 
   // check exception
-  CHK_EXCEPTION__INV_ARG(cb.get_ntoh <int8_t >(16));
-  CHK_EXCEPTION__INV_ARG(cb.get_raw <int16_t>(15));
-  CHK_EXCEPTION__INV_ARG( b.set_hton(16, (int8_t)1));
-  CHK_EXCEPTION__INV_ARG( b.set_raw(15, (int16_t)1));
+  CHK_EXCEPTION__INV_ARG(cb.get_be <int8_t >(16));
+  CHK_EXCEPTION__INV_ARG(cb.get_le <int16_t>(15));
+  CHK_EXCEPTION__INV_ARG( b.set_be(16, (int8_t)1));
+  CHK_EXCEPTION__INV_ARG( b.set_le(15, (int16_t)1));
 
   //
 UNIT_TEST_CASE_END
