@@ -1,6 +1,6 @@
 APP:=server-fw
 TST:=test
-VER:=0.2.0
+VER:=0.2.1
 
 DIR_SRC:=source
 DIR_OBJ:=bin

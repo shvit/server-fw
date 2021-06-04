@@ -1,5 +1,19 @@
+server-fw (0.2.1) unstable; urgency=medium
+
+  * bugfix: Cosmetic; rename config argument SERACH -> SEARCH 
+  
+  * feat: Add file HISTORY
+  
+-- Vitaliy Shirinkin <vitaliy.shirinkin@gmail.com>  04-jun-2021
+
 server-fw (0.2.0) stable; urgency=medium
 
   * First stable version
   
 -- Vitaliy Shirinkin <vitaliy.shirinkin@gmail.com>  29-may-2021
+
+server-fw (0.1.0) unstable; urgency=medium
+
+  * First version
+  
+-- Vitaliy Shirinkin <vitaliy.shirinkin@gmail.com>  08-jan-2020
