@@ -97,6 +97,4 @@ e-mail: vitaliy.shirinkin@gmail.com
 
 ## History
 
-v0.2 Release with many fixes and futures, 2021
-
-v0.1 First release of <b>server-fw</b>, 2019
+See HISTORY file in root directory.
