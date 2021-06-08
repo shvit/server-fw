@@ -36,9 +36,17 @@ sudo apt-get install libssl-dev
 ## How build and use
 
 1. Get sources 
+
+Get stable version
 <pre>
 mkdir server-fw
-git clone git@github.com:shvit/server-fw.git -b server-fw
+git clone https://github.com/shvit/server-fw.git -b master server-fw
+</pre>
+
+Get unstable develop version, but with latest futures (see at HISTORY file)
+<pre>
+mkdir server-fw
+git clone https://github.com/shvit/server-fw.git -b develop server-fw
 </pre>
 
 2. Make binary file (you can skip this and go to 3)
