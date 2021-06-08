@@ -3,6 +3,8 @@
 
 ### v0.2.1 - develop (current unstable version, next stable version in future)
 
+bugfix: reply tftp error packet on stream initialize error
+
 bugfix: enable flush for logging
 
 bugfix: rename config argument SERACH -> SEARCH

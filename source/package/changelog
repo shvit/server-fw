@@ -1,5 +1,9 @@
 server-fw (0.2.1) unstable; urgency=medium
 
+  * bugfix: reply tftp error packet on stream initialize error
+
+  * bugfix: enable flush for logging
+
   * bugfix: Cosmetic; rename config argument SERACH -> SEARCH 
   
   * feat: Add file HISTORY

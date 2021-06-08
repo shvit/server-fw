@@ -259,22 +259,28 @@ bool Session::init()
   {
     // Try 1 - DB
     // TODO:: init() for DataMgrDB
-    ret = false; // remove it!
+    bool init_stream = false; // remove it!
 
     // Try 2 - File
-    if(!ret)
+    if(!init_stream)
     {
       file_man_.release();
       file_man_ = std::make_unique<DataMgrFile>();
 
-      ret = file_man_->init(
+      init_stream = file_man_->init(
           settings_,
           std::bind(
-                  & Session::set_error_if_first,
-                  this,
-                  std::placeholders::_1,
-                  std::placeholders::_2),
+              & Session::set_error_if_first,
+              this,
+              std::placeholders::_1,
+              std::placeholders::_2),
           opt_);
+    }
+
+    if(!init_stream)
+    {
+      // Ignore if error was set from DataMgr
+      set_error_if_first(0, "Unknown stream initialize error; break session");
     }
   }
 
@@ -599,8 +605,12 @@ void Session::set_error_if_first(
     const uint16_t e_cod,
     std::string_view e_msg)
 {
+  L_DBG("Try register error #"+std::to_string(e_cod)+
+        " '"+std::string(e_msg)+"'");
+
   if(!was_error())
   {
+    L_DBG("Rememver it");
     error_code_ = e_cod;
     error_message_.assign(e_msg);
   }
@@ -610,7 +620,7 @@ void Session::set_error_if_first(
 
 bool Session::was_error()
 {
-  return error_code_ || error_message_.size();
+  return (error_code_ > 0U) || (error_message_.size() > 0U);
 }
 
 // -----------------------------------------------------------------------------
