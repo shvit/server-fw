@@ -1,7 +1,9 @@
 ##	'TFTP firmware server' version history
 
 
-### develop (current unstable version, next stable version in future)
+### v0.2.1 - develop (current unstable version, next stable version in future)
+
+bugfix: enable flush for logging
 
 bugfix: rename config argument SERACH -> SEARCH
 
