@@ -27,6 +27,20 @@ namespace tftp
 
 // -----------------------------------------------------------------------------
 
+/** \brief Any common constants
+ */
+namespace constants
+{
+  /// Full version of this
+  constexpr std::string_view app_version = "0.2.1";
+
+  /// Template for match MD5 by regex
+  const std::string regex_template_md5{"([a-fA-F0-9]{32})"};
+
+}
+
+// -----------------------------------------------------------------------------
+
 class Addr;
 
 class Base;
@@ -137,18 +151,6 @@ using fLogMsg = std::function<void(const LogLvl, std::string_view)>;
  *  \param [in] Error message text
  */
 using fSetError = std::function<void(const uint16_t, std::string_view)>;
-
-// -----------------------------------------------------------------------------
-
-/** \brief Any common constants
- */
-namespace constants
-{
-
-  /// Template for match MD5 by regex
-  const std::string regex_template_md5{"([a-fA-F0-9]{32})"};
-
-}
 
 // -----------------------------------------------------------------------------
 
