@@ -37,6 +37,14 @@ namespace constants
   /// Template for match MD5 by regex
   const std::string regex_template_md5{"([a-fA-F0-9]{32})"};
 
+  /// Default tftp port
+  constexpr uint16_t         default_tftp_port        = 69;
+
+  /// Default retransmit count
+  constexpr uint16_t         default_retransmit_count = 3U;
+
+  /// Default logging level pass
+  constexpr int              default_tftp_syslog_lvl  = 6;
 }
 
 // -----------------------------------------------------------------------------
@@ -66,6 +74,10 @@ using Buf = std::vector<char>;
 class SmBuf;
 
 class SmBufEx;
+
+class ClientSettings;
+
+using pClientSettings = std::unique_ptr<ClientSettings>;
 
 // -----------------------------------------------------------------------------
 
