@@ -67,18 +67,19 @@ START_ITER("default options");
 // 2
 START_ITER("load options IPv4");
 {
+  /*
   const char * tst_args[]=
   {
     "./tftp-cl",
-    "10.0.0.202:6900",
-    "-l", "test_local.txt",
-    "-r", "test_remote.txt",
     "-g",
     "-v",
+    "-l", "test_local.txt",
+    "-r", "test_remote.txt",
     "-m", "netascii",
     "-b", "1300",
     "-t", "20",
     "-w", "15",
+    "10.0.0.202:6900",
   };
 
   Settings_test b;
@@ -93,7 +94,7 @@ START_ITER("load options IPv4");
   TEST_CHECK_TRUE(b.request_type() == tftp::SrvReq::read);
   TEST_CHECK_TRUE(b.transfer_mode() == tftp::TransfMode::netascii);
 
-  /*
+
   TEST_CHECK_TRUE(b.is_daemon);
   TEST_CHECK_TRUE(b.use_syslog == 7);
   TEST_CHECK_TRUE(b.local_base_.family() == 2U);

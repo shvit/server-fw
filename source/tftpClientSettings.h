@@ -11,10 +11,22 @@
 #include "tftpCommon.h"
 #include "tftpAddr.h"
 #include "tftpOptions.h"
-
+#include "tftpArgParser.h"
 
 namespace tftp
 {
+
+
+//----------------------
+
+const ArgItems PPPP
+{
+  {1, {{"l"}, {"L"}, {"local"}},       ArgExistVaue::required, "Local file name"},
+  {2, {{"r"}, {"R"}, {"remote"}},      ArgExistVaue::required, "Remote file name"},
+  {3, {{"h"}, {"H"}, {"help"}, {"?"}}, ArgExistVaue::no,       "Show help information"},
+  {4, {{"g"}, {"G"}, {"get"}},         ArgExistVaue::no,       "Get file from server"},
+  {5, {{"p"}, {"P"}, {"put"}},         ArgExistVaue::no,       "Put file to server"},
+};
 
 // -----------------------------------------------------------------------------
 

@@ -45,7 +45,7 @@ bool ClientSettings::load_options(int argc, char * argv[])
   L_DBG("Start argument parse ("+std::to_string(argc)+")");
 
   bool ret = true;
-
+/*
   static const char *optString = "l:L:r:R:gGpPhHvVm:M:b:B:w:W:t:T:";
 
   static const struct option longOpts[] =
@@ -60,18 +60,25 @@ bool ClientSettings::load_options(int argc, char * argv[])
       { "blksize",    required_argument, NULL, 'b' }, // 7
       { "windowsize", required_argument, NULL, 'w' }, // 8
       { "timeout",    required_argument, NULL, 't' }, // 9
-      { "tsize",      required_argument, NULL,  0  }, // 10
+      { "tsize",      optional_argument, NULL,  0  }, // 10
       { NULL,               no_argument, NULL,  0  }  // always last
   };
 
   optind=1;
   while(argc > 1)
   {
-    L_DBG("opt "+std::to_string(optind)+" '"+std::string{argv[optind]}+"'");
+    if(optind<argc)
+    {
+      L_DBG("optind "+std::to_string(optind)+" '"+std::string{argv[optind]}+"'");
+      if(argv[optind][0]!='-') L_DBG("   FIND FREE VALUE: "+std::string{argv[optind]});
+    }
     int longIndex;
     int opt = getopt_long(argc, argv, optString, longOpts, & longIndex);
-    L_DBG("   opt "+std::to_string(opt));
     if(opt == -1) break; // end parsing
+
+    L_DBG("   go opt "+std::to_string(opt) + " '"+(char)opt+"'");
+    L_DBG("   next optind "+std::to_string(optind)+" '"+std::string{argv[optind]}+"'");
+
     switch(opt)
     {
       case 'l':
@@ -182,8 +189,9 @@ bool ClientSettings::load_options(int argc, char * argv[])
 
     } // switch for short options
   }
-
+*/
   L_DBG("Finish argument parse is "+(ret ? "SUCCESS" : "FAIL"));
+
   return ret;
 }
 
