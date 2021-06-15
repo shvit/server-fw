@@ -44,76 +44,6 @@ auto ArgParser::check_arg(const char * ptr_str) const
 }
 
 // -----------------------------------------------------------------------------
-/*
-auto ArgParser::go(
-    const ArgItems & items_ref,
-    fParseItem cb,
-    int argc,
-    char * argv[]) -> VecStr
-{
-  //std::cout << " @ argc=" << argc << std::endl;
-  VecStr ret;
-
-  for(int iter=1; iter < argc; ++iter)
-  {
-    //std::cout << " @@ arguments iter " << iter << std::endl;
-    auto [a_type, a_value] = check_arg(argv[iter]);
-
-    if(a_type == ArgType::not_found) break; // error input data (argv)
-
-    if((a_type == ArgType::normal_value))
-    {
-      ret.push_back(a_value);
-      continue;
-    }
-
-    //std::cout << " @@ items_ref.size()=" << items_ref.size() << std::endl;
-
-    for(size_t it_list=0U; it_list < items_ref.size(); ++it_list)
-    {
-      //std::cout << " @@@ search iter(list) " << it_list << std::endl;
-      const auto & names = std::get<VecStr>(items_ref[it_list]);
-
-      for(size_t it_name=0U; it_name < names.size(); ++it_name)
-      {
-        //std::cout << " @@@   search iter(name) " << it_name << std::endl;
-        if((a_type == ArgType::is_long) 232334345 && (names[it_name].size() < 2U)) continue;
-        if((a_type == ArgType::is_short) && (names[it_name].size() != 1U)) continue;
-
-        if(names[it_name] == a_value) // if find option
-        {
-          if((iter+1) < argc) // this item is not end of list
-          {
-            auto [an_type, an_value] = check_arg(argv[iter+1]);
-
-            if((an_type == ArgType::normal_value) &&
-                ((std::get<ArgExistVaue>(items_ref[it_list]) == ArgExistVaue::required) ||
-                 (std::get<ArgExistVaue>(items_ref[it_list]) == ArgExistVaue::optional)))
-            {
-              cb(std::get<int>(items_ref[it_list]), an_value);
-              ++iter;
-              break;
-            }
-            else
-            {
-              cb(std::get<int>(items_ref[it_list]), "");
-              break;
-            }
-          }
-          else
-          {
-            cb(std::get<int>(items_ref[it_list]), "");
-            break;
-          }
-        }
-      }
-    }
-  }
-
-  return ret;
-}
-*/
-// -----------------------------------------------------------------------------
 
 auto ArgParser::go_full(
     const ArgItems & items_ref,
@@ -206,7 +136,6 @@ void ArgParser::out_help_data(
     std::ostream & stream,
     std::string_view app_name) const
 {
-  stream << "Usage:" << std::endl << app_name;
   if(items.size()==0U)
   {
     stream << std::endl;
@@ -214,14 +143,19 @@ void ArgParser::out_help_data(
   }
   else
   {
-    stream << " [<opt1> [<opt1 value>]] [<opt2> [<opt2 value>]] ... [value1] [value2] ..." << std::endl;
-    stream << "Possible options:" << std::endl;
+    if(std::get<VecStr>(items[0U]).size() != 0U)
+    {
+      stream << "Usage:" << std::endl;
+      stream << (app_name.size() ?  app_name : "./<app_name>");
+      stream << " [opt1> [<opt1 value>]] ... [<main argument 1>] ..." << std::endl;
+      stream << "Possible options:" << std::endl;
+    }
 
     for(auto & item : items)
     {
       auto & names = std::get<VecStr>(item);
       auto & type_arg = std::get<ArgExistVaue>(item);
-      auto & caption = std::get<std::string>(item);
+      auto & caption = std::get<3>(item);
       auto cnt_names=names.size();
 
       if(cnt_names > 0U)
