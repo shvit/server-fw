@@ -30,11 +30,11 @@ enum class ArgExistVaue: int
 };
 
 using ArgItem = std::tuple<
-    int,
-    VecStr,
-    ArgExistVaue,
-    //std::string,
-    std::string>;
+    int,          // Key for unique actions - use at top level switch
+    VecStr,       // Argument option names
+    ArgExistVaue, // Attribute of value for argument
+    std::string,  // Name of value for argument
+    std::string>; // Caption of argument
 
 using ArgItems = std::vector<ArgItem>;
 
@@ -56,11 +56,14 @@ protected:
     normal_value,
     is_short,
     is_long,
+    end_parse,
     not_found,
   };
 
   auto check_arg(const char * ptr_str) const
       -> std::tuple<ArgType, std::string>;
+
+  auto get_line_out(const ArgItem & item) const -> std::string;
 
 public:
 

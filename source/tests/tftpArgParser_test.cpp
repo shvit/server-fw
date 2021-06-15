@@ -43,9 +43,14 @@ START_ITER("Test check_arg()");
   { auto [r1,r2] = p1.check_arg("--goo-gle"); TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::is_long); TEST_CHECK_TRUE(r2 == "goo-gle"); }
 
   // Normal value
-  { auto [r1,r2] = p1.check_arg("--"); TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::normal_value); TEST_CHECK_TRUE(r2 == "--"); }
+  { auto [r1,r2] = p1.check_arg("---"); TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::normal_value); TEST_CHECK_TRUE(r2 == "---"); }
+  { auto [r1,r2] = p1.check_arg("----"); TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::normal_value); TEST_CHECK_TRUE(r2 == "----"); }
+  { auto [r1,r2] = p1.check_arg("-----"); TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::normal_value); TEST_CHECK_TRUE(r2 == "-----"); }
   { auto [r1,r2] = p1.check_arg("10.10.10.10:1000"); TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::normal_value); TEST_CHECK_TRUE(r2 == "10.10.10.10:1000"); }
   { auto [r1,r2] = p1.check_arg("This"); TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::normal_value); TEST_CHECK_TRUE(r2 == "This"); }
+
+  // End of parse
+  { auto [r1,r2] = p1.check_arg("--"); TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::end_parse); TEST_CHECK_TRUE(r2 == ""); }
 
   // Zero
   { auto [r1,r2] = p1.check_arg(nullptr); TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::not_found); TEST_CHECK_TRUE(r2 == ""); }
@@ -173,17 +178,17 @@ START_ITER("Test go_full()");
 
   tftp::ArgItems arg_items
   {
-    { 1, {"l", "L", "local"},      tftp::ArgExistVaue::required, "Local file name"},
-    { 2, {"r", "R", "remote"},     tftp::ArgExistVaue::required, "Remote file name"},
-    { 3, {"g", "G", "get"},        tftp::ArgExistVaue::no,       "Get file from server"},
-    { 4, {"p", "P", "put"},        tftp::ArgExistVaue::no,       "Put file to server"},
-    { 5, {"h", "H", "help", "?"},  tftp::ArgExistVaue::no,       "Show help information"},
-    { 6, {"v", "V", "verb"},       tftp::ArgExistVaue::no,       "Set verbosity mode"},
-    { 7, {"m", "M", "mode"},       tftp::ArgExistVaue::required, "TFTP transfer mode"},
-    { 8, {"b", "B", "blksize"},    tftp::ArgExistVaue::required, "TFTP option 'block size' (default 512)"},
-    { 9, {"t", "T", "timeout"},    tftp::ArgExistVaue::required, "TFTP option 'timeout' (default 10)"},
-    {10, {"w", "W", "windowsize"}, tftp::ArgExistVaue::required, "TFTP option 'windowsize' (default 1)"},
-    {11, {"tsize"},                tftp::ArgExistVaue::optional, "TFTP option 'tsize'; without value use calculated for WRQ"},
+    { 1, {"l", "L", "local"},      tftp::ArgExistVaue::required, "file", "Local file path and name"},
+    { 2, {"r", "R", "remote"},     tftp::ArgExistVaue::required, "file", "Remote file name"},
+    { 3, {"g", "G", "get"},        tftp::ArgExistVaue::no,       "", "Get file from server"},
+    { 4, {"p", "P", "put"},        tftp::ArgExistVaue::no,       "", "Put file to server"},
+    { 5, {"h", "H", "help", "?"},  tftp::ArgExistVaue::no,       "", "Show help information"},
+    { 6, {"v", "V", "verb"},       tftp::ArgExistVaue::no,       "", "Set verbosity mode"},
+    { 7, {"m", "M", "mode"},       tftp::ArgExistVaue::required, "mode", "TFTP transfer mode"},
+    { 8, {"b", "B", "blksize"},    tftp::ArgExistVaue::required, "N", "TFTP option 'block size' (default 512)"},
+    { 9, {"t", "T", "timeout"},    tftp::ArgExistVaue::required, "N", "TFTP option 'timeout' (default 10)"},
+    {10, {"w", "W", "windowsize"}, tftp::ArgExistVaue::required, "N", "TFTP option 'windowsize' (default 1)"},
+    {11, {"tsize"},                tftp::ArgExistVaue::optional, "N", "TFTP option 'tsize'; without value use calculated for WRQ"},
   };
 
   const char * tst_args[]=
@@ -204,6 +209,8 @@ START_ITER("Test go_full()");
     "10.0.0.202:6900",
     "-h", "-H", "--help", "-?",
     "ending",
+    "--",                               // end parsing
+    "--local", "test_local4.txt", "-H", // pass as simple values
   };
 
   tftp::ArgParser p;
@@ -215,10 +222,13 @@ START_ITER("Test go_full()");
       sizeof(tst_args)/sizeof(tst_args[0]),
       const_cast<char **>(tst_args));
 
-  TEST_CHECK_TRUE(res.second.size() == 3U);
+  TEST_CHECK_TRUE(res.second.size() == 6U);
   if(res.second.size() > 0U) TEST_CHECK_TRUE(res.second[0U] == "B-E-G-I-N");
   if(res.second.size() > 1U) TEST_CHECK_TRUE(res.second[1U] == "10.0.0.202:6900");
   if(res.second.size() > 2U) TEST_CHECK_TRUE(res.second[2U] == "ending");
+  if(res.second.size() > 3U) TEST_CHECK_TRUE(res.second[3U] == "--local");
+  if(res.second.size() > 4U) TEST_CHECK_TRUE(res.second[4U] == "test_local4.txt");
+  if(res.second.size() > 5U) TEST_CHECK_TRUE(res.second[5U] == "-H");
 
   TEST_CHECK_TRUE(res.first.size() == 11U);
 

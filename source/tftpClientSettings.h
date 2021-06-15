@@ -18,7 +18,7 @@ namespace tftp
 
 
 //----------------------
-
+/*
 const ArgItems PPPP
 {
   {1, {{"l"}, {"L"}, {"local"}},       ArgExistVaue::required, "Local file name"},
@@ -27,7 +27,7 @@ const ArgItems PPPP
   {4, {{"g"}, {"G"}, {"get"}},         ArgExistVaue::no,       "Get file from server"},
   {5, {{"p"}, {"P"}, {"put"}},         ArgExistVaue::no,       "Put file to server"},
 };
-
+*/
 // -----------------------------------------------------------------------------
 
 class ClientSettings: public Options
