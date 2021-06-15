@@ -6,6 +6,7 @@
  */
 
 #include <iostream>
+#include <sstream>
 
 #include "tftpArgParser.h"
 
@@ -21,26 +22,73 @@ auto ArgParser::check_arg(const char * ptr_str) const
 
   std::string tmp_str{ptr_str};
 
-  if(tmp_str.size() > 2U)
+  if(tmp_str.size() < 2U) return {ArgType::normal_value, tmp_str};
+
+  if(tmp_str[0U] != '-') return {ArgType::normal_value, tmp_str};
+
+  if(tmp_str[1U] == '-')
   {
-    if((tmp_str[0U] == '-') &&
-       (tmp_str[1U] == '-') &&
-       (tmp_str[2U] != '-'))
+    if(tmp_str.size() == 2U) return {ArgType::end_parse, ""};
+
+    if(tmp_str[2U] != '-')
     {
       return {ArgType::is_long, std::string{tmp_str.cbegin()+2, tmp_str.cend()}};
     }
-  }
-
-  if(tmp_str.size() > 1U)
-  {
-    if((tmp_str[0U] == '-') &&
-       (tmp_str[1U] != '-'))
+    else
     {
-      return {ArgType::is_short, std::string{tmp_str.cbegin()+1, tmp_str.cend()}};
+      return {ArgType::normal_value, tmp_str};
     }
   }
 
-  return {ArgType::normal_value, tmp_str};
+  return {ArgType::is_short, std::string{tmp_str.cbegin()+1, tmp_str.cend()}};
+}
+
+// -----------------------------------------------------------------------------
+
+auto ArgParser::get_line_out(const ArgItem & item) const -> std::string
+{
+  std::stringstream ss;
+
+  auto & names = std::get<VecStr>(item);
+  auto & type_arg = std::get<ArgExistVaue>(item);
+  auto & val_capt = std::get<3>(item);
+  auto & caption = std::get<4>(item);
+  auto cnt_names=names.size();
+
+  if(cnt_names > 0U)
+  {
+    if(cnt_names > 1U) ss << "{";
+    bool was_printed=false;
+    for(auto & name : names)
+    {
+      if(was_printed) ss << "|";
+      ss << construct_arg(name);
+      was_printed=true;
+    }
+    if(cnt_names > 1U) ss << "}";
+
+    if(type_arg != ArgExistVaue::no) ss << " ";
+
+    if(type_arg == ArgExistVaue::optional) ss << "[";
+
+    if((type_arg == ArgExistVaue::optional) ||
+       (type_arg == ArgExistVaue::required))
+    {
+      ss << "<";
+      if(val_capt.size()) ss << val_capt; else ss << "value";
+      ss << ">";
+    }
+
+    if(type_arg == ArgExistVaue::optional) ss << "]";
+  }
+
+  if(caption.size() > 0U)
+  {
+    if(cnt_names > 0U) ss << " ";
+    ss << caption << std::endl;
+  }
+
+  return ss.str();
 }
 
 // -----------------------------------------------------------------------------
@@ -52,11 +100,20 @@ auto ArgParser::go_full(
 {
   //std::cout << " @ argc=" << argc << std::endl;
   ArgRes ret;
+  bool is_end_parse=false;
 
   for(int iter=1; iter < argc; ++iter)
   {
+    if(is_end_parse)
+    {
+      ret.second.emplace_back(argv[iter]);
+      continue;
+    }
+
     //std::cout << " @@ arguments iter " << iter << std::endl;
     auto [a_type, a_value] = check_arg(argv[iter]);
+
+    if(a_type == ArgType::end_parse) { is_end_parse=true; continue; }
 
     if(a_type == ArgType::not_found) break; // error input data (argv)
 
@@ -138,7 +195,6 @@ void ArgParser::out_help_data(
 {
   if(items.size()==0U)
   {
-    stream << std::endl;
     stream << "No any possible options!" << std::endl;
   }
   else
@@ -151,41 +207,7 @@ void ArgParser::out_help_data(
       stream << "Possible options:" << std::endl;
     }
 
-    for(auto & item : items)
-    {
-      auto & names = std::get<VecStr>(item);
-      auto & type_arg = std::get<ArgExistVaue>(item);
-      auto & caption = std::get<3>(item);
-      auto cnt_names=names.size();
-
-      if(cnt_names > 0U)
-      {
-        if(cnt_names > 1U) stream << "{";
-        bool was_printed=false;
-        for(auto & name : names)
-        {
-          if(was_printed) stream << "|";
-          stream << construct_arg(name);
-          was_printed=true;
-        }
-        if(cnt_names > 1U) stream << "}";
-
-        if(type_arg != ArgExistVaue::no) stream << " ";
-
-        if(type_arg == ArgExistVaue::optional) stream << "[";
-
-        if((type_arg == ArgExistVaue::optional) ||
-           (type_arg == ArgExistVaue::required)) stream << "<value>";
-
-        if(type_arg == ArgExistVaue::optional) stream << "]";
-      }
-
-      if(caption.size() > 0U)
-      {
-        if(cnt_names > 0U) stream << " ";
-        stream << caption << std::endl;
-      }
-    }
+    for(auto & item : items) stream << get_line_out(item);
   }
 }
 
