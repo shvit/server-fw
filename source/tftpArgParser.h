@@ -33,6 +33,7 @@ using ArgItem = std::tuple<
     int,
     VecStr,
     ArgExistVaue,
+    //std::string,
     std::string>;
 
 using ArgItems = std::vector<ArgItem>;
@@ -63,12 +64,6 @@ protected:
 
 public:
 
-  //auto go(
-  //    const ArgItems & items_ref,
-  //    fParseItem cb,
-  //    int argc,
-  //    char * argv[]) -> VecStr;
-
   auto go_full(
       const ArgItems & items_ref,
       int argc,
@@ -77,7 +72,7 @@ public:
   void out_help_data(
       const ArgItems & items,
       std::ostream & stream,
-      std::string_view app_name) const;
+      std::string_view app_name="") const;
 
   auto construct_arg(const std::string & arg_name) const -> std::string;
 

@@ -191,6 +191,7 @@ START_ITER("Test go_full()");
     "./tftp-cl",
     "B-E-G-I-N",
     "-g", "-G", "--get",
+    //"-gv",
     "-p", "-P", "--put",
     "-v", "-V", "--verb",
     "-l", "test_local1.txt", "-L", "test_local2.txt", "--local", "test_local3.txt",
@@ -207,7 +208,7 @@ START_ITER("Test go_full()");
 
   tftp::ArgParser p;
 
-  p.out_help_data(arg_items, std::cout, "./app");
+  p.out_help_data(arg_items, std::cout);
 
   auto res = p.go_full(
       arg_items,
