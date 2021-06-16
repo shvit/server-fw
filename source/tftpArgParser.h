@@ -63,6 +63,10 @@ protected:
   auto check_arg(const char * ptr_str) const
       -> std::tuple<ArgType, std::string>;
 
+  auto construct_arg(const std::string & arg_name) const -> std::string;
+
+  auto construct_args(const VecStr & arg_names) const -> std::string;
+
   auto get_line_out(const ArgItem & item) const -> std::string;
 
 public:
@@ -77,7 +81,6 @@ public:
       std::ostream & stream,
       std::string_view app_name="") const;
 
-  auto construct_arg(const std::string & arg_name) const -> std::string;
 
 };
 

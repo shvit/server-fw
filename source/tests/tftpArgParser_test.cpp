@@ -22,6 +22,9 @@ class ArgParser_test: public tftp::ArgParser
 public:
   using ArgParser::ArgType;
   using ArgParser::check_arg;
+  using ArgParser::construct_arg;
+  using ArgParser::construct_args;
+  using ArgParser::get_line_out;
 };
 
 //------------------------------------------------------------------------------
@@ -55,11 +58,118 @@ START_ITER("Test check_arg()");
   // Zero
   { auto [r1,r2] = p1.check_arg(nullptr); TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::not_found); TEST_CHECK_TRUE(r2 == ""); }
 }
-/*
-// 2
-START_ITER("Test go()");
-{
 
+// 2
+START_ITER("Test construct_arg()");
+{
+  ArgParser_test p;
+
+  // wrong
+  TEST_CHECK_TRUE(p.construct_arg("") == "");
+  TEST_CHECK_TRUE(p.construct_arg("-") == "");
+  TEST_CHECK_TRUE(p.construct_arg("--") == "");
+  TEST_CHECK_TRUE(p.construct_arg("---") == "");
+  TEST_CHECK_TRUE(p.construct_arg("----") == "");
+  TEST_CHECK_TRUE(p.construct_arg("-----") == "");
+  TEST_CHECK_TRUE(p.construct_arg("-A") == "");
+  TEST_CHECK_TRUE(p.construct_arg("-AB") == "");
+  TEST_CHECK_TRUE(p.construct_arg("-defg") == "");
+  TEST_CHECK_TRUE(p.construct_arg("--A") == "");
+  TEST_CHECK_TRUE(p.construct_arg("--AB") == "");
+  TEST_CHECK_TRUE(p.construct_arg("--defg") == "");
+  TEST_CHECK_TRUE(p.construct_arg(" ") == "");
+  TEST_CHECK_TRUE(p.construct_arg(" A") == "");
+  TEST_CHECK_TRUE(p.construct_arg(" bcd") == "");
+
+  // normal short
+  TEST_CHECK_TRUE(p.construct_arg("a") == "-a");
+  TEST_CHECK_TRUE(p.construct_arg("Z") == "-Z");
+
+  // normal long
+  TEST_CHECK_TRUE(p.construct_arg("ab") == "--ab");
+  TEST_CHECK_TRUE(p.construct_arg("abc") == "--abc");
+  TEST_CHECK_TRUE(p.construct_arg("Fuck") == "--Fuck");
+}
+
+// 3
+START_ITER("Test construct_args()");
+{
+  ArgParser_test p;
+
+  // Empty
+  TEST_CHECK_TRUE(p.construct_args({}) == "");
+  TEST_CHECK_TRUE(p.construct_args({"","",""}) == "");
+  TEST_CHECK_TRUE(p.construct_args({"","-","--","-1","-dfhfgh"}) == "");
+
+  // OK
+  TEST_CHECK_TRUE(p.construct_args({"a"}) == "-a");
+  TEST_CHECK_TRUE(p.construct_args({"V"}) == "-V");
+  TEST_CHECK_TRUE(p.construct_args({"vers"}) == "--vers");
+  TEST_CHECK_TRUE(p.construct_args({"S","vers"}) == "{-S|--vers}");
+  TEST_CHECK_TRUE(p.construct_args({"a","biz","def"}) == "{-a|--biz|--def}");
+  TEST_CHECK_TRUE(p.construct_args({"a","b","d"}) == "{-a|-b|-d}");
+
+  // Partial
+  TEST_CHECK_TRUE(p.construct_args({"","a"}) == "-a");
+  TEST_CHECK_TRUE(p.construct_args({"a",""}) == "-a");
+  TEST_CHECK_TRUE(p.construct_args({"-","a"}) == "-a");
+  TEST_CHECK_TRUE(p.construct_args({"a","-"}) == "-a");
+  TEST_CHECK_TRUE(p.construct_args({"--","a"}) == "-a");
+  TEST_CHECK_TRUE(p.construct_args({"a","--"}) == "-a");
+  TEST_CHECK_TRUE(p.construct_args({"-X","a"}) == "-a");
+  TEST_CHECK_TRUE(p.construct_args({"a","-X"}) == "-a");
+  TEST_CHECK_TRUE(p.construct_args({"--wer","a"}) == "-a");
+  TEST_CHECK_TRUE(p.construct_args({"a","--wer"}) == "-a");
+
+  TEST_CHECK_TRUE(p.construct_args({"","a","-","Exp"}) == "{-a|--Exp}");
+  TEST_CHECK_TRUE(p.construct_args({"-F","a","--des","Exp"}) == "{-a|--Exp}");
+  TEST_CHECK_TRUE(p.construct_args({"","a","-","Exp","--kek"}) == "{-a|--Exp}");
+  TEST_CHECK_TRUE(p.construct_args({"-F","a","--des","Exp"," "}) == "{-a|--Exp}");
+}
+
+// 4
+START_ITER("Test get_line_out()");
+{
+  ArgParser_test p;
+
+  TEST_CHECK_TRUE(p.get_line_out({
+      int{0},
+      tftp::VecStr{},
+      tftp::ArgExistVaue::required,
+      std::string{"file"},
+      std::string{"Nothing"}}) == "Nothing");
+
+  TEST_CHECK_TRUE(p.get_line_out({
+      int{0},
+      tftp::VecStr{"--"},
+      tftp::ArgExistVaue::required,
+      std::string{"file"},
+      std::string{"Nothing"}}) == "Nothing");
+
+  TEST_CHECK_TRUE(p.get_line_out({
+      int{1},
+      tftp::VecStr{"L"},
+      tftp::ArgExistVaue::optional,
+      std::string{""},
+      std::string{"Locale"}}) == "-L [<value>] Locale");
+
+  TEST_CHECK_TRUE(p.get_line_out({
+      int{1},
+      tftp::VecStr{"l", "L", "local"},
+      tftp::ArgExistVaue::required,
+      std::string{"file"},
+      std::string{"Local file name"}}) == "{-l|-L|--local} <file> Local file name");
+
+  TEST_CHECK_TRUE(p.get_line_out({
+      int{1},
+      tftp::VecStr{"l", "L"},
+      tftp::ArgExistVaue::no,
+      std::string{"file"},
+      std::string{}}) == "{-l|-L} ...");
+
+
+
+  /*
   tftp::ArgItems arg_items
   {
     { 1, {"l", "L", "local"},      tftp::ArgExistVaue::required, "Local file name"},
@@ -170,8 +280,9 @@ START_ITER("Test go()");
   TEST_CHECK_TRUE(counter[10] == 3);
   TEST_CHECK_TRUE(counter[11] == 1);
   TEST_CHECK_TRUE(counter[12] == 0);
-}
 */
+}
+
 // 3
 START_ITER("Test go_full()");
 {
@@ -215,7 +326,7 @@ START_ITER("Test go_full()");
 
   tftp::ArgParser p;
 
-  p.out_help_data(arg_items, std::cout);
+  //p.out_help_data(arg_items, std::cout);
 
   auto res = p.go_full(
       arg_items,
