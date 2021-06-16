@@ -1,8 +1,15 @@
-/*
- * tftpArgParser.cpp
+/**
+ * \file tftpArgParser.cpp
+ * \brief Class ArgParser module
  *
- *  Created on: 10 июн. 2021 г.
- *      Author: svv
+ *  Class for CMD arguments parsing
+ *
+ *  License GPL-3.0
+ *
+ *  \date 10-jun-2021
+ *  \author Vitaliy Shirinkin, e-mail: vitaliy.shirinkin@gmail.com
+ *
+ *  \version 0.2
  */
 
 #include <iostream>
@@ -15,7 +22,7 @@ namespace tftp
 
 // -----------------------------------------------------------------------------
 
-auto ArgParser::check_arg(const char * ptr_str) const
+auto ArgParser::check_arg(const char * ptr_str)
     -> std::tuple<ArgParser::ArgType, std::string>
 {
   if(ptr_str == nullptr) return {ArgType::not_found, ""};
@@ -37,7 +44,7 @@ auto ArgParser::check_arg(const char * ptr_str) const
 
 // -----------------------------------------------------------------------------
 
-auto ArgParser::get_line_out(const ArgItem & item) const -> std::string
+auto ArgParser::get_line_out(const ArgItem & item) -> std::string
 {
   std::string ret;
 
@@ -75,12 +82,11 @@ auto ArgParser::get_line_out(const ArgItem & item) const -> std::string
 
 // -----------------------------------------------------------------------------
 
-auto ArgParser::go_full(
+auto ArgParser::go(
     const ArgItems & items_ref,
     int argc,
-    char * argv[]) const -> ArgRes
+    char * argv[]) -> ArgRes
 {
-  //std::cout << " @ argc=" << argc << std::endl;
   ArgRes ret;
   bool is_end_parse=false;
 
@@ -92,7 +98,6 @@ auto ArgParser::go_full(
       continue;
     }
 
-    //std::cout << " @@ arguments iter " << iter << std::endl;
     auto [a_type, a_value] = check_arg(argv[iter]);
 
     if(a_type == ArgType::end_parse) { is_end_parse=true; continue; }
@@ -105,22 +110,17 @@ auto ArgParser::go_full(
       continue;
     }
 
-    //std::cout << " @@ items_ref.size()=" << items_ref.size() << std::endl;
-
     for(size_t it_list=0U; it_list < items_ref.size(); ++it_list)
     {
-      //std::cout << " @@@ search iter(list) " << it_list << std::endl;
       const auto & names = std::get<VecStr>(items_ref[it_list]);
 
       for(size_t it_name=0U; it_name < names.size(); ++it_name)
       {
-        //std::cout << " @@@   search iter(name) " << it_name << std::endl;
         if((a_type == ArgType::is_long)  && (names[it_name].size() < 2U)) continue;
         if((a_type == ArgType::is_short) && (names[it_name].size() != 1U)) continue;
 
         if(names[it_name] == a_value) // if find option
         {
-          //auto & id =
           auto & res_list = ret.first[std::get<int>(items_ref[it_list])];
 
           if((iter+1) < argc) // this item is not end of list
@@ -131,21 +131,18 @@ auto ArgParser::go_full(
                 ((std::get<ArgExistVaue>(items_ref[it_list]) == ArgExistVaue::required) ||
                  (std::get<ArgExistVaue>(items_ref[it_list]) == ArgExistVaue::optional)))
             {
-              //cb(std::get<int>(items_ref[it_list]), an_value);
               res_list.emplace_back(argv[iter], an_value);
               ++iter;
               break;
             }
             else
             {
-              //cb(std::get<int>(items_ref[it_list]), "");
               res_list.emplace_back(argv[iter], "");
               break;
             }
           }
           else
           {
-            //cb(std::get<int>(items_ref[it_list]), "");
             res_list.emplace_back(argv[iter], "");
             break;
           }
@@ -159,7 +156,7 @@ auto ArgParser::go_full(
 
 // -----------------------------------------------------------------------------
 
-auto ArgParser::construct_arg(const std::string & arg_name) const -> std::string
+auto ArgParser::construct_arg(const std::string & arg_name) -> std::string
 {
   if(arg_name.size() == 0U) return "";
 
@@ -175,7 +172,7 @@ auto ArgParser::construct_arg(const std::string & arg_name) const -> std::string
 
 // -----------------------------------------------------------------------------
 
-auto ArgParser::construct_args(const VecStr & arg_names) const -> std::string
+auto ArgParser::construct_args(const VecStr & arg_names) -> std::string
 {
 
   std::stringstream ss;
@@ -202,7 +199,7 @@ auto ArgParser::construct_args(const VecStr & arg_names) const -> std::string
 void ArgParser::out_help_data(
     const ArgItems & items,
     std::ostream & stream,
-    std::string_view app_name) const
+    std::string_view app_name)
 {
   if(items.size()==0U)
   {
