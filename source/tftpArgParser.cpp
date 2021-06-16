@@ -26,69 +26,51 @@ auto ArgParser::check_arg(const char * ptr_str) const
 
   if(tmp_str[0U] != '-') return {ArgType::normal_value, tmp_str};
 
-  if(tmp_str[1U] == '-')
-  {
-    if(tmp_str.size() == 2U) return {ArgType::end_parse, ""};
+  if(tmp_str[1U] != '-') return {ArgType::is_short, std::string{tmp_str.cbegin()+1, tmp_str.cend()}};
 
-    if(tmp_str[2U] != '-')
-    {
-      return {ArgType::is_long, std::string{tmp_str.cbegin()+2, tmp_str.cend()}};
-    }
-    else
-    {
-      return {ArgType::normal_value, tmp_str};
-    }
-  }
+  if(tmp_str.size() == 2U) return {ArgType::end_parse, ""};
 
-  return {ArgType::is_short, std::string{tmp_str.cbegin()+1, tmp_str.cend()}};
+  if(tmp_str[2U] != '-') return {ArgType::is_long, std::string{tmp_str.cbegin()+2, tmp_str.cend()}};
+
+  return {ArgType::normal_value, tmp_str};
 }
 
 // -----------------------------------------------------------------------------
 
 auto ArgParser::get_line_out(const ArgItem & item) const -> std::string
 {
-  std::stringstream ss;
+  std::string ret;
 
   auto & names = std::get<VecStr>(item);
   auto & type_arg = std::get<ArgExistVaue>(item);
   auto & val_capt = std::get<3>(item);
   auto & caption = std::get<4>(item);
-  auto cnt_names=names.size();
 
-  if(cnt_names > 0U)
+  ret = construct_args(names);
+
+  if(ret.size() && (type_arg != ArgExistVaue::no))
   {
-    if(cnt_names > 1U) ss << "{";
-    bool was_printed=false;
-    for(auto & name : names)
-    {
-      if(was_printed) ss << "|";
-      ss << construct_arg(name);
-      was_printed=true;
-    }
-    if(cnt_names > 1U) ss << "}";
+    ret.append(" ");
 
-    if(type_arg != ArgExistVaue::no) ss << " ";
-
-    if(type_arg == ArgExistVaue::optional) ss << "[";
+    if(type_arg == ArgExistVaue::optional) ret.append("[");
 
     if((type_arg == ArgExistVaue::optional) ||
        (type_arg == ArgExistVaue::required))
     {
-      ss << "<";
-      if(val_capt.size()) ss << val_capt; else ss << "value";
-      ss << ">";
+      ret.append("<");
+      if(val_capt.size()) ret.append(val_capt); else ret.append("value");
+      ret.append(">");
     }
 
-    if(type_arg == ArgExistVaue::optional) ss << "]";
+    if(type_arg == ArgExistVaue::optional) ret.append("]");
   }
 
-  if(caption.size() > 0U)
-  {
-    if(cnt_names > 0U) ss << " ";
-    ss << caption << std::endl;
-  }
+  if(ret.size()) ret.append(" ");
 
-  return ss.str();
+  if(caption.size() > 0U) ret.append(caption);
+                     else  ret.append("...");
+
+  return ret;
 }
 
 // -----------------------------------------------------------------------------
@@ -179,11 +161,40 @@ auto ArgParser::go_full(
 
 auto ArgParser::construct_arg(const std::string & arg_name) const -> std::string
 {
+  if(arg_name.size() == 0U) return "";
+
+  if((arg_name[0U] == '-') ||
+     (arg_name[0U] == ' ')) return "";
+
   std::string ret{"-"};
   if(arg_name.size() > 1U) ret.append("-");
   ret.append(arg_name);
 
   return ret;
+}
+
+// -----------------------------------------------------------------------------
+
+auto ArgParser::construct_args(const VecStr & arg_names) const -> std::string
+{
+
+  std::stringstream ss;
+  size_t was_printed = 0U;
+
+  for(auto & name : arg_names)
+  {
+    std::string tmp_str{construct_arg(name)};
+
+    if(tmp_str.size() == 0U) continue;
+
+    if(was_printed) ss << "|";
+    ss << tmp_str;
+    ++was_printed;
+  }
+
+  if(was_printed > 1U) return "{"+ss.str()+"}";
+
+  return ss.str();
 }
 
 // -----------------------------------------------------------------------------
@@ -207,7 +218,7 @@ void ArgParser::out_help_data(
       stream << "Possible options:" << std::endl;
     }
 
-    for(auto & item : items) stream << get_line_out(item);
+    for(auto & item : items) stream << get_line_out(item) << std::endl;
   }
 }
 
