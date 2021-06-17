@@ -5,7 +5,8 @@
  *      Author: svv
  */
 
-#include <getopt.h>
+//#include <getopt.h>
+#include <iostream>
 
 #include "tftpClientSettings.h"
 
@@ -42,154 +43,124 @@ auto ClientSettings::create() -> pClientSettings
 
 bool ClientSettings::load_options(int argc, char * argv[])
 {
-  L_DBG("Start argument parse ("+std::to_string(argc)+")");
+  L_DBG("Start argument parse (argc is "+std::to_string(argc)+")");
 
   bool ret = true;
-/*
-  static const char *optString = "l:L:r:R:gGpPhHvVm:M:b:B:w:W:t:T:";
 
-  static const struct option longOpts[] =
-  {
-      { "local",      required_argument, NULL, 'l' }, // 0
-      { "remote",     required_argument, NULL, 'r' }, // 1
-      { "get",              no_argument, NULL, 'g' }, // 2
-      { "put",              no_argument, NULL, 'p' }, // 3
-      { "help",             no_argument, NULL, 'h' }, // 4
-      { "verbose",          no_argument, NULL, 'v' }, // 5
-      { "mode",       required_argument, NULL, 'm' }, // 6
-      { "blksize",    required_argument, NULL, 'b' }, // 7
-      { "windowsize", required_argument, NULL, 'w' }, // 8
-      { "timeout",    required_argument, NULL, 't' }, // 9
-      { "tsize",      optional_argument, NULL,  0  }, // 10
-      { NULL,               no_argument, NULL,  0  }  // always last
-  };
+  const auto res = ArgParser::go(
+      arg_option_settings,
+      argc,
+      argv);
 
-  optind=1;
-  while(argc > 1)
+  // 1 Parse options
+  for(const auto & item : res.first)
   {
-    if(optind<argc)
+    auto [res_chk, res_str] = ArgParser::chk_result(
+        arg_option_settings,
+        item.first,
+        res.first);
+
+    switch(res_chk)
     {
-      L_DBG("optind "+std::to_string(optind)+" '"+std::string{argv[optind]}+"'");
-      if(argv[optind][0]!='-') L_DBG("   FIND FREE VALUE: "+std::string{argv[optind]});
+      case ResCheck::err_wrong_data:  // wrong do, check code!
+      case ResCheck::not_found:       // wrong do, check code!
+      case ResCheck::err_no_req_value:
+        L_ERR(res_str);
+        ret = false;
+        continue;
+      case ResCheck::wrn_many_arg:
+        L_WRN(res_str);
+        break;
+      case ResCheck::normal:
+        break;
     }
-    int longIndex;
-    int opt = getopt_long(argc, argv, optString, longOpts, & longIndex);
-    if(opt == -1) break; // end parsing
 
-    L_DBG("   go opt "+std::to_string(opt) + " '"+(char)opt+"'");
-    L_DBG("   next optind "+std::to_string(optind)+" '"+std::string{argv[optind]}+"'");
-
-    switch(opt)
+    switch(item.first)
     {
-      case 'l':
-      case 'L':
-        if(optarg) file_local_.assign(optarg);
+      case 1: // local file
+        file_local_ = ArgParser::get_last_value(res.first, item.first);
         break;
-      case 'r':
-      case 'R':
-        if(optarg) file_remote_.assign(optarg);
+      case 2: // remote file
+        file_remote_ = ArgParser::get_last_value(res.first, item.first);
         break;
-      case 'g':
-      case 'G':
+      case 3: // Request GET
         request_type_ = SrvReq::read;
         break;
-      case 'p':
-      case 'P':
+      case 4: // Request PUT
         request_type_ = SrvReq::write;
         break;
-    case 'h':
-    case 'H':
-    case '?':
-      ret = false; // Help message cout
-      break;
-    case 'v':
-    case 'V':
-      verb_ = true;
-      break;
-    case 'm':
-    case 'M':
-      if(optarg)
-      {
-        std::string temp_str{optarg};
-        do_lower(temp_str);
-        if(temp_str == to_string(TransfMode::octet)) transfer_mode_ = TransfMode::octet;
-        else
-        if(temp_str == to_string(TransfMode::mail)) transfer_mode_ = TransfMode::mail;
-        else
-        if(temp_str == to_string(TransfMode::netascii)) transfer_mode_ = TransfMode::netascii;
-        else
-        if(temp_str == to_string(TransfMode::binary)) transfer_mode_ = TransfMode::binary;
-        else
-        transfer_mode_ = TransfMode::unknown;
-      }
-      break;
-
-    case 'b':
-    case 'B':
-      if(optarg)
-      {
-        int tmp_int = std::stol(optarg);
-        if(tmp_int > 0)
-        {
-          blksize_ = {true, tmp_int};
-        }
-      }
-      break;
-    case 'w':
-    case 'W':
-      if(optarg)
-      {
-        int tmp_int = std::stol(optarg);
-        if(tmp_int > 0)
-        {
-          windowsize_ = {true, tmp_int};
-        }
-      }
-      break;
-    case 't':
-    case 'T':
-      if(optarg)
-      {
-        int tmp_int = std::stol(optarg);
-        if(tmp_int > 0)
-        {
-          timeout_ = {true, tmp_int};
-        }
-      }
-      break;
-
-    case 0:
-      switch(longIndex)
-      {
-      case 10: // --tsize
-        if(optarg)
-        {
-          int tmp_int = std::stol(optarg);
-          if(tmp_int > 0)
-          {
-            tsize_ = {true, tmp_int};
-          }
-          else
-          { // only for WRQ use option with fill real file size (ignore arg value)
-            tsize_ = {true, 0};
-          }
-        }
+      case 5: // Help
+        ret = false;
+        ArgParser::out_help_data(arg_option_settings, std::cout, argv[0]);
         break;
-
+      case 6: // Verbosity
+        verb_ = true;
+        break;
+      case 7: // Mode transfer
+        set_transfer_mode(
+            ArgParser::get_last_value(res.first, item.first),
+            std::bind(
+                & ClientSettings::log,
+                this,
+                std::placeholders::_1,
+                std::placeholders::_2));
+        break;
+      case 8: // Block size
+        set_blksize(
+            ArgParser::get_last_value(res.first, item.first),
+            std::bind(
+                & ClientSettings::log,
+                this,
+                std::placeholders::_1,
+                std::placeholders::_2));
+        break;
+      case 9: // Timeout
+        set_timeout(
+            ArgParser::get_last_value(res.first, item.first),
+            std::bind(
+                & ClientSettings::log,
+                this,
+                std::placeholders::_1,
+                std::placeholders::_2));
+        break;
+      case 10: // Windowsize
+        set_windowsize(
+            ArgParser::get_last_value(res.first, item.first),
+            std::bind(
+                & ClientSettings::log,
+                this,
+                std::placeholders::_1,
+                std::placeholders::_2));
+        break;
+      case 11: // Tsize
+        set_tsize(
+            ArgParser::get_last_value(res.first, item.first),
+            std::bind(
+                & ClientSettings::log,
+                this,
+                std::placeholders::_1,
+                std::placeholders::_2));
+        break;
       default:
-        L_ERR("Wrong long option index "+std::to_string(longIndex));
         break;
-
-      } // switch for long options
-      break;
-
-    default:
-      L_ERR("Wrong short option index "+std::to_string(opt));
-      break;
-
-    } // switch for short options
+    }
   }
-*/
+
+  // 2 Parse main arguments
+  if(auto cnt=res.second.size(); cnt == 0U)
+  {
+    L_ERR("No server address found");
+  }
+  else
+  if(cnt > 1U)
+  {
+    L_ERR("Too many address found ("+std::to_string(cnt)+")");
+  }
+  else
+  {
+    srv_addr_.set_string(res.second[0U]);
+  }
+
   L_DBG("Finish argument parse is "+(ret ? "SUCCESS" : "FAIL"));
 
   return ret;

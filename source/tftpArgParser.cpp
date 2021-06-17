@@ -51,6 +51,7 @@ auto ArgParser::get_line_out(const ArgItem & item) -> std::string
   auto & type_arg = std::get<ArgExistVaue>(item);
   auto & val_capt = std::get<3>(item);
   auto & caption = std::get<4>(item);
+  auto & note = std::get<5>(item);
 
   ret = construct_args(names);
 
@@ -75,6 +76,13 @@ auto ArgParser::get_line_out(const ArgItem & item) -> std::string
 
   if(caption.size() > 0U) ret.append(caption);
                      else  ret.append("...");
+
+  if(note.size())
+  {
+    ret.append(" (");
+    ret.append(note);
+    ret.append(")");
+  }
 
   return ret;
 }
@@ -230,6 +238,100 @@ void ArgParser::out_help_data(
 
     for(auto & item : items) stream << get_line_out(item) << std::endl;
   }
+}
+
+// -----------------------------------------------------------------------------
+
+auto ArgParser::construct_caption(
+      const ArgItems & items,
+      const int & id) -> std::string
+{
+  std::string ret;
+
+  bool data_ok = false;
+  size_t src_idx;
+  for(size_t it=0U;  it < items.size(); ++it)
+  {
+    if(std::get<int>(items[it]) == id)
+    {
+      data_ok = true;
+      src_idx = it;
+      break;
+    }
+  }
+  if(data_ok)
+  {
+    ret = std::get<4>(items[src_idx]);
+    if(ret.size() == 0U) ret = "Action #" + std::to_string(id);
+  }
+
+  return ret;
+}
+
+auto ArgParser::get_last_value(
+      const ArgResItems & res,
+      const int & id) -> std::string
+{
+  auto it = res.find(id);
+
+  if(it == res.end()) return "";
+
+  if(it->second.size() == 0U) return "";
+
+  return it->second[it->second.size() -1U].second;
+}
+
+
+// -----------------------------------------------------------------------------
+
+auto ArgParser::chk_result(
+      const ArgItems & items,
+      const int & id,
+      const ArgResItems & res) -> std::tuple<ResCheck,std::string>
+{
+  // Find source data exist by ID
+  bool data_ok=false;
+  size_t src_idx;
+  for(size_t it=0U;  it < items.size(); ++it)
+  {
+    if(std::get<int>(items[it]) == id)
+    {
+      data_ok = true;
+      src_idx = it;
+      break;
+    }
+  }
+  if(!data_ok)
+  {
+    return {ResCheck::err_wrong_data,
+            "Error not found source data for action id #"+std::to_string(id)};
+  }
+
+  // Find ID in result
+  auto curr_res = res.find(id);
+  if(curr_res == res.end())
+  {
+    return {ResCheck::not_found,
+            "No argument for '"+construct_caption(items, id)+"'"};
+  }
+
+  // Check if required not exist
+  auto cnt_res = curr_res->second.size();
+  if((std::get<ArgExistVaue>(items[src_idx]) == ArgExistVaue::required) &&
+      (cnt_res == 0U))
+  {
+    return {ResCheck::err_no_req_value,
+            "No required argument '"+construct_caption(items, id)+"'"};
+  }
+
+  // Check many count args
+  if(cnt_res > 1U)
+  {
+    return {ResCheck::wrn_many_arg,
+            "Many arguments for '"+construct_caption(items, id)+"'"};
+  }
+
+  return {ResCheck::normal, ""};
 }
 
 // -----------------------------------------------------------------------------
