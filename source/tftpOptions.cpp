@@ -118,6 +118,7 @@ bool Options::was_set_any() const
 
 #define OPT_L_INF(MSG) if(log != nullptr) L_INF(MSG);
 #define OPT_L_WRN(MSG) if(log != nullptr) L_WRN(MSG);
+#define OPT_L_ERR(MSG) if(log != nullptr) L_ERR(MSG);
 
 bool Options::buffer_parse(
     const SmBuf & buf,
@@ -166,6 +167,12 @@ bool Options::buffer_parse(
   if(ret)
   {
     std::string curr_mod = buf.get_string(curr_pos, buf_size-curr_pos);
+    if(set_transfer_mode(curr_mod, log))
+    {
+      OPT_L_INF("Recognize tranfser mode '"+curr_mod+"'");
+    }
+    curr_pos += curr_mod.size()+1U;
+    /*
     if((ret = (curr_mod.size() > 0U)))
     {
       do_lower(curr_mod);
@@ -191,6 +198,7 @@ bool Options::buffer_parse(
     {
       OPT_L_WRN("Wrong transfer mode (empty!)");
     }
+    */
   }
 
   // Init options
@@ -210,38 +218,162 @@ bool Options::buffer_parse(
           buf_size-curr_pos)};
       curr_pos += str_val.size()+1U;
 
-      if(is_digit_str(str_val))
-      {
-        int val = std::stoi(str_val);
-        bool fl=false;
-        if(str_opt == constants::name_blksize) blksize_ = {(fl=true), val};
-        else
-        if(str_opt == constants::name_timeout) timeout_ = {(fl=true) ,val};
-        else
-        if(str_opt == constants::name_tsize) tsize_ = {(fl=true), val};
-        else
-        if(str_opt == constants::name_windowsize) windowsize_ = {(fl=true), val};
-        else
-        {
-          OPT_L_WRN("Unknown option '"+str_opt+"'='"+str_val+"'");
-        }
-
-        if(fl) OPT_L_INF("Recognize option '"+str_opt+"' value "+str_val);
-      }
+      bool fl=false;
+      if(str_opt == constants::name_blksize) { fl=true; set_blksize(str_val, log); }
+      else
+      if(str_opt == constants::name_timeout) { fl=true; set_timeout(str_val, log); }
+      else
+      if(str_opt == constants::name_tsize) { fl=true; set_tsize(str_val, log); }
+      else
+      if(str_opt == constants::name_windowsize) { fl=true; set_windowsize(str_val, log); }
       else
       {
-        OPT_L_WRN("Wrong value option '"+str_opt+"'='"+str_val+"'");
+        OPT_L_WRN("Unknown option '"+str_opt+"'='"+str_val+"'");
       }
+      if(fl) OPT_L_INF("Recognize option '"+str_opt+"' value '"+str_val+"'");
     }
   }
 
   return ret;
 }
 
-#undef OPT_L_INF
-#undef OPT_L_WRN
+//------------------------------------------------------------------------------
+
+void Options::set_blksize(
+    const std::string & val,
+    fLogMsg log)
+{
+  if(!is_digit_str(val))
+  {
+    OPT_L_ERR("Wrong option 'blksize' value is '"+val+"'");
+    return;
+  }
+
+  auto tmp_int = std::stoi(val);
+
+  if(tmp_int < 1)
+  {
+    OPT_L_ERR("Wrong option 'blksize' too small ("+std::to_string(tmp_int)+")");
+  }
+  else
+  if(tmp_int > 65500)
+  {
+    L_ERR("Wrong option 'blksize' too large ("+std::to_string(tmp_int)+")");
+  }
+
+  blksize_ = {true, tmp_int};
+}
 
 //------------------------------------------------------------------------------
+
+void Options::set_timeout(
+    const std::string & val,
+    fLogMsg log)
+{
+  if(!is_digit_str(val))
+  {
+    OPT_L_ERR("Wrong option 'timeout' value is '"+val+"'");
+    return;
+  }
+
+  auto tmp_int = std::stoi(val);
+
+  if(tmp_int < 1)
+  {
+    OPT_L_ERR("Wrong option 'timeout' too small ("+std::to_string(tmp_int)+")");
+  }
+  else
+  if(tmp_int > 3600)
+  {
+    L_ERR("Wrong option 'timeout' too large ("+std::to_string(tmp_int)+")");
+  }
+
+  timeout_ = {true, tmp_int};
+}
+
+//------------------------------------------------------------------------------
+
+void Options::set_windowsize(
+    const std::string & val,
+    fLogMsg log)
+{
+  if(!is_digit_str(val))
+  {
+    OPT_L_ERR("Wrong option 'windowsize' value is '"+val+"'");
+    return;
+  }
+
+  auto tmp_int = std::stoi(val);
+
+  if(tmp_int < 1)
+  {
+    OPT_L_ERR("Wrong option 'windowsize' too small ("+std::to_string(tmp_int)+")");
+  }
+
+  windowsize_ = {true, tmp_int};
+}
+
+//------------------------------------------------------------------------------
+
+void Options::set_tsize(
+    const std::string & val,
+    fLogMsg log)
+{
+  if(!is_digit_str(val))
+  {
+    OPT_L_ERR("Wrong option 'tsize' value is '"+val+"'");
+    return;
+  }
+
+  auto tmp_int = std::stoi(val);
+
+  if(tmp_int < 0)
+  {
+    OPT_L_ERR("Wrong option 'blksize' too small ("+std::to_string(tmp_int)+")");
+  }
+
+  tsize_ = {true, tmp_int};
+}
+
+//------------------------------------------------------------------------------
+
+bool Options::set_transfer_mode(
+    const std::string & val,
+    fLogMsg log)
+{
+  bool ret = false;
+
+  if(val.size() > 0U)
+  {
+    std::string curr_mod{val};
+    do_lower(curr_mod);
+
+    size_t fl = 0U;
+    if(curr_mod == "netascii") { ++fl; transfer_mode_ = TransfMode::netascii; }
+    else
+    if(curr_mod == "octet") { ++fl; transfer_mode_ = TransfMode::octet; }
+    else
+    if(curr_mod == "binary") { ++fl; transfer_mode_ = TransfMode::binary; }
+    else
+    if(curr_mod == "mail") { ++fl; transfer_mode_ = TransfMode::mail; }
+
+    if(!(ret = fl))
+    {
+      OPT_L_WRN("Wrong tranfser mode '"+curr_mod+"'! ");
+    }
+  }
+  else
+  {
+    OPT_L_WRN("Wrong transfer mode (empty!)");
+  }
+
+  return ret;
+}
+
+//------------------------------------------------------------------------------
+
+#undef OPT_L_INF
+#undef OPT_L_WRN
 
 } // namespace tftp
 

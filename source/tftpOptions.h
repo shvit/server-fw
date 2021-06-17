@@ -121,6 +121,26 @@ public:
       const size_t & buf_size,
       fLogMsg cb_logging);
 
+  void set_blksize(
+      const std::string & val,
+      fLogMsg log = nullptr);
+
+  void set_timeout(
+      const std::string & val,
+      fLogMsg log = nullptr);
+
+  void set_windowsize(
+      const std::string & val,
+      fLogMsg log = nullptr);
+
+  void set_tsize(
+      const std::string & val,
+      fLogMsg log = nullptr);
+
+  bool set_transfer_mode(
+      const std::string & val,
+      fLogMsg log = nullptr);
+
 };
 
 // -----------------------------------------------------------------------------

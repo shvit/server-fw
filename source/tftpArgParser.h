@@ -40,18 +40,21 @@ enum class ArgExistVaue: int
 
 /** \brief Setting for options with one ID
  *
- *  1: any unique value - ID
- *  2: Vector of option names with one ID; one char - short, more chars - long
- *  3: Attribute with exists value or not
- *  4: Caption of value for option
- *  5: Common caption for option
+ *  Tuple index:
+ *  0: any unique value - ID
+ *  1: Vector of option names with one ID; one char - short, more chars - long
+ *  2: Attribute with exists value or not
+ *  3: Caption of value for option
+ *  4: Common caption for option
+ *  5: Additional info for caption in round bracket
  */
 using ArgItem = std::tuple<
     int,          ///< ID for unique actions - use at top level switch
     VecStr,       ///< Argument option names vector
     ArgExistVaue, ///< Attribute of value for argument
     std::string,  ///< Name of value for argument
-    std::string>; ///< Caption of argument
+    std::string,  ///< Caption of argument - full description
+    std::string>; ///< Additional info for caption in round bracket (...)
 
 using ArgItems = std::vector<ArgItem>;
 
@@ -75,6 +78,15 @@ using ArgResItems = std::map<int, ArgResItemPairs>;
  *  second - unparsed CMD arguments
  */
 using ArgRes = std::pair<ArgResItems, VecStr>;
+
+enum class ResCheck: int
+{
+  not_found,
+  normal,
+  wrn_many_arg,
+  err_no_req_value,
+  err_wrong_data,
+};
 
 // -----------------------------------------------------------------------------
 
@@ -171,6 +183,21 @@ public:
       const ArgItems & items,
       std::ostream & stream,
       std::string_view app_name="");
+
+  static auto construct_caption(
+      const ArgItems & items,
+      const int & id) -> std::string;
+
+  // Parsing results
+
+  static auto chk_result(
+      const ArgItems & items,
+      const int & id,
+      const ArgResItems & res) -> std::tuple<ResCheck,std::string>;
+
+  static auto get_last_value(
+      const ArgResItems & res,
+      const int & id) -> std::string;
 
 };
 

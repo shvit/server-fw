@@ -18,16 +18,22 @@ namespace tftp
 
 
 //----------------------
-/*
-const ArgItems PPPP
+
+const ArgItems arg_option_settings =
 {
-  {1, {{"l"}, {"L"}, {"local"}},       ArgExistVaue::required, "Local file name"},
-  {2, {{"r"}, {"R"}, {"remote"}},      ArgExistVaue::required, "Remote file name"},
-  {3, {{"h"}, {"H"}, {"help"}, {"?"}}, ArgExistVaue::no,       "Show help information"},
-  {4, {{"g"}, {"G"}, {"get"}},         ArgExistVaue::no,       "Get file from server"},
-  {5, {{"p"}, {"P"}, {"put"}},         ArgExistVaue::no,       "Put file to server"},
+  { 1, {"l", "L", "local"},      tftp::ArgExistVaue::required, "file", "Local file path and name", ""},
+  { 2, {"r", "R", "remote"},     tftp::ArgExistVaue::required, "file", "Remote file name", ""},
+  { 3, {"g", "G", "get"},        tftp::ArgExistVaue::no,       "",     "Get file from server", ""},
+  { 4, {"p", "P", "put"},        tftp::ArgExistVaue::no,       "",     "Put file to server", ""},
+  { 5, {"h", "H", "help", "?"},  tftp::ArgExistVaue::no,       "",     "Show help information", ""},
+  { 6, {"v", "V", "verb"},       tftp::ArgExistVaue::no,       "",     "Set verbosity mode", ""},
+  { 7, {"m", "M", "mode"},       tftp::ArgExistVaue::required, "mode", "TFTP transfer mode", ""},
+  { 8, {"b", "B", "blksize"},    tftp::ArgExistVaue::required, "N",    "TFTP option 'block size'", "default 512"},
+  { 9, {"t", "T", "timeout"},    tftp::ArgExistVaue::required, "N",    "TFTP option 'timeout'", "default 10"},
+  {10, {"w", "W", "windowsize"}, tftp::ArgExistVaue::required, "N",    "TFTP option 'windowsize'", "default 1"},
+  {11, {"Z", "z", "tsize"},      tftp::ArgExistVaue::optional, "N",    "TFTP option 'tsize'", "WRQ without value use calculated"},
 };
-*/
+
 // -----------------------------------------------------------------------------
 
 class ClientSettings: public Options

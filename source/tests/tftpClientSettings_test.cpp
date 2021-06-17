@@ -67,7 +67,6 @@ START_ITER("default options");
 // 2
 START_ITER("load options IPv4");
 {
-  /*
   const char * tst_args[]=
   {
     "./tftp-cl",
@@ -79,45 +78,24 @@ START_ITER("load options IPv4");
     "-b", "1300",
     "-t", "20",
     "-w", "15",
+    "--tsize", "15000001",
     "10.0.0.202:6900",
   };
 
   Settings_test b;
   TEST_CHECK_TRUE(b.load_options(sizeof(tst_args)/sizeof(tst_args[0]),
                                  const_cast<char **>(tst_args)));
+
   TEST_CHECK_TRUE(b.verb_);
   TEST_CHECK_TRUE(b.file_local_ == "test_local.txt");
   TEST_CHECK_TRUE(b.file_remote_ == "test_remote.txt");
   TEST_CHECK_TRUE(b.blksize() == 1300);
   TEST_CHECK_TRUE(b.timeout() == 20);
   TEST_CHECK_TRUE(b.windowsize() == 15);
+  TEST_CHECK_TRUE(b.tsize() == 15000001);
   TEST_CHECK_TRUE(b.request_type() == tftp::SrvReq::read);
   TEST_CHECK_TRUE(b.transfer_mode() == tftp::TransfMode::netascii);
-
-
-  TEST_CHECK_TRUE(b.is_daemon);
-  TEST_CHECK_TRUE(b.use_syslog == 7);
-  TEST_CHECK_TRUE(b.local_base_.family() == 2U);
-  TEST_CHECK_TRUE(b.local_base_.port() == 7777U);
-  TEST_CHECK_TRUE(b.local_base_.as_in().sin_addr.s_addr == 16843009U);
-  TEST_CHECK_TRUE(b.local_base_.str() == "1.1.1.1:7777");
-  TEST_CHECK_TRUE(b.lib_dir == "/tmp/libs");
-  TEST_CHECK_TRUE(b.lib_name == "fbclient");
-  TEST_CHECK_TRUE(b.root_dir == "/mnt/tftp");
-  TEST_CHECK_TRUE(b.backup_dirs.size() == 3);
-  TEST_CHECK_TRUE(b.backup_dirs[0] == "/mnt/tst1");
-  TEST_CHECK_TRUE(b.backup_dirs[1] == "/mnt/tst2");
-  TEST_CHECK_TRUE(b.backup_dirs[2] == "/mnt/tst3");
-  TEST_CHECK_TRUE(b.db == "tester.fdb");
-  TEST_CHECK_TRUE(b.user == "SYSDBA");
-  TEST_CHECK_TRUE(b.pass == "masterkey");
-  TEST_CHECK_TRUE(b.role == "none");
-  TEST_CHECK_TRUE(b.dialect == 3U);
-  TEST_CHECK_TRUE(b.retransmit_count_ == 59U);
-  TEST_CHECK_TRUE(b.file_chown_user == "usr1");
-  TEST_CHECK_TRUE(b.file_chown_grp == "grp2");
-  TEST_CHECK_TRUE(b.file_chmod == 0766);
-  */
+  TEST_CHECK_TRUE(b.srv_addr_.str() == "10.0.0.202:6900");
 }
 
 // 3
