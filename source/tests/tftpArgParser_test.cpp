@@ -37,26 +37,79 @@ UNIT_TEST_CASE_BEGIN(main, "Check main methods")
 START_ITER("Test check_arg()");
 {
   // Short
-  { auto [r1,r2] = ArgParser_test::check_arg("-g"); TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::is_short); TEST_CHECK_TRUE(r2 == "g"); }
-  { auto [r1,r2] = ArgParser_test::check_arg("-A"); TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::is_short); TEST_CHECK_TRUE(r2 == "A"); }
+  {
+    auto [r1,r2] = ArgParser_test::check_arg("-g");
+    TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::is_short);
+    TEST_CHECK_TRUE(r2 == "g");
+  }
+  {
+    auto [r1,r2] = ArgParser_test::check_arg("-A");
+    TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::is_short);
+    TEST_CHECK_TRUE(r2 == "A");
+  }
+  {
+    auto [r1,r2] = ArgParser_test::check_arg("-AB");
+    TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::is_short);
+    TEST_CHECK_TRUE(r2 == "AB");
+  }
 
   // Long
-  { auto [r1,r2] = ArgParser_test::check_arg("--g"); TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::is_long); TEST_CHECK_TRUE(r2 == "g"); }
-  { auto [r1,r2] = ArgParser_test::check_arg("--goo"); TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::is_long); TEST_CHECK_TRUE(r2 == "goo"); }
-  { auto [r1,r2] = ArgParser_test::check_arg("--goo-gle"); TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::is_long); TEST_CHECK_TRUE(r2 == "goo-gle"); }
+  {
+    auto [r1,r2] = ArgParser_test::check_arg("--g");
+    TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::is_long);
+    TEST_CHECK_TRUE(r2 == "g");
+  }
+  {
+    auto [r1,r2] = ArgParser_test::check_arg("--goo");
+    TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::is_long);
+    TEST_CHECK_TRUE(r2 == "goo");
+  }
+  {
+    auto [r1,r2] = ArgParser_test::check_arg("--goo-gle");
+    TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::is_long);
+    TEST_CHECK_TRUE(r2 == "goo-gle");
+  }
 
   // Normal value
-  { auto [r1,r2] = ArgParser_test::check_arg("---"); TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::normal_value); TEST_CHECK_TRUE(r2 == "---"); }
-  { auto [r1,r2] = ArgParser_test::check_arg("----"); TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::normal_value); TEST_CHECK_TRUE(r2 == "----"); }
-  { auto [r1,r2] = ArgParser_test::check_arg("-----"); TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::normal_value); TEST_CHECK_TRUE(r2 == "-----"); }
-  { auto [r1,r2] = ArgParser_test::check_arg("10.10.10.10:1000"); TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::normal_value); TEST_CHECK_TRUE(r2 == "10.10.10.10:1000"); }
-  { auto [r1,r2] = ArgParser_test::check_arg("This"); TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::normal_value); TEST_CHECK_TRUE(r2 == "This"); }
+  {
+    auto [r1,r2] = ArgParser_test::check_arg("---");
+    TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::normal_value);
+    TEST_CHECK_TRUE(r2 == "---");
+  }
+  {
+    auto [r1,r2] = ArgParser_test::check_arg("----");
+    TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::normal_value);
+    TEST_CHECK_TRUE(r2 == "----");
+  }
+  {
+    auto [r1,r2] = ArgParser_test::check_arg("-----");
+    TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::normal_value);
+    TEST_CHECK_TRUE(r2 == "-----");
+  }
+  {
+    auto [r1,r2] = ArgParser_test::check_arg("10.10.10.10:1000");
+    TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::normal_value);
+    TEST_CHECK_TRUE(r2 == "10.10.10.10:1000");
+  }
+  {
+    auto [r1,r2] = ArgParser_test::check_arg("This");
+    TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::normal_value);
+    TEST_CHECK_TRUE(r2 == "This");
+  }
 
   // End of parse
-  { auto [r1,r2] = ArgParser_test::check_arg("--"); TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::end_parse); TEST_CHECK_TRUE(r2 == ""); }
+  {
+    auto [r1,r2] = ArgParser_test::check_arg("--");
+    TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::end_parse);
+    TEST_CHECK_TRUE(r2 == "");
+  }
 
-  // Zero
-  { auto [r1,r2] = ArgParser_test::check_arg(nullptr); TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::not_found); TEST_CHECK_TRUE(r2 == ""); }
+  // NULL
+  {
+    auto [r1,r2] = ArgParser_test::check_arg(nullptr);
+    TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::not_found);
+    TEST_CHECK_TRUE(r2 == "");
+  }
 }
 
 // 2
@@ -173,15 +226,15 @@ tftp::ArgItems arg_items
 {
   { 1, {"l", "L", "local"},      tftp::ArgExistVaue::required, "file", "Local file path and name"},
   { 2, {"r", "R", "remote"},     tftp::ArgExistVaue::required, "file", "Remote file name"},
-  { 3, {"g", "G", "get"},        tftp::ArgExistVaue::no,       "", "Get file from server"},
-  { 4, {"p", "P", "put"},        tftp::ArgExistVaue::no,       "", "Put file to server"},
-  { 5, {"h", "H", "help", "?"},  tftp::ArgExistVaue::no,       "", "Show help information"},
-  { 6, {"v", "V", "verb"},       tftp::ArgExistVaue::no,       "", "Set verbosity mode"},
+  { 3, {"g", "G", "get"},        tftp::ArgExistVaue::no,       "",     "Get file from server"},
+  { 4, {"p", "P", "put"},        tftp::ArgExistVaue::no,       "",     "Put file to server"},
+  { 5, {"h", "H", "help", "?"},  tftp::ArgExistVaue::no,       "",     "Show help information"},
+  { 6, {"v", "V", "verb"},       tftp::ArgExistVaue::no,       "",     "Set verbosity mode"},
   { 7, {"m", "M", "mode"},       tftp::ArgExistVaue::required, "mode", "TFTP transfer mode"},
-  { 8, {"b", "B", "blksize"},    tftp::ArgExistVaue::required, "N", "TFTP option 'block size' (default 512)"},
-  { 9, {"t", "T", "timeout"},    tftp::ArgExistVaue::required, "N", "TFTP option 'timeout' (default 10)"},
-  {10, {"w", "W", "windowsize"}, tftp::ArgExistVaue::required, "N", "TFTP option 'windowsize' (default 1)"},
-  {11, {"tsize"},                tftp::ArgExistVaue::optional, "N", "TFTP option 'tsize'; without value use calculated for WRQ"},
+  { 8, {"b", "B", "blksize"},    tftp::ArgExistVaue::required, "N",    "TFTP option 'block size' (default 512)"},
+  { 9, {"t", "T", "timeout"},    tftp::ArgExistVaue::required, "N",    "TFTP option 'timeout' (default 10)"},
+  {10, {"w", "W", "windowsize"}, tftp::ArgExistVaue::required, "N",    "TFTP option 'windowsize' (default 1)"},
+  {11, {"tsize"},                tftp::ArgExistVaue::optional, "N",    "TFTP option 'tsize'; without value use calculated for WRQ"},
 };
 
 const char * tst_args[]=
@@ -206,7 +259,7 @@ const char * tst_args[]=
   "--local", "test_local4.txt", "-H", // pass as simple values
 };
 
-//tftp::ArgParserout_help_data(arg_items, std::cout);
+//tftp::ArgParser::out_help_data(arg_items, std::cout);
 
 auto res = tftp::ArgParser::go(
     arg_items,
