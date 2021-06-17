@@ -15,11 +15,10 @@
 #ifndef SOURCE_TFTPARGPARSER_H_
 #define SOURCE_TFTPARGPARSER_H_
 
+#include <map>
 #include <string>
 #include <tuple>
-#include <functional>
 #include <vector>
-#include <map>
 
 namespace tftp
 {
@@ -86,6 +85,10 @@ using ArgRes = std::pair<ArgResItems, VecStr>;
  *  - standart argc,argv
  *
  *  Main method is go()
+ *
+ *  Support multi short options:
+ *  "-Fuck" == "-F -u -c -k"
+ *  "-aX value" == "-a value -X value" ('a' and 'x' is reuired/optional)
  */
 class ArgParser
 {
@@ -172,7 +175,6 @@ public:
 };
 
 // -----------------------------------------------------------------------------
-
 
 } // namespace tftp
 

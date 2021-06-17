@@ -234,15 +234,17 @@ tftp::ArgItems arg_items
   { 8, {"b", "B", "blksize"},    tftp::ArgExistVaue::required, "N",    "TFTP option 'block size' (default 512)"},
   { 9, {"t", "T", "timeout"},    tftp::ArgExistVaue::required, "N",    "TFTP option 'timeout' (default 10)"},
   {10, {"w", "W", "windowsize"}, tftp::ArgExistVaue::required, "N",    "TFTP option 'windowsize' (default 1)"},
-  {11, {"tsize"},                tftp::ArgExistVaue::optional, "N",    "TFTP option 'tsize'; without value use calculated for WRQ"},
+  {11, {"Q","tsize"},            tftp::ArgExistVaue::optional, "N",    "TFTP option 'tsize'; without value use calculated for WRQ"},
 };
 
+START_ITER("Stage 1 - Common check - many doubles");
+{
 const char * tst_args[]=
 {
   "./tftp-cl",
   "B-E-G-I-N",
   "-g", "-G", "--get",
-  //"-gv",
+  "-gv",
   "-p", "-P", "--put",
   "-v", "-V", "--verb",
   "-l", "test_local1.txt", "-L", "test_local2.txt", "--local", "test_local3.txt",
@@ -277,9 +279,10 @@ if(res.second.size() > 5U) TEST_CHECK_TRUE(res.second[5U] == "-H");
 TEST_CHECK_TRUE(res.first.size() == 11U);
 
 {
-  auto & v = res.first[ 1];
-  TEST_CHECK_TRUE(v.size() == 3U);
-  if(auto vs = v.size(); vs>0U)
+  const auto & v = res.first[1];
+  const auto vs = v.size();
+  TEST_CHECK_TRUE(vs == 3U);
+  if(vs>0U)
   {
     TEST_CHECK_TRUE(v[0U].first == "-l");
     TEST_CHECK_TRUE(v[0U].second == "test_local1.txt");
@@ -296,9 +299,10 @@ TEST_CHECK_TRUE(res.first.size() == 11U);
   }
 }
 {
-  auto & v = res.first[ 2];
-  TEST_CHECK_TRUE(v.size() == 3U);
-  if(auto vs=v.size(); vs>0U)
+  const auto & v = res.first[ 2];
+  const auto vs=v.size();
+  TEST_CHECK_TRUE(vs == 3U);
+  if(vs>0U)
   {
     TEST_CHECK_TRUE(v[0U].first == "-r");
     TEST_CHECK_TRUE(v[0U].second == "test_remote100.txt");
@@ -316,7 +320,7 @@ TEST_CHECK_TRUE(res.first.size() == 11U);
 }
 {
   auto & v = res.first[ 3];
-  TEST_CHECK_TRUE(v.size() == 3U);
+  TEST_CHECK_TRUE(v.size() == 4U);
   if(auto vs=v.size(); vs>0U)
   {
     TEST_CHECK_TRUE(v[0U].first == "-g");
@@ -329,6 +333,11 @@ TEST_CHECK_TRUE(res.first.size() == 11U);
       {
         TEST_CHECK_TRUE(v[2U].first == "--get");
         TEST_CHECK_TRUE(v[2U].second == "");
+        if(vs>3U)
+        {
+          TEST_CHECK_TRUE(v[3U].first == "-g");
+          TEST_CHECK_TRUE(v[3U].second == "");
+        }
       }
     }
   }
@@ -378,19 +387,24 @@ TEST_CHECK_TRUE(res.first.size() == 11U);
 }
 {
   auto & v = res.first[ 6];
-  TEST_CHECK_TRUE(v.size() == 3U);
+  TEST_CHECK_TRUE(v.size() == 4U);
   if(auto vs=v.size(); vs>0U)
   {
     TEST_CHECK_TRUE(v[0U].first == "-v");
     TEST_CHECK_TRUE(v[0U].second == "");
     if(vs>1U)
     {
-      TEST_CHECK_TRUE(v[1U].first == "-V");
+      TEST_CHECK_TRUE(v[1U].first == "-v");
       TEST_CHECK_TRUE(v[1U].second == "");
       if(vs>2U)
       {
-        TEST_CHECK_TRUE(v[2U].first == "--verb");
+        TEST_CHECK_TRUE(v[2U].first == "-V");
         TEST_CHECK_TRUE(v[2U].second == "");
+        if(vs>3U)
+        {
+          TEST_CHECK_TRUE(v[3U].first == "--verb");
+          TEST_CHECK_TRUE(v[3U].second == "");
+        }
       }
     }
   }
@@ -482,6 +496,112 @@ TEST_CHECK_TRUE(res.first.size() == 11U);
     {
       TEST_CHECK_TRUE(v[1U].first == "--tsize");
       TEST_CHECK_TRUE(v[1U].second == "232334345");
+    }
+  }
+}
+}
+
+
+START_ITER("Stage 2 - Multi short options with 'required'");
+{
+
+  const char * tst_args2[]=
+  {
+    "./tftp-cl",
+    "-LR", "file_name", "--get",
+    "127.0.0.1",
+  };
+
+  auto res2 = tftp::ArgParser::go(
+      arg_items,
+      sizeof(tst_args2)/sizeof(tst_args2[0]),
+      const_cast<char **>(tst_args2));
+
+  TEST_CHECK_TRUE(res2.second.size() == 1U);
+  if(res2.second.size() > 0U) TEST_CHECK_TRUE(res2.second[0U] == "127.0.0.1");
+
+  TEST_CHECK_TRUE(res2.first.size() == 3U);
+
+  {
+    const auto & v = res2.first[1];
+    const auto vs = v.size();
+    TEST_CHECK_TRUE(vs == 1U);
+    if(vs>0U)
+    {
+      TEST_CHECK_TRUE(v[0U].first == "-L");
+      TEST_CHECK_TRUE(v[0U].second == "file_name");
+    }
+  }
+  {
+    const auto & v = res2.first[2];
+    const auto vs = v.size();
+    TEST_CHECK_TRUE(vs == 1U);
+    if(vs>0U)
+    {
+      TEST_CHECK_TRUE(v[0U].first == "-R");
+      TEST_CHECK_TRUE(v[0U].second == "file_name");
+    }
+  }
+  {
+    const auto & v = res2.first[3];
+    const auto vs = v.size();
+    TEST_CHECK_TRUE(vs == 1U);
+    if(vs>0U)
+    {
+      TEST_CHECK_TRUE(v[0U].first == "--get");
+      TEST_CHECK_TRUE(v[0U].second == "");
+    }
+  }
+}
+
+START_ITER("Stage 3 - Multi short options with 'optional' and 'no'");
+{
+
+  const char * tst_args2[]=
+  {
+    "./tftp-cl",
+    "-LGQ", "file_name",
+    "127.0.0.1",
+  };
+
+  auto res2 = tftp::ArgParser::go(
+      arg_items,
+      sizeof(tst_args2)/sizeof(tst_args2[0]),
+      const_cast<char **>(tst_args2));
+
+  TEST_CHECK_TRUE(res2.second.size() == 1U);
+  if(res2.second.size() > 0U) TEST_CHECK_TRUE(res2.second[0U] == "127.0.0.1");
+
+  TEST_CHECK_TRUE(res2.first.size() == 3U);
+
+  {
+    const auto & v = res2.first[1];
+    const auto vs = v.size();
+    TEST_CHECK_TRUE(vs == 1U);
+    if(vs>0U)
+    {
+      TEST_CHECK_TRUE(v[0U].first == "-L");
+      TEST_CHECK_TRUE(v[0U].second == "file_name");
+    }
+  }
+  {
+    const auto & v = res2.first[11];
+    const auto vs = v.size();
+    TEST_CHECK_TRUE(vs == 1U);
+    if(vs>0U)
+    {
+      TEST_CHECK_TRUE(v[0U].first == "-Q");
+      TEST_CHECK_TRUE(v[0U].second == "file_name");
+    }
+  }
+  {
+    const auto & v = res2.first[3];
+    const auto vs = v.size();
+    TEST_CHECK_TRUE(vs == 1U);
+    if(vs>0U)
+    {
+      TEST_CHECK_TRUE(v[0U].first == "-G");
+      TEST_CHECK_TRUE(v[0U].second == "");
     }
   }
 }

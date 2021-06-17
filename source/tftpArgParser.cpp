@@ -12,7 +12,6 @@
  *  \version 0.2
  */
 
-#include <iostream>
 #include <sstream>
 
 #include "tftpArgParser.h"
@@ -110,45 +109,59 @@ auto ArgParser::go(
       continue;
     }
 
-    for(size_t it_list=0U; it_list < items_ref.size(); ++it_list)
+    bool need_skip_next=false;
+
+    // Get search list (for correct pass short multi options)
+    VecStr a_vals;
+    if(a_type == ArgType::is_long) a_vals.push_back(a_value);
+    if(a_type == ArgType::is_short)
     {
-      const auto & names = std::get<VecStr>(items_ref[it_list]);
+      for(auto & chr : a_value) a_vals.push_back(std::string{chr});
+    }
 
-      for(size_t it_name=0U; it_name < names.size(); ++it_name)
+    // Check next argument
+    ArgType     next_type{ArgType::not_found};
+    std::string next_value;
+    if((iter+1) < argc)
+    {
+      std::tie(next_type, next_value) = check_arg(argv[iter+1]);
+    }
+
+    // Search!
+    for(const auto & itm : items_ref)
+    {
+      const auto & itm_type_val = std::get<ArgExistVaue>(itm);
+
+      for(const auto & chk_name : std::get<VecStr>(itm))
       {
-        if((a_type == ArgType::is_long)  && (names[it_name].size() < 2U)) continue;
-        if((a_type == ArgType::is_short) && (names[it_name].size() != 1U)) continue;
+        if((a_type == ArgType::is_long)  && (chk_name.size() < 2U)) continue;
+        if((a_type == ArgType::is_short) && (chk_name.size() != 1U)) continue;
 
-        if(names[it_name] == a_value) // if find option
+        for(auto & passed_name : a_vals)
         {
-          auto & res_list = ret.first[std::get<int>(items_ref[it_list])];
-
-          if((iter+1) < argc) // this item is not end of list
+          if(chk_name == passed_name) // if find option
           {
-            auto [an_type, an_value] = check_arg(argv[iter+1]);
+            auto & res_list = ret.first[std::get<int>(itm)]; // create if need
 
-            if((an_type == ArgType::normal_value) &&
-                ((std::get<ArgExistVaue>(items_ref[it_list]) == ArgExistVaue::required) ||
-                 (std::get<ArgExistVaue>(items_ref[it_list]) == ArgExistVaue::optional)))
+            if((next_type == ArgType::normal_value) &&
+               ((itm_type_val == ArgExistVaue::required) ||
+                (itm_type_val == ArgExistVaue::optional)))
             {
-              res_list.emplace_back(argv[iter], an_value);
-              ++iter;
-              break;
+              res_list.emplace_back(ArgParser::construct_arg(passed_name), next_value);
+              need_skip_next = true;
             }
             else
             {
-              res_list.emplace_back(argv[iter], "");
-              break;
+              res_list.emplace_back(ArgParser::construct_arg(passed_name), "");
             }
-          }
-          else
-          {
-            res_list.emplace_back(argv[iter], "");
+
             break;
           }
         }
       }
     }
+
+    if(need_skip_next) ++iter;
   }
 
   return ret;
