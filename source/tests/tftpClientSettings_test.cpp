@@ -20,31 +20,47 @@ UNIT_TEST_SUITE_BEGIN(ClientSettings)
 
 /** \brief Helper class for unit-test access to Settings protected field
  */
-class Settings_test: public tftp::ClientSettings
+class ClientSettings_test: public tftp::ClientSettings
 {
 public:
-  Settings_test():
-    ClientSettings()
+  size_t log_err;
+  size_t log_wrn;
+  size_t log_inf;
+  size_t log_dbg;
+
+  ClientSettings_test():
+    ClientSettings(),
+    log_err{0U},
+    log_wrn{0U},
+    log_inf{0U},
+    log_dbg{0U}
   {
     callback_log_ = std::bind(
-        & Settings_test::cout_log,
+        & ClientSettings_test::cout_log,
         this,
         std::placeholders::_1,
         std::placeholders::_2);
 
   };
 
-  //using ClientSettings::ClientSettings;
+  void cout_log(tftp::LogLvl lvl, std::string_view msg)
+  {
+    switch(lvl)
+    {
+      case tftp::LogLvl::err:     ++log_err; break;
+      case tftp::LogLvl::warning: ++log_wrn; break;
+      case tftp::LogLvl::info:    ++log_inf; break;
+      case tftp::LogLvl::debug:   ++log_dbg; break;
+      default:  break;
+    }
+    //std::cout << "[DEBUG] " << tftp::to_string(lvl) << " " <<  msg << std::endl;
+  }
+
   using ClientSettings::srv_addr_;
   using ClientSettings::verb_;
   using ClientSettings::file_local_;
   using ClientSettings::file_remote_;
   using ClientSettings::callback_log_;
-
-  void cout_log(tftp::LogLvl lvl, std::string_view msg) const
-  {
-    std::cout << "[DEBUG] " << tftp::to_string(lvl) << " " <<  msg << std::endl;
-  }
 };
 
 //------------------------------------------------------------------------------
@@ -54,18 +70,16 @@ UNIT_TEST_CASE_BEGIN(parse_arg_cl, "Parse CMD client arguments")
 // 1
 START_ITER("default options");
 {
-  Settings_test b;
-  TEST_CHECK_TRUE (b.srv_addr_.family() == 0U);
+  ClientSettings_test b;
+  TEST_CHECK_TRUE (b.srv_addr_.family() == AF_INET);
   TEST_CHECK_TRUE (b.srv_addr_.port() == tftp::constants::default_tftp_port);
   TEST_CHECK_FALSE(b.verb_);
   TEST_CHECK_TRUE (b.file_local_.size() == 0U);
   TEST_CHECK_TRUE (b.file_remote_.size() == 0U);
-  //TEST_CHECK_TRUE (b.callback_log_ == nullptr);
-
 }
 
 // 2
-START_ITER("load options IPv4");
+START_ITER("load options normal");
 {
   const char * tst_args[]=
   {
@@ -82,9 +96,16 @@ START_ITER("load options IPv4");
     "10.0.0.202:6900",
   };
 
-  Settings_test b;
+  ClientSettings_test b;
   TEST_CHECK_TRUE(b.load_options(sizeof(tst_args)/sizeof(tst_args[0]),
                                  const_cast<char **>(tst_args)));
+
+  //b.out_help(std::cout);
+
+  TEST_CHECK_TRUE(b.log_err == 0U);
+  TEST_CHECK_TRUE(b.log_wrn == 0U);
+  TEST_CHECK_TRUE(b.log_inf == 0U);
+  TEST_CHECK_TRUE(b.log_dbg == 2U);
 
   TEST_CHECK_TRUE(b.verb_);
   TEST_CHECK_TRUE(b.file_local_ == "test_local.txt");
@@ -99,42 +120,32 @@ START_ITER("load options IPv4");
 }
 
 // 3
-START_ITER("load options IPv6");
+START_ITER("Try to load fail options");
 {
-  /*
   const char * tst_args[]=
   {
-    "./server-fw",
-    "--ip", "[fe80::1]:65000",
-    "--root-dir", "/mnt/tftp",
+    "./tftp-cl",
+    "-m", "hren",
+    "-b", "10000000000",
+    "-t", "5555555555",
+    "-w", "0",
+    "--tsize", "awwdswd",
   };
 
-  Settings_test b;
-  b.load_options(sizeof(tst_args)/sizeof(tst_args[0]),
-                 const_cast<char **>(tst_args));
-  TEST_CHECK_FALSE(b.is_daemon);
-  TEST_CHECK_TRUE(b.use_syslog == tftp::constants::default_tftp_syslog_lvl);
-  TEST_CHECK_TRUE(b.local_base_.family() == AF_INET6);
-  TEST_CHECK_TRUE(b.local_base_.port() == 65000U);
-  TEST_CHECK_TRUE(b.local_base_.as_in6().sin6_addr.__in6_u.__u6_addr8[ 0] == 0xfeU);
-  TEST_CHECK_TRUE(b.local_base_.as_in6().sin6_addr.__in6_u.__u6_addr8[ 1] == 0x80U);
-  TEST_CHECK_TRUE(b.local_base_.as_in6().sin6_addr.__in6_u.__u6_addr8[ 2] == 0x00U);
-  TEST_CHECK_TRUE(b.local_base_.as_in6().sin6_addr.__in6_u.__u6_addr8[ 3] == 0x00U);
-  TEST_CHECK_TRUE(b.local_base_.as_in6().sin6_addr.__in6_u.__u6_addr8[ 4] == 0x00U);
-  TEST_CHECK_TRUE(b.local_base_.as_in6().sin6_addr.__in6_u.__u6_addr8[ 5] == 0x00U);
-  TEST_CHECK_TRUE(b.local_base_.as_in6().sin6_addr.__in6_u.__u6_addr8[ 6] == 0x00U);
-  TEST_CHECK_TRUE(b.local_base_.as_in6().sin6_addr.__in6_u.__u6_addr8[ 7] == 0x00U);
-  TEST_CHECK_TRUE(b.local_base_.as_in6().sin6_addr.__in6_u.__u6_addr8[ 8] == 0x00U);
-  TEST_CHECK_TRUE(b.local_base_.as_in6().sin6_addr.__in6_u.__u6_addr8[ 9] == 0x00U);
-  TEST_CHECK_TRUE(b.local_base_.as_in6().sin6_addr.__in6_u.__u6_addr8[10] == 0x00U);
-  TEST_CHECK_TRUE(b.local_base_.as_in6().sin6_addr.__in6_u.__u6_addr8[11] == 0x00U);
-  TEST_CHECK_TRUE(b.local_base_.as_in6().sin6_addr.__in6_u.__u6_addr8[12] == 0x00U);
-  TEST_CHECK_TRUE(b.local_base_.as_in6().sin6_addr.__in6_u.__u6_addr8[13] == 0x00U);
-  TEST_CHECK_TRUE(b.local_base_.as_in6().sin6_addr.__in6_u.__u6_addr8[14] == 0x00U);
-  TEST_CHECK_TRUE(b.local_base_.as_in6().sin6_addr.__in6_u.__u6_addr8[15] == 0x01U);
-  TEST_CHECK_TRUE(b.local_base_.str() == "[fe80::1]:65000");
-  TEST_CHECK_TRUE(b.retransmit_count_ == tftp::constants::default_retransmit_count);
-  */
+  ClientSettings_test b;
+  TEST_CHECK_TRUE(b.load_options(sizeof(tst_args)/sizeof(tst_args[0]),
+                                 const_cast<char **>(tst_args)));
+
+  TEST_CHECK_TRUE (b.log_err == 0U);
+  TEST_CHECK_TRUE (b.log_wrn == 6U);
+  TEST_CHECK_TRUE (b.log_inf == 0U);
+  TEST_CHECK_TRUE (b.log_dbg == 2U);
+  TEST_CHECK_TRUE (b.transfer_mode() == tftp::TransfMode::unknown);
+  TEST_CHECK_FALSE(b.was_set_blksize());
+  TEST_CHECK_FALSE(b.was_set_timeout());
+  TEST_CHECK_FALSE(b.was_set_windowsize());
+  TEST_CHECK_FALSE(b.was_set_tsize());
+  TEST_CHECK_TRUE (b.srv_addr_.str() == "127.0.0.1:69");
 }
 
 UNIT_TEST_CASE_END

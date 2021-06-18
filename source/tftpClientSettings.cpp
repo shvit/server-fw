@@ -23,7 +23,7 @@ ClientSettings::ClientSettings():
     file_remote_{},
     callback_log_{nullptr}
 {
-  srv_addr_.set_port(constants::default_tftp_port);
+  srv_addr_.set_string("127.0.0.1:"+std::to_string(constants::default_tftp_port));
 }
 
 // -----------------------------------------------------------------------------
@@ -34,10 +34,10 @@ ClientSettings::~ClientSettings()
 
 // -----------------------------------------------------------------------------
 
-auto ClientSettings::create() -> pClientSettings
-{
-  return std::make_unique<ClientSettings>(ClientSettings{});
-}
+//auto ClientSettings::create() -> pClientSettings
+//{
+//  return std::make_unique<ClientSettings>(ClientSettings{});
+//}
 
 //------------------------------------------------------------------------------
 
@@ -46,6 +46,12 @@ bool ClientSettings::load_options(int argc, char * argv[])
   L_DBG("Start argument parse (argc is "+std::to_string(argc)+")");
 
   bool ret = true;
+
+  fLogMsg do_logging = std::bind(
+      & ClientSettings::log,
+      this,
+      std::placeholders::_1,
+      std::placeholders::_2);
 
   const auto res = ArgParser::go(
       arg_option_settings,
@@ -91,7 +97,8 @@ bool ClientSettings::load_options(int argc, char * argv[])
         break;
       case 5: // Help
         ret = false;
-        ArgParser::out_help_data(arg_option_settings, std::cout, argv[0]);
+        //ArgParser::out_help_data(arg_option_settings, std::cout, argv[0]);
+        out_help(std::cout, argv[0]);
         break;
       case 6: // Verbosity
         verb_ = true;
@@ -99,47 +106,27 @@ bool ClientSettings::load_options(int argc, char * argv[])
       case 7: // Mode transfer
         set_transfer_mode(
             ArgParser::get_last_value(res.first, item.first),
-            std::bind(
-                & ClientSettings::log,
-                this,
-                std::placeholders::_1,
-                std::placeholders::_2));
+            do_logging);
         break;
       case 8: // Block size
         set_blksize(
             ArgParser::get_last_value(res.first, item.first),
-            std::bind(
-                & ClientSettings::log,
-                this,
-                std::placeholders::_1,
-                std::placeholders::_2));
+            do_logging);
         break;
       case 9: // Timeout
         set_timeout(
             ArgParser::get_last_value(res.first, item.first),
-            std::bind(
-                & ClientSettings::log,
-                this,
-                std::placeholders::_1,
-                std::placeholders::_2));
+            do_logging);
         break;
       case 10: // Windowsize
         set_windowsize(
             ArgParser::get_last_value(res.first, item.first),
-            std::bind(
-                & ClientSettings::log,
-                this,
-                std::placeholders::_1,
-                std::placeholders::_2));
+            do_logging);
         break;
       case 11: // Tsize
         set_tsize(
             ArgParser::get_last_value(res.first, item.first),
-            std::bind(
-                & ClientSettings::log,
-                this,
-                std::placeholders::_1,
-                std::placeholders::_2));
+            do_logging);
         break;
       default:
         break;
@@ -149,7 +136,7 @@ bool ClientSettings::load_options(int argc, char * argv[])
   // 2 Parse main arguments
   if(auto cnt=res.second.size(); cnt == 0U)
   {
-    L_ERR("No server address found");
+    L_WRN("No server address found; used "+srv_addr_.str());
   }
   else
   if(cnt > 1U)
@@ -175,6 +162,20 @@ void ClientSettings::log(LogLvl lvl, std::string_view msg) const
 
 // -----------------------------------------------------------------------------
 
+void ClientSettings::out_id(std::ostream & stream) const
+{
+  stream << "Simple tftp firmware server 'server-fw' v" << constants::app_version << " licensed GPL-3.0" << std::endl
+  << "(c) 2019-2021 Vitaliy.V.Shirinkin, e-mail: vitaliy.shirinkin@gmail.com" << std::endl;
+}
+
+// -----------------------------------------------------------------------------
+
+void ClientSettings::out_help(std::ostream & stream, std::string_view app) const
+{
+  ArgParser::out_help_data(arg_option_settings, stream, app);
+}
+
+// -----------------------------------------------------------------------------
 
 } // namespace tftp
 
