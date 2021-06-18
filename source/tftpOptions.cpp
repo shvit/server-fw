@@ -172,33 +172,6 @@ bool Options::buffer_parse(
       OPT_L_INF("Recognize tranfser mode '"+curr_mod+"'");
     }
     curr_pos += curr_mod.size()+1U;
-    /*
-    if((ret = (curr_mod.size() > 0U)))
-    {
-      do_lower(curr_mod);
-      if(curr_mod == "netascii") transfer_mode_ = TransfMode::netascii;
-      else
-      if(curr_mod == "octet") transfer_mode_ = TransfMode::octet;
-      else
-      if(curr_mod == "binary") transfer_mode_ = TransfMode::binary;
-      else
-      if(curr_mod == "mail") transfer_mode_ = TransfMode::mail;
-
-      if(transfer_mode_ != TransfMode::unknown)
-      {
-        OPT_L_INF("Recognize tranfser mode '"+curr_mod+"'");
-      }
-      else
-      {
-        OPT_L_WRN("Wrong tranfser mode '"+curr_mod+"'! ");
-      }
-      curr_pos += curr_mod.size()+1U;
-    }
-    else
-    {
-      OPT_L_WRN("Wrong transfer mode (empty!)");
-    }
-    */
   }
 
   // Init options
@@ -228,7 +201,7 @@ bool Options::buffer_parse(
       if(str_opt == constants::name_windowsize) { fl=true; set_windowsize(str_val, log); }
       else
       {
-        OPT_L_WRN("Unknown option '"+str_opt+"'='"+str_val+"'");
+        OPT_L_WRN("Unknown option '"+str_opt+"'='"+str_val+"'; Ignore!");
       }
       if(fl) OPT_L_INF("Recognize option '"+str_opt+"' value '"+str_val+"'");
     }
@@ -245,20 +218,31 @@ void Options::set_blksize(
 {
   if(!is_digit_str(val))
   {
-    OPT_L_ERR("Wrong option 'blksize' value is '"+val+"'");
+    OPT_L_WRN("Wrong value '"+val+"'; Ignore!");
     return;
   }
 
-  auto tmp_int = std::stoi(val);
+  int tmp_int;
+  try
+  {
+    tmp_int = std::stoi(val);
+  }
+  catch (...)
+  {
+    OPT_L_WRN("Converting error value '"+val+"'; Ignore!");
+    return;
+  }
 
   if(tmp_int < 1)
   {
-    OPT_L_ERR("Wrong option 'blksize' too small ("+std::to_string(tmp_int)+")");
+    OPT_L_WRN("Wrong value too small ("+val+"); Ignore!");
+    return;
   }
-  else
+
   if(tmp_int > 65500)
   {
-    L_ERR("Wrong option 'blksize' too large ("+std::to_string(tmp_int)+")");
+    OPT_L_WRN("Wrong value too large ("+val+"); Ignore!");
+    return;
   }
 
   blksize_ = {true, tmp_int};
@@ -272,20 +256,31 @@ void Options::set_timeout(
 {
   if(!is_digit_str(val))
   {
-    OPT_L_ERR("Wrong option 'timeout' value is '"+val+"'");
+    OPT_L_WRN("Wrong value '"+val+"'; Ignore!");
     return;
   }
 
-  auto tmp_int = std::stoi(val);
+  int tmp_int;
+  try
+  {
+    tmp_int = std::stoi(val);
+  }
+  catch (...)
+  {
+    OPT_L_WRN("Converting error value '"+val+"'; Ignore!");
+    return;
+  }
 
   if(tmp_int < 1)
   {
-    OPT_L_ERR("Wrong option 'timeout' too small ("+std::to_string(tmp_int)+")");
+    OPT_L_WRN("Wrong value too small ("+val+"); Ignore!");
+    return;
   }
-  else
+
   if(tmp_int > 3600)
   {
-    L_ERR("Wrong option 'timeout' too large ("+std::to_string(tmp_int)+")");
+    OPT_L_WRN("Wrong value too large ("+val+"); Ignore!");
+    return;
   }
 
   timeout_ = {true, tmp_int};
@@ -299,15 +294,25 @@ void Options::set_windowsize(
 {
   if(!is_digit_str(val))
   {
-    OPT_L_ERR("Wrong option 'windowsize' value is '"+val+"'");
+    OPT_L_WRN("Wrong value '"+val+"'; Ignore!");
     return;
   }
 
-  auto tmp_int = std::stoi(val);
+  int tmp_int;
+  try
+  {
+    tmp_int = std::stoi(val);
+  }
+  catch (...)
+  {
+    OPT_L_WRN("Converting error value '"+val+"'; Ignore!");
+    return;
+  }
 
   if(tmp_int < 1)
   {
-    OPT_L_ERR("Wrong option 'windowsize' too small ("+std::to_string(tmp_int)+")");
+    OPT_L_WRN("Wrong value too small ("+val+"); Ignore!");
+    return;
   }
 
   windowsize_ = {true, tmp_int};
@@ -321,15 +326,25 @@ void Options::set_tsize(
 {
   if(!is_digit_str(val))
   {
-    OPT_L_ERR("Wrong option 'tsize' value is '"+val+"'");
+    OPT_L_WRN("Wrong value '"+val+"'; Ignore!");
     return;
   }
 
-  auto tmp_int = std::stoi(val);
+  int tmp_int;
+  try
+  {
+    tmp_int = std::stoi(val);
+  }
+  catch (...)
+  {
+    OPT_L_WRN("Converting error value '"+val+"'; Ignore!");
+    return;
+  }
 
   if(tmp_int < 0)
   {
-    OPT_L_ERR("Wrong option 'blksize' too small ("+std::to_string(tmp_int)+")");
+    OPT_L_WRN("Wrong value too small ("+val+"); Ignore!");
+    return;
   }
 
   tsize_ = {true, tmp_int};
@@ -359,12 +374,12 @@ bool Options::set_transfer_mode(
 
     if(!(ret = fl))
     {
-      OPT_L_WRN("Wrong tranfser mode '"+curr_mod+"'! ");
+      OPT_L_WRN("Wrong value '"+curr_mod+"'; Ignore!");
     }
   }
   else
   {
-    OPT_L_WRN("Wrong transfer mode (empty!)");
+    OPT_L_WRN("Wrong value (empty!); Ignore!");
   }
 
   return ret;

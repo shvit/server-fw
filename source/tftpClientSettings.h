@@ -21,6 +21,9 @@ namespace tftp
 
 const ArgItems arg_option_settings =
 {
+    {0, {}, tftp::ArgExistVaue::no, "", "Simple TFTP client from 'server-fw' project licensed GPL-3.0", ""},
+    {0, {}, tftp::ArgExistVaue::no, "", "Github project page https://github.com/shvit/server-fw", ""},
+    {0, {}, tftp::ArgExistVaue::no, "", "(c) 2019-2021 Vitaliy.V.Shirinkin, e-mail: vitaliy.shirinkin@gmail.com", ""},
   { 1, {"l", "L", "local"},      tftp::ArgExistVaue::required, "file", "Local file path and name", ""},
   { 2, {"r", "R", "remote"},     tftp::ArgExistVaue::required, "file", "Remote file name", ""},
   { 3, {"g", "G", "get"},        tftp::ArgExistVaue::no,       "",     "Get file from server", ""},
@@ -60,7 +63,7 @@ public:
    *
    *  \return Unique pointer of ClientSettings
    */
-  static auto create() -> pClientSettings;
+  //static auto create() -> pClientSettings;
 
   /** \brief Destructor
    */
@@ -76,7 +79,7 @@ public:
 
   void out_id(std::ostream & stream) const;
 
-  void out_help(std::ostream & stream, std::string_view app) const;
+  void out_help(std::ostream & stream, std::string_view app="") const;
 
   /** \brief Local used logger method
    *
