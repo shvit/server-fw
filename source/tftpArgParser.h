@@ -105,6 +105,9 @@ enum class ResCheck: int
 class ArgParser
 {
 protected:
+  ArgItems data_settings_;
+  ArgRes   data_result_;
+
 
   enum class ArgType: int
   {
@@ -114,6 +117,53 @@ protected:
     end_parse,
     not_found,
   };
+
+  /** \brief Check char pointer is argument option
+   *
+   *  For short arguments need "-" at start position and one or more chars
+   *  For long arguments need "--" at start position and one or more chars
+   *  If find only "--" then need end partse and return ArgType::end_parse
+   *  \param [in] ptr_str Source pointer to chars
+   *  \return Tuple with type ArgType and result string (without -/--)
+   */
+  auto chk_arg(const char * ptr_str) const
+      -> std::tuple<ArgType, std::string>;
+
+  /** \brief Construct string with right argument option
+   *
+   *  Used for help output
+   *  Add -/-- at start of string argument name:
+   *  - if legth=1 then add "-" at begin
+   *  - if length>1 then add "--" at begin
+   *  If string name is wrong then return ""
+   *  \param [in] arg_name Argument name
+   *  \return String with right option
+   */
+  auto constr_arg(const std::string & arg_name) const -> std::string;
+
+  /** \brief Construct right argument all options
+   *
+   *  Used for help output
+   *  Use construct_arg() for options
+   *  If options count >1 then add: '{', '|', '}'
+   *  \param [in] arg_names Vector with names
+   *  \return Result string
+   */
+  auto constr_args(const VecStr & arg_names) -> std::string;
+
+  /** \brief Out one line with argument option data
+   *
+   *  Used for help output
+   *  Use construct_args() for options
+   *  If no option names then out only captions
+   *  \param [in] item Tuple of one argument option
+   *  \return Result one string line
+   */
+  auto constr_line_out(const ArgItem & item) -> std::string;
+
+
+
+
 
   /** \brief Check char pointer is argument option
    *
@@ -159,6 +209,28 @@ protected:
   static auto get_line_out(const ArgItem & item) -> std::string;
 
 public:
+
+  ArgParser();
+
+  ArgParser(const ArgItems & new_val);
+
+  /** \brief Parsing argument options
+   *
+   *  \param [in] items_ref Source settings for all arguments options
+   *  \param [in] argc Count of arguments from CMD
+   *  \param [in] argv Arguments from CMD
+   *  \return Parsed data as type ArgRes
+   */
+  auto run(
+      int argc,
+      char * argv[]) -> const ArgRes &;
+
+  auto constr_caption(const int & id) -> std::string;
+
+
+
+
+
 
   /** \brief Parsing argument options
    *

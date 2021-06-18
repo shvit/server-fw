@@ -21,6 +21,186 @@ namespace tftp
 
 // -----------------------------------------------------------------------------
 
+ArgParser::ArgParser():
+    data_settings_{},
+    data_result_{}
+{
+}
+
+// -----------------------------------------------------------------------------
+
+ArgParser::ArgParser(const ArgItems & new_val):
+    data_settings_{new_val},
+    data_result_{}
+{
+}
+
+// -----------------------------------------------------------------------------
+
+auto ArgParser::run(
+    int argc,
+    char * argv[]) -> const ArgRes &
+{
+
+  return data_result_;
+}
+
+// -----------------------------------------------------------------------------
+
+auto ArgParser::chk_arg(const char * ptr_str) const
+    -> std::tuple<ArgType, std::string>
+{
+  if(ptr_str == nullptr) return {ArgType::not_found, ""};
+
+  std::string tmp_str{ptr_str};
+
+  if(tmp_str.size() < 2U) return {ArgType::normal_value, tmp_str};
+
+  if(tmp_str[0U] != '-') return {ArgType::normal_value, tmp_str};
+
+  if(tmp_str[1U] != '-') return {ArgType::is_short, std::string{tmp_str.cbegin()+1, tmp_str.cend()}};
+
+  if(tmp_str.size() == 2U) return {ArgType::end_parse, "--"};
+
+  if(tmp_str[2U] != '-') return {ArgType::is_long, std::string{tmp_str.cbegin()+2, tmp_str.cend()}};
+
+  return {ArgType::normal_value, tmp_str};
+}
+
+// -----------------------------------------------------------------------------
+
+auto ArgParser::constr_arg(const std::string & arg_name) const -> std::string
+{
+  if(arg_name.size() == 0U) return "";
+
+  if((arg_name[0U] == '-') ||
+     (arg_name[0U] == ' ')) return "";
+
+  std::string ret{"-"};
+  if(arg_name.size() > 1U) ret.append("-");
+  ret.append(arg_name);
+
+  return ret;
+}
+
+// -----------------------------------------------------------------------------
+
+auto ArgParser::constr_args(const VecStr & arg_names) -> std::string
+{
+
+  std::stringstream ss;
+  size_t was_printed = 0U;
+
+  for(auto & name : arg_names)
+  {
+    std::string tmp_str{constr_arg(name)};
+
+    if(tmp_str.size() == 0U) continue;
+
+    if(was_printed) ss << "|";
+    ss << tmp_str;
+    ++was_printed;
+  }
+
+  if(was_printed > 1U) return "{"+ss.str()+"}";
+
+  return ss.str();
+}
+
+// -----------------------------------------------------------------------------
+
+auto ArgParser::constr_caption(const int & id) -> std::string
+{
+  std::string ret;
+
+  bool data_ok = false;
+  size_t src_idx;
+  for(size_t it=0U;  it < data_settings_.size(); ++it)
+  {
+    if(std::get<int>(data_settings_[it]) == id)
+    {
+      data_ok = true;
+      src_idx = it;
+      break;
+    }
+  }
+  if(data_ok)
+  {
+    ret = std::get<4>(data_settings_[src_idx]);
+    if(ret.size() == 0U) ret = "Action #" + std::to_string(id);
+  }
+
+  return ret;
+}
+
+// -----------------------------------------------------------------------------
+
+auto ArgParser::constr_line_out(const ArgItem & item) -> std::string
+{
+  std::string ret;
+
+  auto & names = std::get<VecStr>(item);
+  auto & type_arg = std::get<ArgExistVaue>(item);
+  auto & val_capt = std::get<3>(item);
+  auto & caption = std::get<4>(item);
+  auto & note = std::get<5>(item);
+
+  ret = constr_args(names);
+
+  if(ret.size() && (type_arg != ArgExistVaue::no))
+  {
+    ret.append(" ");
+
+    if(type_arg == ArgExistVaue::optional) ret.append("[");
+
+    if((type_arg == ArgExistVaue::optional) ||
+       (type_arg == ArgExistVaue::required))
+    {
+      ret.append("<");
+      if(val_capt.size()) ret.append(val_capt); else ret.append("value");
+      ret.append(">");
+    }
+
+    if(type_arg == ArgExistVaue::optional) ret.append("]");
+  }
+
+  if(ret.size()) ret.append(" ");
+
+  if(caption.size() > 0U) ret.append(caption);
+                     else  ret.append("...");
+
+  if(note.size())
+  {
+    ret.append(" (");
+    ret.append(note);
+    ret.append(")");
+  }
+
+  return ret;
+}
+
+// -----------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 auto ArgParser::check_arg(const char * ptr_str)
     -> std::tuple<ArgParser::ArgType, std::string>
 {
