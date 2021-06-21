@@ -359,9 +359,9 @@ START_ITER("Test constr_line_out()");
       int{1},
       tftp::VecStr{"L"},
       tftp::ArgExistVaue::optional,
-      std::string{""},
+      std::string{},
       std::string{"Locale"},
-      std::string{""}}) == "-L [<value>] Locale");
+      std::string{}}) == "-L [<value>] Locale");
 
   TEST_CHECK_TRUE(p.constr_line_out({
       int{1},
@@ -369,7 +369,7 @@ START_ITER("Test constr_line_out()");
       tftp::ArgExistVaue::required,
       std::string{"file"},
       std::string{"Local file name"},
-      std::string{""}}) == "{-l|-L|--local} <file> Local file name");
+      std::string{}}) == "{-l|-L|--local} <file> Local file name");
 
   TEST_CHECK_TRUE(p.constr_line_out({
       int{1},
@@ -377,7 +377,23 @@ START_ITER("Test constr_line_out()");
       tftp::ArgExistVaue::no,
       std::string{"file"},
       std::string{},
-      std::string{""}}) == "{-l|-L} ...");
+      std::string{}}) == "{-l|-L} ...");
+
+  TEST_CHECK_TRUE(p.constr_line_out({
+      int{1},
+      tftp::VecStr{},
+      tftp::ArgExistVaue::no,
+      std::string{"file"},
+      std::string{},
+      std::string{}}) == "");
+
+  TEST_CHECK_TRUE(p.constr_line_out({
+      int{1},
+      tftp::VecStr{},
+      tftp::ArgExistVaue::no,
+      std::string{"file"},
+      std::string{},
+      std::string{"ANY TEXT"}}) == "(ANY TEXT)");
 }
 /*
 START_ITER("Test get_line_out()");
@@ -433,18 +449,25 @@ UNIT_TEST_CASE_BEGIN(full_test, "Check method go_full()")
 
 tftp::ArgItems arg_items
 {
+  {0, {}, tftp::ArgExistVaue::no, "", "Simple TFTP client from 'server-fw' project licensed GPL-3.0", ""},
+  {0, {}, tftp::ArgExistVaue::no, "", "Github project page https://github.com/shvit/server-fw", ""},
+  {0, {}, tftp::ArgExistVaue::no, "", "(c) 2019-2021 Vitaliy.V.Shirinkin, e-mail: vitaliy.shirinkin@gmail.com", ""},
+  {99,{}, tftp::ArgExistVaue::no, "", "--", ""},
+  {0, {}, tftp::ArgExistVaue::no, "", "Usage:", ""},
+  {0, {}, tftp::ArgExistVaue::no, "", "./tftp-cl [<options> ... ] <IP addr>[:<Port>]", ""},
+  {0, {}, tftp::ArgExistVaue::no, "", "Possible options:", ""},
   { 1, {"l", "L", "local"},      tftp::ArgExistVaue::required, "file", "Local file path and name", ""},
   { 2, {"r", "R", "remote"},     tftp::ArgExistVaue::required, "file", "Remote file name", ""},
   { 3, {"g", "G", "get"},        tftp::ArgExistVaue::no,       "",     "Get file from server", ""},
   { 4, {"p", "P", "put"},        tftp::ArgExistVaue::no,       "",     "Put file to server", ""},
   { 5, {"h", "H", "help", "?"},  tftp::ArgExistVaue::no,       "",     "Show help information", ""},
-  { 6, {"v", "V", "verb"},       tftp::ArgExistVaue::no,       "",     "Set verbosity mode", ""},
+  { 6, {"v", "V", "verb"},       tftp::ArgExistVaue::no,       "",     "", ""},
   { 7, {"m", "M", "mode"},       tftp::ArgExistVaue::required, "mode", "TFTP transfer mode", ""},
   { 8, {"b", "B", "blksize"},    tftp::ArgExistVaue::required, "N",    "TFTP option 'block size'", "default 512"},
   { 9, {"t", "T", "timeout"},    tftp::ArgExistVaue::required, "N",    "TFTP option 'timeout'", "default 10"},
   {10, {"w", "W", "windowsize"}, tftp::ArgExistVaue::required, "N",    "TFTP option 'windowsize'", "default 1"},
   {11, {"Q","tsize"},            tftp::ArgExistVaue::optional, "N",    "TFTP option 'tsize'", "WRQ without value use calculated"},
-  {100,{},                       tftp::ArgExistVaue::required, "",     "", ""   },
+  {100,{},                       tftp::ArgExistVaue::required, "",     "", "Testing output"   },
 };
 
 START_ITER("Stage 1 - Common check - many doubles");
@@ -478,19 +501,17 @@ START_ITER("Check constr_caption()");
   TEST_CHECK_TRUE(p.constr_caption(12345) == "");
   TEST_CHECK_TRUE(p.constr_caption(100) == "Action #100");
   TEST_CHECK_TRUE(p.constr_caption(1) == "Local file path and name");
+  TEST_CHECK_TRUE(p.constr_caption(99) == ""); // --
 }
-/*
-START_ITER("Check construct_caption()");
-{
-  TEST_CHECK_TRUE(ArgParser_test::construct_caption(arg_items, 12345) == "");
-  TEST_CHECK_TRUE(ArgParser_test::construct_caption(arg_items, 100) == "Action #100");
-  TEST_CHECK_TRUE(ArgParser_test::construct_caption(arg_items, 1) == "Local file path and name");
-}
-*/
 
 
 
-//tftp::ArgParser::out_help_data(arg_items, std::cout); // develop checks
+  //p.out_help(std::cout); // develop checks
+  //p.out_header(std::cout); // develop checks
+
+//const auto & res = p.run(
+//    sizeof(tst_args)/sizeof(tst_args[0]),
+//    const_cast<char **>(tst_args));
 
 auto res = tftp::ArgParser::go(
     arg_items,
