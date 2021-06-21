@@ -47,6 +47,9 @@ enum class ArgExistVaue: int
  *  3: Caption of value for option
  *  4: Common caption for option
  *  5: Additional info for caption in round bracket
+ *
+ *  Header info start with empty vector #1
+ *  Header info stop when find "--" at #4
  */
 using ArgItem = std::tuple<
     int,          ///< ID for unique actions - use at top level switch
@@ -149,7 +152,7 @@ protected:
    *  \param [in] arg_names Vector with names
    *  \return Result string
    */
-  auto constr_args(const VecStr & arg_names) -> std::string;
+  auto constr_args(const VecStr & arg_names) const -> std::string;
 
   /** \brief Out one line with argument option data
    *
@@ -159,7 +162,7 @@ protected:
    *  \param [in] item Tuple of one argument option
    *  \return Result one string line
    */
-  auto constr_line_out(const ArgItem & item) -> std::string;
+  auto constr_line_out(const ArgItem & item) const -> std::string;
 
 
 
@@ -225,9 +228,28 @@ public:
       int argc,
       char * argv[]) -> const ArgRes &;
 
-  auto constr_caption(const int & id) -> std::string;
+  auto constr_caption(const int & id) const -> std::string;
 
+  /** \brief Out to stream help information of arguments options
+   *
+   *  Used for help output
+   *  Get information from ArgItems value
+   *  \param [out] stream Output stream
+   *  \param [in] Application name (filename); default is ""
+   */
+  void out_help(
+      std::ostream & stream,
+      std::string_view app_name="") const;
 
+  /** \brief Out to stream header output for application
+   *
+   *  Used for output: Application name, License, etc. See at ArgItems
+   *  Get information from ArgItems value
+   *  \param [in] items Source settings for all arguments options
+   *  \param [out] stream Output stream
+   *  \param [in] Application name (filename); default is ""
+   */
+  void out_header(std::ostream & stream) const;
 
 
 

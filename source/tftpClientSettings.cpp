@@ -17,6 +17,7 @@ namespace tftp
 
 ClientSettings::ClientSettings():
     Options(),
+    ap_{arg_option_settings},
     srv_addr_{},
     verb_{false},
     file_local_{},
@@ -53,8 +54,7 @@ bool ClientSettings::load_options(int argc, char * argv[])
       std::placeholders::_1,
       std::placeholders::_2);
 
-  const auto res = ArgParser::go(
-      arg_option_settings,
+  const auto & res = ap_.run(
       argc,
       argv);
 
@@ -162,17 +162,16 @@ void ClientSettings::log(LogLvl lvl, std::string_view msg) const
 
 // -----------------------------------------------------------------------------
 
-void ClientSettings::out_id(std::ostream & stream) const
+void ClientSettings::out_header(std::ostream & stream) const
 {
-  stream << "Simple tftp firmware server 'server-fw' v" << constants::app_version << " licensed GPL-3.0" << std::endl
-  << "(c) 2019-2021 Vitaliy.V.Shirinkin, e-mail: vitaliy.shirinkin@gmail.com" << std::endl;
+  ap_.out_header(stream);
 }
 
 // -----------------------------------------------------------------------------
 
 void ClientSettings::out_help(std::ostream & stream, std::string_view app) const
 {
-  ArgParser::out_help_data(arg_option_settings, stream, app);
+  ap_.out_help(stream, app);
 }
 
 // -----------------------------------------------------------------------------

@@ -41,6 +41,82 @@ auto ArgParser::run(
     int argc,
     char * argv[]) -> const ArgRes &
 {
+  bool is_end_parse=false;
+
+  for(int iter=1; iter < argc; ++iter)
+  {
+    if(is_end_parse)
+    {
+      data_result_.second.emplace_back(argv[iter]);
+      continue;
+    }
+
+    auto [a_type, a_value] = chk_arg(argv[iter]);
+
+    if(a_type == ArgType::end_parse) { is_end_parse=true; continue; }
+
+    if(a_type == ArgType::not_found) break; // error input data (argv)
+
+    if((a_type == ArgType::normal_value))
+    {
+      data_result_.second.push_back(a_value);
+      continue;
+    }
+
+    bool need_skip_next=false;
+
+    // Get search list (for correct pass short multi options)
+    VecStr a_vals;
+    if(a_type == ArgType::is_long) a_vals.push_back(a_value);
+    if(a_type == ArgType::is_short)
+    {
+      for(auto & chr : a_value) a_vals.push_back(std::string{chr});
+    }
+
+    // Check next argument
+    ArgType     next_type{ArgType::not_found};
+    std::string next_value;
+    if((iter+1) < argc)
+    {
+      std::tie(next_type, next_value) = chk_arg(argv[iter+1]);
+    }
+
+    // Search!
+    for(const auto & itm : data_settings_)
+    {
+      const auto & itm_type_val = std::get<ArgExistVaue>(itm);
+
+      for(const auto & chk_name : std::get<VecStr>(itm))
+      {
+        if((a_type == ArgType::is_long)  && (chk_name.size() < 2U)) continue;
+        if((a_type == ArgType::is_short) && (chk_name.size() != 1U)) continue;
+
+        for(auto & passed_name : a_vals)
+        {
+          if(chk_name == passed_name) // if find option
+          {
+            auto & res_list = data_result_.first[std::get<int>(itm)]; // create if need
+
+            if((next_type == ArgType::normal_value) &&
+               ((itm_type_val == ArgExistVaue::required) ||
+                (itm_type_val == ArgExistVaue::optional)))
+            {
+              res_list.emplace_back(constr_arg(passed_name), next_value);
+              need_skip_next = true;
+            }
+            else
+            {
+              res_list.emplace_back(constr_arg(passed_name), "");
+            }
+
+            break;
+          }
+        }
+      }
+    }
+
+    if(need_skip_next) ++iter;
+  }
 
   return data_result_;
 }
@@ -85,7 +161,7 @@ auto ArgParser::constr_arg(const std::string & arg_name) const -> std::string
 
 // -----------------------------------------------------------------------------
 
-auto ArgParser::constr_args(const VecStr & arg_names) -> std::string
+auto ArgParser::constr_args(const VecStr & arg_names) const -> std::string
 {
 
   std::stringstream ss;
@@ -109,7 +185,7 @@ auto ArgParser::constr_args(const VecStr & arg_names) -> std::string
 
 // -----------------------------------------------------------------------------
 
-auto ArgParser::constr_caption(const int & id) -> std::string
+auto ArgParser::constr_caption(const int & id) const -> std::string
 {
   std::string ret;
 
@@ -128,6 +204,7 @@ auto ArgParser::constr_caption(const int & id) -> std::string
   {
     ret = std::get<4>(data_settings_[src_idx]);
     if(ret.size() == 0U) ret = "Action #" + std::to_string(id);
+    if(ret == "--") ret.clear();
   }
 
   return ret;
@@ -135,7 +212,7 @@ auto ArgParser::constr_caption(const int & id) -> std::string
 
 // -----------------------------------------------------------------------------
 
-auto ArgParser::constr_line_out(const ArgItem & item) -> std::string
+auto ArgParser::constr_line_out(const ArgItem & item) const -> std::string
 {
   std::string ret;
 
@@ -164,14 +241,16 @@ auto ArgParser::constr_line_out(const ArgItem & item) -> std::string
     if(type_arg == ArgExistVaue::optional) ret.append("]");
   }
 
+  // Add () Caption
   if(ret.size()) ret.append(" ");
+  ret.append(caption);
+  if(ret.size() && (caption.size() == 0U)) ret.append("...");
 
-  if(caption.size() > 0U) ret.append(caption);
-                     else  ret.append("...");
-
+  // Add () Note
   if(note.size())
   {
-    ret.append(" (");
+    if(ret.size()) ret.append(" ");
+    ret.append("(");
     ret.append(note);
     ret.append(")");
   }
@@ -181,9 +260,48 @@ auto ArgParser::constr_line_out(const ArgItem & item) -> std::string
 
 // -----------------------------------------------------------------------------
 
+void ArgParser::out_help(
+    std::ostream & stream,
+    std::string_view app_name) const
+{
+  if(data_settings_.size()==0U)
+  {
+    stream << "No any possible options!" << std::endl;
+  }
+  else
+  {
+    if(std::get<VecStr>(data_settings_[0U]).size() != 0U)
+    {
+      stream << "Usage:" << std::endl;
+      stream << (app_name.size() ?  app_name : "./<app_name>");
+      stream << " [opt1> [<opt1 value>]] ... [<main argument 1>] ..." << std::endl;
+      stream << "Possible options:" << std::endl;
+    }
 
+    for(auto & item : data_settings_)
+    {
+      std::string tmp_str = constr_line_out(item);
+      if(tmp_str == "--") continue;
+      stream << tmp_str << std::endl;
+    }
+  }
 
+}
 
+// -----------------------------------------------------------------------------
+
+void ArgParser::out_header(std::ostream & stream) const
+{
+  for(auto & item : data_settings_)
+  {
+    if(std::get<VecStr>(item).size() > 0U) break;
+    if(std::get<4>(item) == "--") break;
+
+    stream << constr_line_out(item) << std::endl;
+  }
+}
+
+// -----------------------------------------------------------------------------
 
 
 
