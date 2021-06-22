@@ -15,16 +15,24 @@ namespace tftp
 
 // -----------------------------------------------------------------------------
 
-ClientSettings::ClientSettings():
-    Options(),
-    ap_{constants::arg_option_settings},
-    srv_addr_{},
-    verb_{0},
-    file_local_{},
-    file_remote_{},
-    callback_log_{nullptr}
+ClientSettings::ClientSettings(fLogMsg cb_logger):
+  Options(),
+  ap_{constants::arg_option_settings},
+  srv_addr_{},
+  verb_{0},
+  file_local_{},
+  file_remote_{},
+  callback_log_{cb_logger}
 {
   srv_addr_.set_string("127.0.0.1:"+std::to_string(constants::default_tftp_port));
+}
+
+
+// -----------------------------------------------------------------------------
+
+ClientSettings::ClientSettings():
+    ClientSettings(nullptr)
+{
 }
 
 // -----------------------------------------------------------------------------
