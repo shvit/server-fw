@@ -1,8 +1,15 @@
-/*
- * tftpClientSettings.h
+/**
+ * \file  tftpClientSettingss.h
+ * \brief Class ClientSettings header
  *
- *  Created on: 9 июн. 2021 г.
- *      Author: svv
+ *  Class for arguments parsing for TFTP client
+ *
+ *  License GPL-3.0
+ *
+ *  \date 09-jun-2021
+ *  \author Vitaliy Shirinkin, e-mail: vitaliy.shirinkin@gmail.com
+ *
+ *  \version 0.2
  */
 
 #ifndef SOURCE_TFTPCLIENTSETTINGS_H_
@@ -15,7 +22,6 @@
 
 namespace tftp
 {
-
 
 //------------------------------------------------------------------------------
 
@@ -102,22 +108,19 @@ public:
    */
   bool load_options(int argc, char * argv[]);
 
-  /** \brief Out to stream header output for application
+  /** \brief Out to cout header output for application
    *
    *  Used for output: Application name, License, etc. See at ArgItems
    *  Get information from ArgItems value
-   *  \param [out] stream Output stream
    */
-  void out_header(std::ostream & stream) const;
+  void out_header() const;
 
-  /** \brief Out to stream help information of arguments options
+  /** \brief Out to cout help information of arguments options
    *
    *  Used for help output
    *  Get information from ArgItems value
-   *  \param [out] stream Output stream
-   *  \param [in] Application name (filename); default is ""
    */
-  void out_help(std::ostream & stream, std::string_view app="") const;
+  void out_help() const;
 
 };
 

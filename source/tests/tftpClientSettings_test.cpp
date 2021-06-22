@@ -1,12 +1,14 @@
-/*
- * tftpClientSettings_test.cpp
+/**
+ * \file tftpClientSettingss_test.cpp
+ * \brief Unit-tests for class ClientSettingss
  *
- *  Created on: 9 июн. 2021 г.
- *      Author: svv
+ *  License GPL-3.0
+ *
+ *  \date 09-jun-2021
+ *  \author Vitaliy Shirinkin, e-mail: vitaliy.shirinkin@gmail.com
+ *
+ *  \version 0.2
  */
-
-
-
 
 #include "../tftpCommon.h"
 #include "../tftpClientSettings.h"
@@ -100,8 +102,8 @@ START_ITER("load options normal");
   TEST_CHECK_TRUE(b.load_options(sizeof(tst_args)/sizeof(tst_args[0]),
                                  const_cast<char **>(tst_args)));
 
-  //b.out_help(std::cout);
-  //b.out_header(std::cout);
+  //b.out_help();
+  //b.out_header();
 
   TEST_CHECK_TRUE(b.log_err == 0U);
   TEST_CHECK_TRUE(b.log_wrn == 0U);
