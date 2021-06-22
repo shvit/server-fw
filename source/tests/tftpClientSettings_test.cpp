@@ -108,7 +108,7 @@ START_ITER("load options normal");
   TEST_CHECK_TRUE(b.log_inf == 0U);
   TEST_CHECK_TRUE(b.log_dbg == 2U);
 
-  TEST_CHECK_TRUE(b.verb_);
+  TEST_CHECK_TRUE(b.verb_ == 7);
   TEST_CHECK_TRUE(b.file_local_ == "test_local.txt");
   TEST_CHECK_TRUE(b.file_remote_ == "test_remote.txt");
   TEST_CHECK_TRUE(b.blksize() == 1300);
@@ -131,6 +131,7 @@ START_ITER("Try to load fail options");
     "-t", "5555555555",
     "-w", "0",
     "--tsize", "awwdswd",
+    "--verb", "5",
   };
 
   ClientSettings_test b;
@@ -147,6 +148,7 @@ START_ITER("Try to load fail options");
   TEST_CHECK_FALSE(b.was_set_windowsize());
   TEST_CHECK_FALSE(b.was_set_tsize());
   TEST_CHECK_TRUE (b.srv_addr_.str() == "127.0.0.1:69");
+  TEST_CHECK_TRUE(b.verb_ == 5);
 }
 
 UNIT_TEST_CASE_END

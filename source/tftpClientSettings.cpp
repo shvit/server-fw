@@ -19,7 +19,7 @@ ClientSettings::ClientSettings():
     Options(),
     ap_{constants::arg_option_settings},
     srv_addr_{},
-    verb_{false},
+    verb_{0},
     file_local_{},
     file_remote_{},
     callback_log_{nullptr}
@@ -91,7 +91,11 @@ bool ClientSettings::load_options(int argc, char * argv[])
         out_help(std::cout, argv[0]);
         break;
       case 6: // Verbosity
-        verb_ = true;
+        {
+          verb_ = 7;  // default
+          auto tmp_val= ap_.get_parsed_int(item.first);
+          if(tmp_val.has_value()) verb_ = tmp_val.value();
+        }
         break;
       case 7: // Mode transfer
         set_transfer_mode(ap_.get_parsed_item(item.first), do_logging);

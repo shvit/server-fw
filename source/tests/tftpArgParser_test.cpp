@@ -587,17 +587,47 @@ TEST_CHECK_TRUE(p.get_parsed_item( 9) == "7");
 TEST_CHECK_TRUE(p.get_parsed_item(10) == "27");
 TEST_CHECK_TRUE(p.get_parsed_item(11) == "232334345");
 
-{
-  auto [r1,r2] = p.chk_parsed_item(3);
-  TEST_CHECK_TRUE(r1==tftp::ResCheck::wrn_many_arg);
-  TEST_CHECK_TRUE(r2.size() > 0U); // Warning message
-}
-{
-  auto [r1,r2] = p.chk_parsed_item(100);
-  TEST_CHECK_TRUE(r1==tftp::ResCheck::not_found);
-  TEST_CHECK_TRUE(r2.size() > 0U); // Notify message
-}
+  // chk_parsed_item()
+  {
+    auto [r1,r2] = p.chk_parsed_item(3);
+    TEST_CHECK_TRUE(r1==tftp::ResCheck::wrn_many_arg);
+    TEST_CHECK_TRUE(r2.size() > 0U); // Warning message
+  }
+  {
+    auto [r1,r2] = p.chk_parsed_item(100);
+    TEST_CHECK_TRUE(r1==tftp::ResCheck::not_found);
+    TEST_CHECK_TRUE(r2.size() > 0U); // Notify message
+  }
 
+  // get_parsed_int()
+  {
+    auto r = p.get_parsed_int(11);
+    TEST_CHECK_TRUE(r.has_value());
+    if(r.has_value()) TEST_CHECK_TRUE(r.value() == 232334345);
+  }
+  {
+    auto r = p.get_parsed_int(10);
+    TEST_CHECK_TRUE(r.has_value());
+    if(r.has_value()) TEST_CHECK_TRUE(r.value() == 27);
+  }
+  {
+    auto r = p.get_parsed_int(9);
+    TEST_CHECK_TRUE(r.has_value());
+    if(r.has_value()) TEST_CHECK_TRUE(r.value() == 7);
+  }
+  {
+    auto r = p.get_parsed_int(8);
+    TEST_CHECK_TRUE(r.has_value());
+    if(r.has_value()) TEST_CHECK_TRUE(r.value() == 4096);
+  }
+  { auto r = p.get_parsed_int(    7); TEST_CHECK_FALSE(r.has_value()); }
+  { auto r = p.get_parsed_int(    6); TEST_CHECK_FALSE(r.has_value()); }
+  { auto r = p.get_parsed_int(    5); TEST_CHECK_FALSE(r.has_value()); }
+  { auto r = p.get_parsed_int(    4); TEST_CHECK_FALSE(r.has_value()); }
+  { auto r = p.get_parsed_int(    3); TEST_CHECK_FALSE(r.has_value()); }
+  { auto r = p.get_parsed_int(    2); TEST_CHECK_FALSE(r.has_value()); }
+  { auto r = p.get_parsed_int(    1); TEST_CHECK_FALSE(r.has_value()); }
+  { auto r = p.get_parsed_int(10002); TEST_CHECK_FALSE(r.has_value()); }
 }
 
 
