@@ -82,13 +82,17 @@ using ArgResItems = std::map<int, ArgResItemPairs>;
  */
 using ArgRes = std::pair<ArgResItems, VecStr>;
 
+// -----------------------------------------------------------------------------
+
+/** \brief Enum for arguments parsing result by action ID
+ */
 enum class ResCheck: int
 {
-  not_found,
-  normal,
-  wrn_many_arg,
-  err_no_req_value,
-  err_wrong_data,
+  not_found,        ///< ID not found in result
+  normal,           ///< ID found and value present if need
+  wrn_many_arg,     ///< Warning - ID has some values (more then 1)
+  err_no_req_value, ///< Error - ID found but required value not present; need break
+  err_wrong_data,   ///< Error - ID not exist at source settings; need break
 };
 
 // -----------------------------------------------------------------------------
@@ -96,10 +100,10 @@ enum class ResCheck: int
 /** \brief Parser of command line argumants
  *
  *  Source:
- *  - settings arguments values as type ArgItems
+ *  - settings arguments values as type ArgItems when create
  *  - standart argc,argv
  *
- *  Main method is go()
+ *  Main method is run()
  *
  *  Support multi short options:
  *  "-Fuck" == "-F -u -c -k"
@@ -108,18 +112,22 @@ enum class ResCheck: int
 class ArgParser
 {
 protected:
-  ArgItems data_settings_;
-  ArgRes   data_result_;
 
-
+  /** \brief Type of argument
+   */
   enum class ArgType: int
   {
-    normal_value,
-    is_short,
-    is_long,
-    end_parse,
-    not_found,
+    normal_value, ///< Not option, normal value
+    is_short,     ///< Short option with starting "-"
+    is_long,      ///< Long option with starting "--"
+    end_parse,    ///< End of parse if equal "--"
+    not_found,    ///< Not found if wrong source pointer
   };
+
+protected:
+
+  ArgItems data_settings_; ///< Source settings
+  ArgRes   data_result_;   ///< Parsing result
 
   /** \brief Check char pointer is argument option
    *
@@ -164,61 +172,21 @@ protected:
    */
   auto constr_line_out(const ArgItem & item) const -> std::string;
 
-
-
-
-
-  /** \brief Check char pointer is argument option
-   *
-   *  For short arguments need "-" at start position and one or more chars
-   *  For long arguments need "--" at start position and one or more chars
-   *  If find only "--" then need end partse and return ArgType::end_parse
-   *  \param [in] ptr_str Source pointer to chars
-   *  \return Tuple with type ArgType and result string (without -/--)
+  /** \brief Default (fake) constructor
    */
-  static auto check_arg(const char * ptr_str)
-      -> std::tuple<ArgType, std::string>;
-
-  /** \brief Construct string with right argument option
-   *
-   *  Used for help output
-   *  Add -/-- at start of string argument name:
-   *  - if legth=1 then add "-" at begin
-   *  - if length>1 then add "--" at begin
-   *  If string name is wrong then return ""
-   *  \param [in] arg_name Argument name
-   *  \return String with right option
-   */
-  static auto construct_arg(const std::string & arg_name) -> std::string;
-
-  /** \brief Construct right argument all options
-   *
-   *  Used for help output
-   *  Use construct_arg() for options
-   *  If options count >1 then add: '{', '|', '}'
-   *  \param [in] arg_names Vector with names
-   *  \return Result string
-   */
-  static auto construct_args(const VecStr & arg_names) -> std::string;
-
-  /** \brief Out one line with argument option data
-   *
-   *  Used for help output
-   *  Use construct_args() for options
-   *  If no option names then out only captions
-   *  \param [in] item Tuple of one argument option
-   *  \return Result one string line
-   */
-  static auto get_line_out(const ArgItem & item) -> std::string;
+  ArgParser();
 
 public:
 
-  ArgParser();
-
-  ArgParser(const ArgItems & new_val);
-
-  /** \brief Parsing argument options
+  /** \brief Main constructor
    *
+   *   \param [in] new_sett Settings of argument options
+   */
+  ArgParser(const ArgItems & new_sett);
+
+  /** \brief Parsing argument options from CMD
+   *
+   *  Clear previous result (if he was be)
    *  \param [in] items_ref Source settings for all arguments options
    *  \param [in] argc Count of arguments from CMD
    *  \param [in] argv Arguments from CMD
@@ -228,6 +196,11 @@ public:
       int argc,
       char * argv[]) -> const ArgRes &;
 
+  /** \brief Construct caption (option description) by ID
+   *
+   *   \param [in] id Identifier of action
+   *   \return Caption string ("" if not present)
+   */
   auto constr_caption(const int & id) const -> std::string;
 
   /** \brief Out to stream help information of arguments options
@@ -245,53 +218,25 @@ public:
    *
    *  Used for output: Application name, License, etc. See at ArgItems
    *  Get information from ArgItems value
-   *  \param [in] items Source settings for all arguments options
    *  \param [out] stream Output stream
-   *  \param [in] Application name (filename); default is ""
    */
   void out_header(std::ostream & stream) const;
 
-
-
-
-  /** \brief Parsing argument options
+  /** \brief Check action ID exist at result
    *
-   *  \param [in] items_ref Source settings for all arguments options
-   *  \param [in] argc Count of arguments from CMD
-   *  \param [in] argv Arguments from CMD
-   *  \return Parsed data as type ArgRes
+   *  \param [in] id Action ID
+   *  \return Tuple with ResCheck and notify message
    */
-  static auto go(
-      const ArgItems & items_ref,
-      int argc,
-      char * argv[]) -> ArgRes;
+  auto chk_parsed_item(const int & id) const
+      -> std::tuple<ResCheck,std::string>;
 
-  /** \brief Out to stream help information of arguments options
+  /** \brief Get option value by action ID
    *
-   *  Used for help output
-   *  \param [in] items Source settings for all arguments options
-   *  \param [out] stream Output stream
-   *  \param [in] Application name (filename); default is ""
+   *  If result values count more 1, then return last value
+   *  \param [in] id Action ID
+   *  \return String value
    */
-  static void out_help_data(
-      const ArgItems & items,
-      std::ostream & stream,
-      std::string_view app_name="");
-
-  static auto construct_caption(
-      const ArgItems & items,
-      const int & id) -> std::string;
-
-  // Parsing results
-
-  static auto chk_result(
-      const ArgItems & items,
-      const int & id,
-      const ArgResItems & res) -> std::tuple<ResCheck,std::string>;
-
-  static auto get_last_value(
-      const ArgResItems & res,
-      const int & id) -> std::string;
+  auto get_parsed_item(const int & id) const -> std::string;
 
 };
 
