@@ -30,12 +30,6 @@ public:
   using ArgParser::constr_line_out;
 
   using tftp::ArgParser::ArgParser;
-
-  using ArgParser::check_arg;
-  using ArgParser::construct_arg;
-  using ArgParser::construct_args;
-  using ArgParser::get_line_out;
-  using ArgParser::construct_caption;
 };
 
 //------------------------------------------------------------------------------
@@ -122,85 +116,6 @@ START_ITER("Test chk_arg()");
     TEST_CHECK_TRUE(r2 == "");
   }
 }
-/*
-START_ITER("Test check_arg()");
-{
-  // Short
-  {
-    auto [r1,r2] = ArgParser_test::check_arg("-g");
-    TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::is_short);
-    TEST_CHECK_TRUE(r2 == "g");
-  }
-  {
-    auto [r1,r2] = ArgParser_test::check_arg("-A");
-    TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::is_short);
-    TEST_CHECK_TRUE(r2 == "A");
-  }
-  {
-    auto [r1,r2] = ArgParser_test::check_arg("-AB");
-    TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::is_short);
-    TEST_CHECK_TRUE(r2 == "AB");
-  }
-
-  // Long
-  {
-    auto [r1,r2] = ArgParser_test::check_arg("--g");
-    TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::is_long);
-    TEST_CHECK_TRUE(r2 == "g");
-  }
-  {
-    auto [r1,r2] = ArgParser_test::check_arg("--goo");
-    TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::is_long);
-    TEST_CHECK_TRUE(r2 == "goo");
-  }
-  {
-    auto [r1,r2] = ArgParser_test::check_arg("--goo-gle");
-    TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::is_long);
-    TEST_CHECK_TRUE(r2 == "goo-gle");
-  }
-
-  // Normal value
-  {
-    auto [r1,r2] = ArgParser_test::check_arg("---");
-    TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::normal_value);
-    TEST_CHECK_TRUE(r2 == "---");
-  }
-  {
-    auto [r1,r2] = ArgParser_test::check_arg("----");
-    TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::normal_value);
-    TEST_CHECK_TRUE(r2 == "----");
-  }
-  {
-    auto [r1,r2] = ArgParser_test::check_arg("-----");
-    TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::normal_value);
-    TEST_CHECK_TRUE(r2 == "-----");
-  }
-  {
-    auto [r1,r2] = ArgParser_test::check_arg("10.10.10.10:1000");
-    TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::normal_value);
-    TEST_CHECK_TRUE(r2 == "10.10.10.10:1000");
-  }
-  {
-    auto [r1,r2] = ArgParser_test::check_arg("This");
-    TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::normal_value);
-    TEST_CHECK_TRUE(r2 == "This");
-  }
-
-  // End of parse
-  {
-    auto [r1,r2] = ArgParser_test::check_arg("--");
-    TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::end_parse);
-    TEST_CHECK_TRUE(r2 == "");
-  }
-
-  // NULL
-  {
-    auto [r1,r2] = ArgParser_test::check_arg(nullptr);
-    TEST_CHECK_TRUE(r1 == ArgParser_test::ArgType::not_found);
-    TEST_CHECK_TRUE(r2 == "");
-  }
-}
-*/
 
 // 2
 START_ITER("Test constr_arg()");
@@ -233,36 +148,6 @@ START_ITER("Test constr_arg()");
   TEST_CHECK_TRUE(p.constr_arg("abc") == "--abc");
   TEST_CHECK_TRUE(p.constr_arg("Fuck") == "--Fuck");
 }
-/*
-START_ITER("Test constr_arg()");
-{
-  // wrong
-  TEST_CHECK_TRUE(ArgParser_test::construct_arg("") == "");
-  TEST_CHECK_TRUE(ArgParser_test::construct_arg("-") == "");
-  TEST_CHECK_TRUE(ArgParser_test::construct_arg("--") == "");
-  TEST_CHECK_TRUE(ArgParser_test::construct_arg("---") == "");
-  TEST_CHECK_TRUE(ArgParser_test::construct_arg("----") == "");
-  TEST_CHECK_TRUE(ArgParser_test::construct_arg("-----") == "");
-  TEST_CHECK_TRUE(ArgParser_test::construct_arg("-A") == "");
-  TEST_CHECK_TRUE(ArgParser_test::construct_arg("-AB") == "");
-  TEST_CHECK_TRUE(ArgParser_test::construct_arg("-defg") == "");
-  TEST_CHECK_TRUE(ArgParser_test::construct_arg("--A") == "");
-  TEST_CHECK_TRUE(ArgParser_test::construct_arg("--AB") == "");
-  TEST_CHECK_TRUE(ArgParser_test::construct_arg("--defg") == "");
-  TEST_CHECK_TRUE(ArgParser_test::construct_arg(" ") == "");
-  TEST_CHECK_TRUE(ArgParser_test::construct_arg(" A") == "");
-  TEST_CHECK_TRUE(ArgParser_test::construct_arg(" bcd") == "");
-
-  // normal short
-  TEST_CHECK_TRUE(ArgParser_test::construct_arg("a") == "-a");
-  TEST_CHECK_TRUE(ArgParser_test::construct_arg("Z") == "-Z");
-
-  // normal long
-  TEST_CHECK_TRUE(ArgParser_test::construct_arg("ab") == "--ab");
-  TEST_CHECK_TRUE(ArgParser_test::construct_arg("abc") == "--abc");
-  TEST_CHECK_TRUE(ArgParser_test::construct_arg("Fuck") == "--Fuck");
-}
-*/
 
 // 3
 START_ITER("Test constr_args()");
@@ -299,40 +184,6 @@ START_ITER("Test constr_args()");
   TEST_CHECK_TRUE(p.constr_args({"","a","-","Exp","--kek"}) == "{-a|--Exp}");
   TEST_CHECK_TRUE(p.constr_args({"-F","a","--des","Exp"," "}) == "{-a|--Exp}");
 }
-/*
-START_ITER("Test construct_args()");
-{
-  // Empty
-  TEST_CHECK_TRUE(ArgParser_test::construct_args({}) == "");
-  TEST_CHECK_TRUE(ArgParser_test::construct_args({"","",""}) == "");
-  TEST_CHECK_TRUE(ArgParser_test::construct_args({"","-","--","-1","-dfhfgh"}) == "");
-
-  // OK
-  TEST_CHECK_TRUE(ArgParser_test::construct_args({"a"}) == "-a");
-  TEST_CHECK_TRUE(ArgParser_test::construct_args({"V"}) == "-V");
-  TEST_CHECK_TRUE(ArgParser_test::construct_args({"vers"}) == "--vers");
-  TEST_CHECK_TRUE(ArgParser_test::construct_args({"S","vers"}) == "{-S|--vers}");
-  TEST_CHECK_TRUE(ArgParser_test::construct_args({"a","biz","def"}) == "{-a|--biz|--def}");
-  TEST_CHECK_TRUE(ArgParser_test::construct_args({"a","b","d"}) == "{-a|-b|-d}");
-
-  // Partial
-  TEST_CHECK_TRUE(ArgParser_test::construct_args({"","a"}) == "-a");
-  TEST_CHECK_TRUE(ArgParser_test::construct_args({"a",""}) == "-a");
-  TEST_CHECK_TRUE(ArgParser_test::construct_args({"-","a"}) == "-a");
-  TEST_CHECK_TRUE(ArgParser_test::construct_args({"a","-"}) == "-a");
-  TEST_CHECK_TRUE(ArgParser_test::construct_args({"--","a"}) == "-a");
-  TEST_CHECK_TRUE(ArgParser_test::construct_args({"a","--"}) == "-a");
-  TEST_CHECK_TRUE(ArgParser_test::construct_args({"-X","a"}) == "-a");
-  TEST_CHECK_TRUE(ArgParser_test::construct_args({"a","-X"}) == "-a");
-  TEST_CHECK_TRUE(ArgParser_test::construct_args({"--wer","a"}) == "-a");
-  TEST_CHECK_TRUE(ArgParser_test::construct_args({"a","--wer"}) == "-a");
-
-  TEST_CHECK_TRUE(ArgParser_test::construct_args({"","a","-","Exp"}) == "{-a|--Exp}");
-  TEST_CHECK_TRUE(ArgParser_test::construct_args({"-F","a","--des","Exp"}) == "{-a|--Exp}");
-  TEST_CHECK_TRUE(ArgParser_test::construct_args({"","a","-","Exp","--kek"}) == "{-a|--Exp}");
-  TEST_CHECK_TRUE(ArgParser_test::construct_args({"-F","a","--des","Exp"," "}) == "{-a|--Exp}");
-}
-*/
 
 // 4
 START_ITER("Test constr_line_out()");
@@ -395,57 +246,12 @@ START_ITER("Test constr_line_out()");
       std::string{},
       std::string{"ANY TEXT"}}) == "(ANY TEXT)");
 }
-/*
-START_ITER("Test get_line_out()");
-{
-  TEST_CHECK_TRUE(ArgParser_test::get_line_out({
-      int{0},
-      tftp::VecStr{},
-      tftp::ArgExistVaue::required,
-      std::string{"file"},
-      std::string{"Nothing"},
-      std::string{""}}) == "Nothing");
-
-  TEST_CHECK_TRUE(ArgParser_test::get_line_out({
-      int{0},
-      tftp::VecStr{"--"},
-      tftp::ArgExistVaue::required,
-      std::string{"file"},
-      std::string{"Nothing"},
-      std::string{"other"}}) == "Nothing (other)");
-
-  TEST_CHECK_TRUE(ArgParser_test::get_line_out({
-      int{1},
-      tftp::VecStr{"L"},
-      tftp::ArgExistVaue::optional,
-      std::string{""},
-      std::string{"Locale"},
-      std::string{""}}) == "-L [<value>] Locale");
-
-  TEST_CHECK_TRUE(ArgParser_test::get_line_out({
-      int{1},
-      tftp::VecStr{"l", "L", "local"},
-      tftp::ArgExistVaue::required,
-      std::string{"file"},
-      std::string{"Local file name"},
-      std::string{""}}) == "{-l|-L|--local} <file> Local file name");
-
-  TEST_CHECK_TRUE(ArgParser_test::get_line_out({
-      int{1},
-      tftp::VecStr{"l", "L"},
-      tftp::ArgExistVaue::no,
-      std::string{"file"},
-      std::string{},
-      std::string{""}}) == "{-l|-L} ...");
-}
-*/
 
 UNIT_TEST_CASE_END
 
 //------------------------------------------------------------------------------
 
 UNIT_TEST_CASE_BEGIN(full_test, "Check method go_full()")
-
 
 tftp::ArgItems arg_items
 {
@@ -469,6 +275,16 @@ tftp::ArgItems arg_items
   {11, {"Q","tsize"},            tftp::ArgExistVaue::optional, "N",    "TFTP option 'tsize'", "WRQ without value use calculated"},
   {100,{},                       tftp::ArgExistVaue::required, "",     "", "Testing output"   },
 };
+
+ArgParser_test p(arg_items);
+
+START_ITER("Check constr_caption()");
+{
+  TEST_CHECK_TRUE(p.constr_caption(12345) == "");
+  TEST_CHECK_TRUE(p.constr_caption(100) == "Action #100");
+  TEST_CHECK_TRUE(p.constr_caption(1) == "Local file path and name");
+  TEST_CHECK_TRUE(p.constr_caption(99) == ""); // --
+}
 
 START_ITER("Stage 1 - Common check - many doubles");
 {
@@ -494,27 +310,10 @@ const char * tst_args[]=
   "--local", "test_local4.txt", "-H", // pass as simple values
 };
 
-ArgParser_test p(arg_items);
+//p.out_help(std::cout); // develop checks
+//p.out_header(std::cout); // develop checks
 
-START_ITER("Check constr_caption()");
-{
-  TEST_CHECK_TRUE(p.constr_caption(12345) == "");
-  TEST_CHECK_TRUE(p.constr_caption(100) == "Action #100");
-  TEST_CHECK_TRUE(p.constr_caption(1) == "Local file path and name");
-  TEST_CHECK_TRUE(p.constr_caption(99) == ""); // --
-}
-
-
-
-  //p.out_help(std::cout); // develop checks
-  //p.out_header(std::cout); // develop checks
-
-//const auto & res = p.run(
-//    sizeof(tst_args)/sizeof(tst_args[0]),
-//    const_cast<char **>(tst_args));
-
-auto res = tftp::ArgParser::go(
-    arg_items,
+const auto & res = p.run(
     sizeof(tst_args)/sizeof(tst_args[0]),
     const_cast<char **>(tst_args));
 
@@ -528,226 +327,275 @@ if(res.second.size() > 5U) TEST_CHECK_TRUE(res.second[5U] == "-H");
 
 TEST_CHECK_TRUE(res.first.size() == 11U);
 
+size_t iter_count=0U;
+size_t skip_count=0U;
+for(const auto & item: res.first)
 {
-  const auto & v = res.first[1];
+  const auto & id  = item.first;
+  const auto & v  = item.second;
   const auto vs = v.size();
-  TEST_CHECK_TRUE(vs == 3U);
-  if(vs>0U)
+
+  switch(id)
   {
-    TEST_CHECK_TRUE(v[0U].first == "-l");
-    TEST_CHECK_TRUE(v[0U].second == "test_local1.txt");
-    if(vs>1U)
-    {
-      TEST_CHECK_TRUE(v[1U].first == "-L");
-      TEST_CHECK_TRUE(v[1U].second == "test_local2.txt");
-      if(vs>2U)
+    case 1: // local
+      TEST_CHECK_TRUE(vs == 3U);
+      if(vs>0U)
       {
-        TEST_CHECK_TRUE(v[2U].first == "--local");
-        TEST_CHECK_TRUE(v[2U].second == "test_local3.txt");
-      }
-    }
-  }
-}
-{
-  const auto & v = res.first[ 2];
-  const auto vs=v.size();
-  TEST_CHECK_TRUE(vs == 3U);
-  if(vs>0U)
-  {
-    TEST_CHECK_TRUE(v[0U].first == "-r");
-    TEST_CHECK_TRUE(v[0U].second == "test_remote100.txt");
-    if(vs>1U)
-    {
-      TEST_CHECK_TRUE(v[1U].first == "-R");
-      TEST_CHECK_TRUE(v[1U].second == "test_remote200.txt");
-      if(vs>2U)
-      {
-        TEST_CHECK_TRUE(v[2U].first == "--remote");
-        TEST_CHECK_TRUE(v[2U].second == "test_remote300.txt");
-      }
-    }
-  }
-}
-{
-  auto & v = res.first[ 3];
-  TEST_CHECK_TRUE(v.size() == 4U);
-  if(auto vs=v.size(); vs>0U)
-  {
-    TEST_CHECK_TRUE(v[0U].first == "-g");
-    TEST_CHECK_TRUE(v[0U].second == "");
-    if(vs>1U)
-    {
-      TEST_CHECK_TRUE(v[1U].first == "-G");
-      TEST_CHECK_TRUE(v[1U].second == "");
-      if(vs>2U)
-      {
-        TEST_CHECK_TRUE(v[2U].first == "--get");
-        TEST_CHECK_TRUE(v[2U].second == "");
-        if(vs>3U)
+        TEST_CHECK_TRUE(v[0U].first == "-l");
+        TEST_CHECK_TRUE(v[0U].second == "test_local1.txt");
+        if(vs>1U)
         {
-          TEST_CHECK_TRUE(v[3U].first == "-g");
-          TEST_CHECK_TRUE(v[3U].second == "");
+          TEST_CHECK_TRUE(v[1U].first == "-L");
+          TEST_CHECK_TRUE(v[1U].second == "test_local2.txt");
+          if(vs>2U)
+          {
+            TEST_CHECK_TRUE(v[2U].first == "--local");
+            TEST_CHECK_TRUE(v[2U].second == "test_local3.txt");
+          }
         }
       }
-    }
-  }
-}
-{
-  auto & v = res.first[ 4];
-  TEST_CHECK_TRUE(v.size() == 3U);
-  if(auto vs=v.size(); vs>0U)
-  {
-    TEST_CHECK_TRUE(v[0U].first == "-p");
-    TEST_CHECK_TRUE(v[0U].second == "");
-    if(vs>1U)
-    {
-      TEST_CHECK_TRUE(v[1U].first == "-P");
-      TEST_CHECK_TRUE(v[1U].second == "");
-      if(vs>2U)
+      ++iter_count;
+      break;
+
+    case 2: // remote
+      TEST_CHECK_TRUE(vs == 3U);
+      if(vs>0U)
       {
-        TEST_CHECK_TRUE(v[2U].first == "--put");
-        TEST_CHECK_TRUE(v[2U].second == "");
-      }
-    }
-  }
-}
-{
-  auto & v = res.first[ 5];
-  TEST_CHECK_TRUE(v.size() == 4U);
-  if(auto vs=v.size(); vs>0U)
-  {
-    TEST_CHECK_TRUE(v[0U].first == "-h");
-    TEST_CHECK_TRUE(v[0U].second == "");
-    if(vs>1U)
-    {
-      TEST_CHECK_TRUE(v[1U].first == "-H");
-      TEST_CHECK_TRUE(v[1U].second == "");
-      if(vs>2U)
-      {
-        TEST_CHECK_TRUE(v[2U].first == "--help");
-        TEST_CHECK_TRUE(v[2U].second == "");
-        if(vs>3U)
+        TEST_CHECK_TRUE(v[0U].first == "-r");
+        TEST_CHECK_TRUE(v[0U].second == "test_remote100.txt");
+        if(vs>1U)
         {
-          TEST_CHECK_TRUE(v[3U].first == "-?");
-          TEST_CHECK_TRUE(v[3U].second == "");
+          TEST_CHECK_TRUE(v[1U].first == "-R");
+          TEST_CHECK_TRUE(v[1U].second == "test_remote200.txt");
+          if(vs>2U)
+          {
+            TEST_CHECK_TRUE(v[2U].first == "--remote");
+            TEST_CHECK_TRUE(v[2U].second == "test_remote300.txt");
+          }
         }
       }
-    }
-  }
-}
-{
-  auto & v = res.first[ 6];
-  TEST_CHECK_TRUE(v.size() == 4U);
-  if(auto vs=v.size(); vs>0U)
-  {
-    TEST_CHECK_TRUE(v[0U].first == "-v");
-    TEST_CHECK_TRUE(v[0U].second == "");
-    if(vs>1U)
-    {
-      TEST_CHECK_TRUE(v[1U].first == "-v");
-      TEST_CHECK_TRUE(v[1U].second == "");
-      if(vs>2U)
+      ++iter_count;
+      break;
+
+    case 3: // get
+      TEST_CHECK_TRUE(v.size() == 4U);
+      if(auto vs=v.size(); vs>0U)
       {
-        TEST_CHECK_TRUE(v[2U].first == "-V");
-        TEST_CHECK_TRUE(v[2U].second == "");
-        if(vs>3U)
+        TEST_CHECK_TRUE(v[0U].first == "-g");
+        TEST_CHECK_TRUE(v[0U].second == "");
+        if(vs>1U)
         {
-          TEST_CHECK_TRUE(v[3U].first == "--verb");
-          TEST_CHECK_TRUE(v[3U].second == "");
+          TEST_CHECK_TRUE(v[1U].first == "-G");
+          TEST_CHECK_TRUE(v[1U].second == "");
+          if(vs>2U)
+          {
+            TEST_CHECK_TRUE(v[2U].first == "--get");
+            TEST_CHECK_TRUE(v[2U].second == "");
+            if(vs>3U)
+            {
+              TEST_CHECK_TRUE(v[3U].first == "-g");
+              TEST_CHECK_TRUE(v[3U].second == "");
+            }
+          }
         }
       }
-    }
-  }
-}
-{
-  auto & v = res.first[ 7];
-  TEST_CHECK_TRUE(v.size() == 3U);
-  if(auto vs=v.size(); vs>0U)
-  {
-    TEST_CHECK_TRUE(v[0U].first == "-m");
-    TEST_CHECK_TRUE(v[0U].second == "netascii");
-    if(vs>1U)
-    {
-      TEST_CHECK_TRUE(v[1U].first == "-M");
-      TEST_CHECK_TRUE(v[1U].second == "octet");
-      if(vs>2U)
+      ++iter_count;
+      break;
+
+    case 4: // put
+      TEST_CHECK_TRUE(v.size() == 3U);
+      if(auto vs=v.size(); vs>0U)
       {
-        TEST_CHECK_TRUE(v[2U].first == "--mode");
-        TEST_CHECK_TRUE(v[2U].second == "mail");
+        TEST_CHECK_TRUE(v[0U].first == "-p");
+        TEST_CHECK_TRUE(v[0U].second == "");
+        if(vs>1U)
+        {
+          TEST_CHECK_TRUE(v[1U].first == "-P");
+          TEST_CHECK_TRUE(v[1U].second == "");
+          if(vs>2U)
+          {
+            TEST_CHECK_TRUE(v[2U].first == "--put");
+            TEST_CHECK_TRUE(v[2U].second == "");
+          }
+        }
       }
-    }
-  }
-}
-{
-  auto & v = res.first[ 8];
-  TEST_CHECK_TRUE(v.size() == 3U);
-  if(auto vs=v.size(); vs>0U)
-  {
-    TEST_CHECK_TRUE(v[0U].first == "-b");
-    TEST_CHECK_TRUE(v[0U].second == "1300");
-    if(vs>1U)
-    {
-      TEST_CHECK_TRUE(v[1U].first == "-B");
-      TEST_CHECK_TRUE(v[1U].second == "812");
-      if(vs>2U)
+      ++iter_count;
+      break;
+
+    case 5: // help
+      TEST_CHECK_TRUE(v.size() == 4U);
+      if(auto vs=v.size(); vs>0U)
       {
-        TEST_CHECK_TRUE(v[2U].first == "--blksize");
-        TEST_CHECK_TRUE(v[2U].second == "4096");
+        TEST_CHECK_TRUE(v[0U].first == "-h");
+        TEST_CHECK_TRUE(v[0U].second == "");
+        if(vs>1U)
+        {
+          TEST_CHECK_TRUE(v[1U].first == "-H");
+          TEST_CHECK_TRUE(v[1U].second == "");
+          if(vs>2U)
+          {
+            TEST_CHECK_TRUE(v[2U].first == "--help");
+            TEST_CHECK_TRUE(v[2U].second == "");
+            if(vs>3U)
+            {
+              TEST_CHECK_TRUE(v[3U].first == "-?");
+              TEST_CHECK_TRUE(v[3U].second == "");
+            }
+          }
+        }
       }
-    }
-  }
-}
-{
-  auto & v = res.first[ 9];
-  TEST_CHECK_TRUE(v.size() == 3U);
-  if(auto vs=v.size(); vs>0U)
-  {
-    TEST_CHECK_TRUE(v[0U].first == "-t");
-    TEST_CHECK_TRUE(v[0U].second == "20");
-    if(vs>1U)
-    {
-      TEST_CHECK_TRUE(v[1U].first == "-T");
-      TEST_CHECK_TRUE(v[1U].second == "99");
-      if(vs>2U)
+      ++iter_count;
+      break;
+
+    case 6: // verb
+      TEST_CHECK_TRUE(v.size() == 4U);
+      if(auto vs=v.size(); vs>0U)
       {
-        TEST_CHECK_TRUE(v[2U].first == "--timeout");
-        TEST_CHECK_TRUE(v[2U].second == "7");
+        TEST_CHECK_TRUE(v[0U].first == "-v");
+        TEST_CHECK_TRUE(v[0U].second == "");
+        if(vs>1U)
+        {
+          TEST_CHECK_TRUE(v[1U].first == "-v");
+          TEST_CHECK_TRUE(v[1U].second == "");
+          if(vs>2U)
+          {
+            TEST_CHECK_TRUE(v[2U].first == "-V");
+            TEST_CHECK_TRUE(v[2U].second == "");
+            if(vs>3U)
+            {
+              TEST_CHECK_TRUE(v[3U].first == "--verb");
+              TEST_CHECK_TRUE(v[3U].second == "");
+            }
+          }
+        }
       }
-    }
-  }
-}
-{
-  auto & v = res.first[10];
-  TEST_CHECK_TRUE(v.size() == 3U);
-  if(auto vs=v.size(); vs>0U)
-  {
-    TEST_CHECK_TRUE(v[0U].first == "-w");
-    TEST_CHECK_TRUE(v[0U].second == "15");
-    if(vs>1U)
-    {
-      TEST_CHECK_TRUE(v[1U].first == "-W");
-      TEST_CHECK_TRUE(v[1U].second == "51");
-      if(vs>2U)
+      ++iter_count;
+      break;
+
+    case 7: // mode
+      TEST_CHECK_TRUE(v.size() == 3U);
+      if(auto vs=v.size(); vs>0U)
       {
-        TEST_CHECK_TRUE(v[2U].first == "--windowsize");
-        TEST_CHECK_TRUE(v[2U].second == "27");
+        TEST_CHECK_TRUE(v[0U].first == "-m");
+        TEST_CHECK_TRUE(v[0U].second == "netascii");
+        if(vs>1U)
+        {
+          TEST_CHECK_TRUE(v[1U].first == "-M");
+          TEST_CHECK_TRUE(v[1U].second == "octet");
+          if(vs>2U)
+          {
+            TEST_CHECK_TRUE(v[2U].first == "--mode");
+            TEST_CHECK_TRUE(v[2U].second == "mail");
+          }
+        }
       }
-    }
+      ++iter_count;
+      break;
+
+    case 8: // blksize
+      TEST_CHECK_TRUE(v.size() == 3U);
+      if(auto vs=v.size(); vs>0U)
+      {
+        TEST_CHECK_TRUE(v[0U].first == "-b");
+        TEST_CHECK_TRUE(v[0U].second == "1300");
+        if(vs>1U)
+        {
+          TEST_CHECK_TRUE(v[1U].first == "-B");
+          TEST_CHECK_TRUE(v[1U].second == "812");
+          if(vs>2U)
+          {
+            TEST_CHECK_TRUE(v[2U].first == "--blksize");
+            TEST_CHECK_TRUE(v[2U].second == "4096");
+          }
+        }
+      }
+      ++iter_count;
+      break;
+
+    case 9: // timeout
+      TEST_CHECK_TRUE(v.size() == 3U);
+      if(auto vs=v.size(); vs>0U)
+      {
+        TEST_CHECK_TRUE(v[0U].first == "-t");
+        TEST_CHECK_TRUE(v[0U].second == "20");
+        if(vs>1U)
+        {
+          TEST_CHECK_TRUE(v[1U].first == "-T");
+          TEST_CHECK_TRUE(v[1U].second == "99");
+          if(vs>2U)
+          {
+            TEST_CHECK_TRUE(v[2U].first == "--timeout");
+            TEST_CHECK_TRUE(v[2U].second == "7");
+          }
+        }
+      }
+      ++iter_count;
+      break;
+
+    case 10: // windowsize
+      TEST_CHECK_TRUE(v.size() == 3U);
+      if(auto vs=v.size(); vs>0U)
+      {
+        TEST_CHECK_TRUE(v[0U].first == "-w");
+        TEST_CHECK_TRUE(v[0U].second == "15");
+        if(vs>1U)
+        {
+          TEST_CHECK_TRUE(v[1U].first == "-W");
+          TEST_CHECK_TRUE(v[1U].second == "51");
+          if(vs>2U)
+          {
+            TEST_CHECK_TRUE(v[2U].first == "--windowsize");
+            TEST_CHECK_TRUE(v[2U].second == "27");
+          }
+        }
+      }
+      ++iter_count;
+      break;
+
+    case 11: // tsize
+      TEST_CHECK_TRUE(v.size() == 2U);
+      if(auto vs=v.size(); vs>0U)
+      {
+        TEST_CHECK_TRUE(v[0U].first == "--tsize");
+        TEST_CHECK_TRUE(v[0U].second == "");
+        if(vs>1U)
+        {
+          TEST_CHECK_TRUE(v[1U].first == "--tsize");
+          TEST_CHECK_TRUE(v[1U].second == "232334345");
+        }
+      }
+      ++iter_count;
+      break;
+
+    default:
+      ++skip_count;
+      break;
   }
 }
+TEST_CHECK_TRUE(iter_count == 11U);
+TEST_CHECK_TRUE(skip_count == 0U);
+
+TEST_CHECK_TRUE(p.get_parsed_item( 1) == "test_local3.txt");
+TEST_CHECK_TRUE(p.get_parsed_item( 2) == "test_remote300.txt");
+TEST_CHECK_TRUE(p.get_parsed_item( 3) == "");
+TEST_CHECK_TRUE(p.get_parsed_item( 4) == "");
+TEST_CHECK_TRUE(p.get_parsed_item( 5) == "");
+TEST_CHECK_TRUE(p.get_parsed_item( 6) == "");
+TEST_CHECK_TRUE(p.get_parsed_item( 7) == "mail");
+TEST_CHECK_TRUE(p.get_parsed_item( 8) == "4096");
+TEST_CHECK_TRUE(p.get_parsed_item( 9) == "7");
+TEST_CHECK_TRUE(p.get_parsed_item(10) == "27");
+TEST_CHECK_TRUE(p.get_parsed_item(11) == "232334345");
+
 {
-  auto & v = res.first[11];
-  TEST_CHECK_TRUE(v.size() == 2U);
-  if(auto vs=v.size(); vs>0U)
-  {
-    TEST_CHECK_TRUE(v[0U].first == "--tsize");
-    TEST_CHECK_TRUE(v[0U].second == "");
-    if(vs>1U)
-    {
-      TEST_CHECK_TRUE(v[1U].first == "--tsize");
-      TEST_CHECK_TRUE(v[1U].second == "232334345");
-    }
-  }
+  auto [r1,r2] = p.chk_parsed_item(3);
+  TEST_CHECK_TRUE(r1==tftp::ResCheck::wrn_many_arg);
+  TEST_CHECK_TRUE(r2.size() > 0U); // Warning message
+}
+{
+  auto [r1,r2] = p.chk_parsed_item(100);
+  TEST_CHECK_TRUE(r1==tftp::ResCheck::not_found);
+  TEST_CHECK_TRUE(r2.size() > 0U); // Notify message
 }
 
 }
@@ -755,7 +603,6 @@ TEST_CHECK_TRUE(res.first.size() == 11U);
 
 START_ITER("Stage 2 - Multi short options with 'required'");
 {
-
   const char * tst_args2[]=
   {
     "./tftp-cl",
@@ -763,8 +610,7 @@ START_ITER("Stage 2 - Multi short options with 'required'");
     "127.0.0.1",
   };
 
-  auto res2 = tftp::ArgParser::go(
-      arg_items,
+  const auto & res2 = p.run(
       sizeof(tst_args2)/sizeof(tst_args2[0]),
       const_cast<char **>(tst_args2));
 
@@ -773,36 +619,58 @@ START_ITER("Stage 2 - Multi short options with 'required'");
 
   TEST_CHECK_TRUE(res2.first.size() == 3U);
 
+
+  size_t iter_count=0U;
+  size_t skip_count=0U;
+  for(const auto & item: res2.first)
   {
-    const auto & v = res2.first[1];
+    const auto & id  = item.first;
+    const auto & v  = item.second;
     const auto vs = v.size();
-    TEST_CHECK_TRUE(vs == 1U);
-    if(vs>0U)
+
+    switch(id)
     {
-      TEST_CHECK_TRUE(v[0U].first == "-L");
-      TEST_CHECK_TRUE(v[0U].second == "file_name");
+      case 1: // local
+        TEST_CHECK_TRUE(vs == 1U);
+        if(vs>0U)
+        {
+          TEST_CHECK_TRUE(v[0U].first == "-L");
+          TEST_CHECK_TRUE(v[0U].second == "file_name");
+        }
+        ++iter_count;
+        break;
+
+      case 2: // remote
+        TEST_CHECK_TRUE(vs == 1U);
+        if(vs>0U)
+        {
+          TEST_CHECK_TRUE(v[0U].first == "-R");
+          TEST_CHECK_TRUE(v[0U].second == "file_name");
+        }
+        ++iter_count;
+        break;
+
+      case 3: // get
+        TEST_CHECK_TRUE(vs == 1U);
+        if(vs>0U)
+        {
+          TEST_CHECK_TRUE(v[0U].first == "--get");
+          TEST_CHECK_TRUE(v[0U].second == "");
+        }
+        ++iter_count;
+        break;
+
+      default:
+        ++skip_count;
+        break;
     }
   }
-  {
-    const auto & v = res2.first[2];
-    const auto vs = v.size();
-    TEST_CHECK_TRUE(vs == 1U);
-    if(vs>0U)
-    {
-      TEST_CHECK_TRUE(v[0U].first == "-R");
-      TEST_CHECK_TRUE(v[0U].second == "file_name");
-    }
-  }
-  {
-    const auto & v = res2.first[3];
-    const auto vs = v.size();
-    TEST_CHECK_TRUE(vs == 1U);
-    if(vs>0U)
-    {
-      TEST_CHECK_TRUE(v[0U].first == "--get");
-      TEST_CHECK_TRUE(v[0U].second == "");
-    }
-  }
+  TEST_CHECK_TRUE(iter_count == 3U);
+  TEST_CHECK_TRUE(skip_count == 0U);
+
+  TEST_CHECK_TRUE(p.get_parsed_item(1) == "file_name");
+  TEST_CHECK_TRUE(p.get_parsed_item(2) == "file_name");
+  TEST_CHECK_TRUE(p.get_parsed_item(3) == "");
 }
 
 START_ITER("Stage 3 - Multi short options with 'optional' and 'no'");
@@ -814,8 +682,7 @@ START_ITER("Stage 3 - Multi short options with 'optional' and 'no'");
     "127.0.0.1",
   };
 
-  auto res2 = tftp::ArgParser::go(
-      arg_items,
+  const auto & res2 = p.run(
       sizeof(tst_args2)/sizeof(tst_args2[0]),
       const_cast<char **>(tst_args2));
 
@@ -824,36 +691,67 @@ START_ITER("Stage 3 - Multi short options with 'optional' and 'no'");
 
   TEST_CHECK_TRUE(res2.first.size() == 3U);
 
+  size_t iter_count=0U;
+  size_t skip_count=0U;
+  for(const auto & item: res2.first)
   {
-    const auto & v = res2.first[1];
+    const auto & id  = item.first;
+    const auto & v  = item.second;
     const auto vs = v.size();
-    TEST_CHECK_TRUE(vs == 1U);
-    if(vs>0U)
+
+    switch(id)
     {
-      TEST_CHECK_TRUE(v[0U].first == "-L");
-      TEST_CHECK_TRUE(v[0U].second == "file_name");
+      case 1: // local
+        TEST_CHECK_TRUE(vs == 1U);
+        if(vs>0U)
+        {
+          TEST_CHECK_TRUE(v[0U].first == "-L");
+          TEST_CHECK_TRUE(v[0U].second == "file_name");
+        }
+        ++iter_count;
+        break;
+
+      case 3: // get
+        TEST_CHECK_TRUE(vs == 1U);
+        if(vs>0U)
+        {
+          TEST_CHECK_TRUE(v[0U].first == "-G");
+          TEST_CHECK_TRUE(v[0U].second == "");
+        }
+        ++iter_count;
+        break;
+
+      case 11: // tsize
+        TEST_CHECK_TRUE(vs == 1U);
+        if(vs>0U)
+        {
+          TEST_CHECK_TRUE(v[0U].first == "-Q");
+          TEST_CHECK_TRUE(v[0U].second == "file_name");
+        }
+        ++iter_count;
+        break;
+
+      default:
+        ++skip_count;
+        break;
     }
   }
+  TEST_CHECK_TRUE(iter_count == 3U);
+  TEST_CHECK_TRUE(skip_count == 0U);
+
   {
-    const auto & v = res2.first[11];
-    const auto vs = v.size();
-    TEST_CHECK_TRUE(vs == 1U);
-    if(vs>0U)
-    {
-      TEST_CHECK_TRUE(v[0U].first == "-Q");
-      TEST_CHECK_TRUE(v[0U].second == "file_name");
-    }
+    auto [r1,r2] = p.chk_parsed_item(1);
+    TEST_CHECK_TRUE(r1==tftp::ResCheck::normal);
+    TEST_CHECK_TRUE(r2.size() == 0U); // No message
   }
   {
-    const auto & v = res2.first[3];
-    const auto vs = v.size();
-    TEST_CHECK_TRUE(vs == 1U);
-    if(vs>0U)
-    {
-      TEST_CHECK_TRUE(v[0U].first == "-G");
-      TEST_CHECK_TRUE(v[0U].second == "");
-    }
+    auto [r1,r2] = p.chk_parsed_item(1001);
+    TEST_CHECK_TRUE(r1==tftp::ResCheck::err_wrong_data);
+    TEST_CHECK_TRUE(r2.size() > 0U); // Error message
   }
+  TEST_CHECK_TRUE(p.get_parsed_item( 1) == "file_name");
+  TEST_CHECK_TRUE(p.get_parsed_item( 3) == "");
+  TEST_CHECK_TRUE(p.get_parsed_item(11) == "file_name");
 }
 
 UNIT_TEST_CASE_END

@@ -101,6 +101,7 @@ START_ITER("load options normal");
                                  const_cast<char **>(tst_args)));
 
   //b.out_help(std::cout);
+  //b.out_header(std::cout);
 
   TEST_CHECK_TRUE(b.log_err == 0U);
   TEST_CHECK_TRUE(b.log_wrn == 0U);

@@ -17,7 +17,7 @@ namespace tftp
 
 ClientSettings::ClientSettings():
     Options(),
-    ap_{arg_option_settings},
+    ap_{constants::arg_option_settings},
     srv_addr_{},
     verb_{false},
     file_local_{},
@@ -32,13 +32,6 @@ ClientSettings::ClientSettings():
 ClientSettings::~ClientSettings()
 {
 }
-
-// -----------------------------------------------------------------------------
-
-//auto ClientSettings::create() -> pClientSettings
-//{
-//  return std::make_unique<ClientSettings>(ClientSettings{});
-//}
 
 //------------------------------------------------------------------------------
 
@@ -61,10 +54,7 @@ bool ClientSettings::load_options(int argc, char * argv[])
   // 1 Parse options
   for(const auto & item : res.first)
   {
-    auto [res_chk, res_str] = ArgParser::chk_result(
-        arg_option_settings,
-        item.first,
-        res.first);
+    auto [res_chk, res_str] = ap_.chk_parsed_item(item.first);
 
     switch(res_chk)
     {
@@ -84,10 +74,10 @@ bool ClientSettings::load_options(int argc, char * argv[])
     switch(item.first)
     {
       case 1: // local file
-        file_local_ = ArgParser::get_last_value(res.first, item.first);
+        file_local_ = ap_.get_parsed_item(item.first);
         break;
       case 2: // remote file
-        file_remote_ = ArgParser::get_last_value(res.first, item.first);
+        file_remote_ = ap_.get_parsed_item(item.first);
         break;
       case 3: // Request GET
         request_type_ = SrvReq::read;
@@ -104,29 +94,19 @@ bool ClientSettings::load_options(int argc, char * argv[])
         verb_ = true;
         break;
       case 7: // Mode transfer
-        set_transfer_mode(
-            ArgParser::get_last_value(res.first, item.first),
-            do_logging);
+        set_transfer_mode(ap_.get_parsed_item(item.first), do_logging);
         break;
       case 8: // Block size
-        set_blksize(
-            ArgParser::get_last_value(res.first, item.first),
-            do_logging);
+        set_blksize(ap_.get_parsed_item(item.first), do_logging);
         break;
       case 9: // Timeout
-        set_timeout(
-            ArgParser::get_last_value(res.first, item.first),
-            do_logging);
+        set_timeout(ap_.get_parsed_item(item.first), do_logging);
         break;
       case 10: // Windowsize
-        set_windowsize(
-            ArgParser::get_last_value(res.first, item.first),
-            do_logging);
+        set_windowsize(ap_.get_parsed_item(item.first), do_logging);
         break;
       case 11: // Tsize
-        set_tsize(
-            ArgParser::get_last_value(res.first, item.first),
-            do_logging);
+        set_tsize(ap_.get_parsed_item(item.first), do_logging);
         break;
       default:
         break;
