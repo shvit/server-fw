@@ -22,6 +22,10 @@ namespace tftp
 namespace constants
 {
 
+  /** \brief Settings for parsing CMD argument options
+   *
+   *  Used for parse with class ArgParser
+   */
   const ArgItems arg_option_settings =
   {
     {0, {}, tftp::ArgExistVaue::no, "", "Simple TFTP client from 'server-fw' project licensed GPL-3.0", ""},
@@ -48,6 +52,10 @@ namespace constants
 
 // -----------------------------------------------------------------------------
 
+/** \brief Class for manipulate TFTP client settings
+ *
+ *  Parse settings from argc/argv
+ */
 class ClientSettings: public Options
 {
 protected:
@@ -77,6 +85,10 @@ protected:
   void log(LogLvl lvl, std::string_view msg) const;
 
 public:
+
+  /** \brief Constructor with logger
+   */
+  ClientSettings(fLogMsg cb_logger);
 
   /** \brief Destructor
    */
