@@ -16,6 +16,7 @@
 #define SOURCE_TFTPARGPARSER_H_
 
 #include <map>
+#include <optional>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -237,6 +238,15 @@ public:
    *  \return String value
    */
   auto get_parsed_item(const int & id) const -> std::string;
+
+  /** \brief Get option value integer by action ID
+   *
+   *  If result values count more 1, then return last value
+   *  If value is wrong, then return no value optional
+   *  \param [in] id Action ID
+   *  \return Integer value optional
+   */
+  auto get_parsed_int(const int & id) const -> std::optional<int>;
 
 };
 

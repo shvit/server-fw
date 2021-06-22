@@ -36,7 +36,7 @@ namespace constants
     { 3, {"g", "G", "get"},        tftp::ArgExistVaue::no,       "",     "Get file from server", ""},
     { 4, {"p", "P", "put"},        tftp::ArgExistVaue::no,       "",     "Put file to server", ""},
     { 5, {"h", "H", "help", "?"},  tftp::ArgExistVaue::no,       "",     "Show help information", ""},
-    { 6, {"v", "V", "verb"},       tftp::ArgExistVaue::no,       "",     "Set verbosity mode", ""},
+    { 6, {"v", "V", "verb"},       tftp::ArgExistVaue::optional, "level", "Set verbosity mode with logging level", "default 7 debug"},
     { 7, {"m", "M", "mode"},       tftp::ArgExistVaue::required, "mode", "TFTP transfer mode", ""},
     { 8, {"b", "B", "blksize"},    tftp::ArgExistVaue::required, "N",    "TFTP option 'block size'", "default 512"},
     { 9, {"t", "T", "timeout"},    tftp::ArgExistVaue::required, "N",    "TFTP option 'timeout'", "default 10"},
@@ -56,7 +56,7 @@ protected:
 
   Addr srv_addr_; ///< Server address/port
 
-  bool verb_; ///< Verbosity mode
+  int verb_; ///< Verbosity mode
 
   std::string file_local_; ///< Local filename
 

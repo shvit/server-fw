@@ -367,4 +367,26 @@ auto ArgParser::get_parsed_item(const int & id) const -> std::string
 
 // -----------------------------------------------------------------------------
 
+auto ArgParser::get_parsed_int(const int & id) const -> std::optional<int>
+{
+  std::optional<int> ret;
+
+  std::string tmp_str = get_parsed_item(id);
+  if(tmp_str.size())
+  {
+    size_t pos;
+
+    try
+    {
+      int tmp_int = std::stoi(tmp_str, & pos, 10);
+      ret = tmp_int;
+    }
+    catch(...) {}
+  }
+
+  return ret;
+}
+
+// -----------------------------------------------------------------------------
+
 } // namespace tftp
