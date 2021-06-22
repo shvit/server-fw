@@ -1,11 +1,17 @@
-/*
- * tftpClientSettings.cpp
+/**
+ * \file  tftpClientSettingss.cpp
+ * \brief Class ClientSettings module
  *
- *  Created on: 9 июн. 2021 г.
- *      Author: svv
+ *  Class for arguments parsing for TFTP client
+ *
+ *  License GPL-3.0
+ *
+ *  \date 09-jun-2021
+ *  \author Vitaliy Shirinkin, e-mail: vitaliy.shirinkin@gmail.com
+ *
+ *  \version 0.2
  */
 
-//#include <getopt.h>
 #include <iostream>
 
 #include "tftpClientSettings.h"
@@ -95,8 +101,7 @@ bool ClientSettings::load_options(int argc, char * argv[])
         break;
       case 5: // Help
         ret = false;
-        //ArgParser::out_help_data(arg_option_settings, std::cout, argv[0]);
-        out_help(std::cout, argv[0]);
+        out_help();
         break;
       case 6: // Verbosity
         {
@@ -154,16 +159,16 @@ void ClientSettings::log(LogLvl lvl, std::string_view msg) const
 
 // -----------------------------------------------------------------------------
 
-void ClientSettings::out_header(std::ostream & stream) const
+void ClientSettings::out_header() const
 {
-  ap_.out_header(stream);
+  ap_.out_header(std::cout);
 }
 
 // -----------------------------------------------------------------------------
 
-void ClientSettings::out_help(std::ostream & stream, std::string_view app) const
+void ClientSettings::out_help() const
 {
-  ap_.out_help(stream, app);
+  ap_.out_help(std::cout);
 }
 
 // -----------------------------------------------------------------------------
