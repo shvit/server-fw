@@ -1,4 +1,5 @@
 APP:=server-fw
+APP2:=tftp-cl
 TST:=test
 VER:=0.2.1
 
@@ -10,21 +11,24 @@ DIR_LOG:=$(DIR_DOC)/log
 DIR_PKG:=package
 
 APP_FILE:=$(DIR_OBJ)/$(APP)
+APP2_FILE:=$(DIR_OBJ)/$(APP2)
 TST_FILE:="$(DIR_OBJ)/$(TST)"
 DOC_FILE:="$(DIR_DOC)/$(APP).pdf"
 PKG:=$(APP)_$(VER)-1_amd64.deb
 DIR_PKG_DEB:=DEBIAN
 
-OBJ_APP=$(patsubst $(DIR_SRC)/%.cpp,$(DIR_OBJ)/%.o,$(wildcard $(DIR_SRC)/*.cpp))
+OBJ_ALL=$(patsubst $(DIR_SRC)/%.cpp,$(DIR_OBJ)/%.o,$(wildcard $(DIR_SRC)/*.cpp))
+OBJ_APP2=$(patsubst $(DIR_SRC)/%.cpp,$(DIR_OBJ)/%.o,$(wildcard $(DIR_SRC)/tftpClient*.cpp) $(DIR_SRC)/tftp-cl.cpp)
+OBJ_APP=$(filter-out $(OBJ_APP2), $(OBJ_ALL))
 OBJ_TST=$(patsubst $(DIR_SRC)/$(DIR_TST)/%.cpp,$(DIR_OBJ)/$(DIR_TST)/%.o,$(wildcard $(DIR_SRC)/$(DIR_TST)/*.cpp))
 
-DEPS:=$(OBJ_APP:.o=.d) $(OBJ_TST:.o=.d)
+DEPS:=$(OBJ_APP:.o=.d) $(OBJ_APP2:.o=.d) $(OBJ_TST:.o=.d)
 
 BASE_CFLAGS := $(CFLAGS) -Wall -fPIC -std=c++17 -pthread -pedantic -MMD 
 CFLAGS = $(BASE_CFLAGS) -g -O0
 LDFLAGS += -lstdc++ -lpthread -ldl -lstdc++fs
 
-all: $(APP_FILE)
+all: $(APP_FILE) $(APP2_FILE)
 
 -include $(DEPS)
 
@@ -46,9 +50,10 @@ dir_doc:
 
 release: CFLAGS = $(BASE_CFLAGS) -O3
 
-release: $(APP_FILE)
+release: $(APP_FILE) $(APP2_FILE)
 	@echo "Strip file '$<'"
 	@strip $(APP_FILE)
+	@strip $(APP2_FILE)
 
 $(DIR_OBJ)/%.o: $(DIR_SRC)/%.cpp | dir_obj
 	@echo "Compile module $@"
@@ -62,17 +67,23 @@ $(APP_FILE): $(OBJ_APP)
 	@echo "Linking $@"
 	@$(CXX) $^ -o $@  $(LDFLAGS)
 
-$(TST_FILE): $(patsubst $(DIR_OBJ)/$(APP).o,,$(OBJ_APP)) $(OBJ_TST)
+$(APP2_FILE): $(OBJ_APP2) $(patsubst $(DIR_OBJ)/$(APP).o,,$(OBJ_APP))
+	@echo "Linking $@"
+	@$(CXX) $^ -o $@  $(LDFLAGS)
+
+$(TST_FILE): $(patsubst $(DIR_OBJ)/$(APP).o,,$(OBJ_APP)) $(patsubst $(DIR_OBJ)/$(APP2).o,,$(OBJ_APP2)) $(OBJ_TST)
 	@echo "Linking '$@'"
 	@$(CXX) $^ -lboost_unit_test_framework -lcrypto -o $@  $(LDFLAGS)
 
 show:
-	@echo "Obj app:"
+	@echo "Obj app server:"
 	@echo "$(strip $(OBJ_APP))"|sed 's/ /\n/g'|sed 's/^/  /'|sort
-	@echo "Obj tst:"
+	@echo "Obj app client:"
+	@echo "$(strip $(OBJ_APP2))"|sed 's/ /\n/g'|sed 's/^/  /'|sort
+	@echo "Obj unit-tests:"
 	@echo "$(strip $(OBJ_TST))"|sed 's/ /\n/g'|sed 's/^/  /'|sort
-	@echo "Deps:"
-	@echo "$(strip $(DEPS))"|sed 's/ /\n/g'|sed 's/^/  /'|sort
+	@#echo "Deps:"
+	@#echo "$(strip $(DEPS))"|sed 's/ /\n/g'|sed 's/^/  /'|sort
 
 $(DOC_FILE): $(wildcard $(DIR_SRC)/*) Doxyfile | dir_doc
 	@echo "Documentation (1/2) prepare ..."

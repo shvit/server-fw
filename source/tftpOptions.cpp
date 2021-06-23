@@ -151,26 +151,16 @@ bool Options::buffer_parse(
   // Init filename
   if(ret)
   {
-    filename_ = buf.get_string(curr_pos, buf_size-curr_pos);
-    if((ret = (filename_.size() > 0U)))
-    {
-      OPT_L_INF("Recognize filename '"+filename_+"'");
-      curr_pos += filename_.size()+1U;
-    }
-    else
-    {
-      OPT_L_WRN("Wrong filename (empty!)");
-    }
+    auto tmp_str = buf.get_string(curr_pos, buf_size-curr_pos);
+    ret = set_filename(tmp_str, log);
+    curr_pos += tmp_str.size()+1U;
   }
 
   // Init TFTP transfer mode
   if(ret)
   {
     std::string curr_mod = buf.get_string(curr_pos, buf_size-curr_pos);
-    if(set_transfer_mode(curr_mod, log))
-    {
-      OPT_L_INF("Recognize tranfser mode '"+curr_mod+"'");
-    }
+    ret = set_transfer_mode(curr_mod, log);
     curr_pos += curr_mod.size()+1U;
   }
 
@@ -208,6 +198,30 @@ bool Options::buffer_parse(
   }
 
   return ret;
+}
+
+//------------------------------------------------------------------------------
+
+void Options::set_request_type(SrvReq new_req)
+{
+  request_type_ = new_req;
+}
+
+//------------------------------------------------------------------------------
+
+bool Options::set_filename(const std::string & val, fLogMsg log)
+{
+  filename_ = val;
+  if(filename_.size() > 0U)
+  {
+    OPT_L_INF("Recognize filename '"+filename_+"'");
+    return true;
+  }
+  else
+  {
+    OPT_L_WRN("Wrong filename (empty!)");
+    return false;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -372,7 +386,11 @@ bool Options::set_transfer_mode(
     else
     if(curr_mod == "mail") { ++fl; transfer_mode_ = TransfMode::mail; }
 
-    if(!(ret = fl))
+    if((ret = fl))
+    {
+      OPT_L_INF("Recognize tranfser mode '"+curr_mod+"'");
+    }
+    else
     {
       OPT_L_WRN("Wrong value '"+curr_mod+"'; Ignore!");
     }

@@ -21,24 +21,15 @@ namespace tftp
 
 // -----------------------------------------------------------------------------
 
-ClientSettings::ClientSettings(fLogMsg cb_logger):
-  Options(),
-  ap_{constants::arg_option_settings},
-  srv_addr_{},
-  verb_{0},
-  file_local_{},
-  file_remote_{},
-  callback_log_{cb_logger}
-{
-  srv_addr_.set_string("127.0.0.1:"+std::to_string(constants::default_tftp_port));
-}
-
-
-// -----------------------------------------------------------------------------
-
 ClientSettings::ClientSettings():
-    ClientSettings(nullptr)
+  ap_{constants::arg_option_settings},
+  srv_addr{},
+  verb{4},
+  file_local{},
+  //file_remote{},
+  opt{}
 {
+  srv_addr.set_string("127.0.0.1:"+std::to_string(constants::default_tftp_port));
 }
 
 // -----------------------------------------------------------------------------
@@ -49,17 +40,11 @@ ClientSettings::~ClientSettings()
 
 //------------------------------------------------------------------------------
 
-bool ClientSettings::load_options(int argc, char * argv[])
+bool ClientSettings::load_options(fLogMsg log, int argc, char * argv[])
 {
   L_DBG("Start argument parse (argc is "+std::to_string(argc)+")");
 
   bool ret = true;
-
-  fLogMsg do_logging = std::bind(
-      & ClientSettings::log,
-      this,
-      std::placeholders::_1,
-      std::placeholders::_2);
 
   const auto & res = ap_.run(
       argc,
@@ -88,42 +73,42 @@ bool ClientSettings::load_options(int argc, char * argv[])
     switch(item.first)
     {
       case 1: // local file
-        file_local_ = ap_.get_parsed_item(item.first);
+        file_local = ap_.get_parsed_item(item.first);
         break;
       case 2: // remote file
-        file_remote_ = ap_.get_parsed_item(item.first);
+        opt.set_filename(ap_.get_parsed_item(item.first), log);
         break;
       case 3: // Request GET
-        request_type_ = SrvReq::read;
+        opt.set_request_type(SrvReq::read);
         break;
       case 4: // Request PUT
-        request_type_ = SrvReq::write;
+        opt.set_request_type(SrvReq::write);
         break;
       case 5: // Help
         ret = false;
-        out_help();
+        //out_help();
         break;
       case 6: // Verbosity
         {
-          verb_ = 7;  // default
+          verb = 7;  // default
           auto tmp_val= ap_.get_parsed_int(item.first);
-          if(tmp_val.has_value()) verb_ = tmp_val.value();
+          if(tmp_val.has_value()) verb = tmp_val.value();
         }
         break;
       case 7: // Mode transfer
-        set_transfer_mode(ap_.get_parsed_item(item.first), do_logging);
+        opt.set_transfer_mode(ap_.get_parsed_item(item.first), log);
         break;
       case 8: // Block size
-        set_blksize(ap_.get_parsed_item(item.first), do_logging);
+        opt.set_blksize(ap_.get_parsed_item(item.first), log);
         break;
       case 9: // Timeout
-        set_timeout(ap_.get_parsed_item(item.first), do_logging);
+        opt.set_timeout(ap_.get_parsed_item(item.first), log);
         break;
       case 10: // Windowsize
-        set_windowsize(ap_.get_parsed_item(item.first), do_logging);
+        opt.set_windowsize(ap_.get_parsed_item(item.first), log);
         break;
       case 11: // Tsize
-        set_tsize(ap_.get_parsed_item(item.first), do_logging);
+        opt.set_tsize(ap_.get_parsed_item(item.first), log);
         break;
       default:
         break;
@@ -133,7 +118,7 @@ bool ClientSettings::load_options(int argc, char * argv[])
   // 2 Parse main arguments
   if(auto cnt=res.second.size(); cnt == 0U)
   {
-    L_WRN("No server address found; used "+srv_addr_.str());
+    L_WRN("No server address found; used "+srv_addr.str());
   }
   else
   if(cnt > 1U)
@@ -142,7 +127,7 @@ bool ClientSettings::load_options(int argc, char * argv[])
   }
   else
   {
-    srv_addr_.set_string(res.second[0U]);
+    srv_addr.set_string(res.second[0U]);
   }
 
   L_DBG("Finish argument parse is "+(ret ? "SUCCESS" : "FAIL"));
@@ -152,23 +137,16 @@ bool ClientSettings::load_options(int argc, char * argv[])
 
 // -----------------------------------------------------------------------------
 
-void ClientSettings::log(LogLvl lvl, std::string_view msg) const
+void ClientSettings::out_header(std::ostream & stream) const
 {
-  if(callback_log_) callback_log_(lvl, msg);
+  ap_.out_header(stream);
 }
 
 // -----------------------------------------------------------------------------
 
-void ClientSettings::out_header() const
+void ClientSettings::out_help(std::ostream & stream) const
 {
-  ap_.out_header(std::cout);
-}
-
-// -----------------------------------------------------------------------------
-
-void ClientSettings::out_help() const
-{
-  ap_.out_help(std::cout);
+  ap_.out_help(stream);
 }
 
 // -----------------------------------------------------------------------------
