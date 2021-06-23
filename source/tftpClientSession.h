@@ -8,6 +8,7 @@
 #ifndef SOURCE_TFTPCLIENTSESSION_H_
 #define SOURCE_TFTPCLIENTSESSION_H_
 
+#include <atomic>
 #include <fstream>
 #include <experimental/filesystem>
 
@@ -41,14 +42,17 @@ enum class ClientSessionResult: int
 class ClientSession
 {
 protected:
-  std::ostream *  pstream_;
-  ClientSettings  settings_;   ///< Settings for TFTP client
-  Addr            local_addr_; ///< Local address
-  int             socket_;     ///< Socket
-  size_t          stage_;      ///< Full (!) number of processed block
-  std::ifstream   file_in_;    ///< Input file stream
-  std::ofstream   file_out_;   ///< Output file stream
-  size_t          file_size_;  ///< Size for processed data
+  std::ostream *   pstream_;
+  ClientSettings   settings_;   ///< Settings for TFTP client
+  Addr             local_addr_; ///< Local address
+  int              socket_;     ///< Socket
+  size_t           stage_;      ///< Full (!) number of processed block
+  std::ifstream    file_in_;    ///< Input file stream
+  std::ofstream    file_out_;   ///< Output file stream
+  size_t           file_size_;  ///< Size for processed data
+
+  std::atomic_bool need_break_; ///< Flag for stop session
+  std::atomic_bool stopped_;    ///< Flag for stop session
 
   /** \brief Local used logger method
    *
@@ -159,6 +163,8 @@ public:
    *  Local file will delete if stream was opened
    */
   void cancel();
+
+  void need_break();
 
 };
 
