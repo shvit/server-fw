@@ -184,6 +184,21 @@ public:
       const size_t & buf_size,
       fLogMsg cb_logging);
 
+  /** \brief Set request type
+   *
+   *  \param [in] val New value
+   */
+  void set_request_type(SrvReq new_req);
+
+  /** \brief Set filename from string value
+   *
+   *  \param [in] val String value
+   *  \param [in] log Callbacl for logging; default is nullptr
+   */
+  bool set_filename(
+      const std::string & val,
+      fLogMsg log = nullptr);
+
   /** \brief Set 'blksize' from string value
    *
    *  \param [in] val String value

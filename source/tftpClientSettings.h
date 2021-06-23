@@ -62,25 +62,23 @@ namespace constants
  *
  *  Parse settings from argc/argv
  */
-class ClientSettings: public Options
+class ClientSettings
 {
 protected:
 
   ArgParser ap_; ///< Argument parser
 
-  Addr srv_addr_; ///< Server address/port
+public:
 
-  int verb_; ///< Verbosity mode
+  Addr srv_addr; ///< Server address/port
 
-  std::string file_local_; ///< Local filename
+  int verb; ///< Verbosity mode
 
-  std::string file_remote_; ///< Remote filename
+  std::string file_local; ///< Local filename
 
-  fLogMsg callback_log_; ///< Logging callback
+  //std::string file_remote; ///< Remote filename
 
-  /** \brief Default constructor (hide)
-   */
-  ClientSettings();
+  Options opt;
 
   /** \brief Local used logger method
    *
@@ -88,13 +86,11 @@ protected:
    *  \param [in] lvl Level of message
    *  \param [in] msg Text message
    */
-  void log(LogLvl lvl, std::string_view msg) const;
+  //void log(LogLvl lvl, std::string_view msg) const;
 
-public:
-
-  /** \brief Constructor with logger
+  /** \brief Default constructor
    */
-  ClientSettings(fLogMsg cb_logger);
+  ClientSettings();
 
   /** \brief Destructor
    */
@@ -102,25 +98,31 @@ public:
 
   /** \brief Load settings from CMD arguments
    *
+   *  \param [in] cb_logger Callback logger
    *  \param [in] argc Count of elements in argv
    *  \param [in] argv Array of arguments
    *  \return True if success, else - false
    */
-  bool load_options(int argc, char * argv[]);
+  bool load_options(
+      fLogMsg cb_logger,
+      int argc,
+      char * argv[]);
 
   /** \brief Out to cout header output for application
    *
    *  Used for output: Application name, License, etc. See at ArgItems
    *  Get information from ArgItems value
+   *  \param [out] stream Output stream
    */
-  void out_header() const;
+  void out_header(std::ostream & stream) const;
 
   /** \brief Out to cout help information of arguments options
    *
    *  Used for help output
    *  Get information from ArgItems value
+   *  \param [out] stream Output stream
    */
-  void out_help() const;
+  void out_help(std::ostream & stream) const;
 
 };
 
