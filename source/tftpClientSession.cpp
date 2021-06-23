@@ -372,17 +372,36 @@ void ClientSession::close()
 
 // -----------------------------------------------------------------------------
 
+void ClientSession::cancel()
+{
+  if(file_out_.is_open())
+  {
+    file_out_.close();
+
+    if(filesystem::exists(settings_.file_local))
+    {
+      L_INF("Remove file '"+settings_.file_local+"'");
+      filesystem::remove(settings_.file_local);
+    }
+  }
+
+  close();
+}
+
+// -----------------------------------------------------------------------------
+
 auto ClientSession::run_session() -> ClientSessionResult
 {
   if(!active())
   {
     L_ERR("File streams not active");
+    cancel();
     return ClientSessionResult::fail_run;
   }
 
   // TODO: Do tftp protocol
   sleep(2);
-
+  cancel();
   return ClientSessionResult::fail_run;
 }
 
@@ -393,6 +412,7 @@ auto ClientSession::run(int argc, char * argv[]) -> ClientSessionResult
   if(!init(argc, argv))
   {
     L_ERR("Wrong run - fail init session");
+    cancel();
     return ClientSessionResult::fail_init;
   }
 
