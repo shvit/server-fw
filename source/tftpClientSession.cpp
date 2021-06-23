@@ -35,7 +35,9 @@ ClientSession::ClientSession(std::ostream * stream):
         stage_{0U},
         file_in_{},
         file_out_{},
-        file_size_{0U}
+        file_size_{0U},
+        need_break_{false},
+        stopped_{false}
 {
   if(pstream_) settings_.out_header(*pstream_);
 }
@@ -396,12 +398,39 @@ auto ClientSession::run_session() -> ClientSessionResult
   {
     L_ERR("File streams not active");
     cancel();
+    stopped_ = true;
     return ClientSessionResult::fail_run;
   }
 
+  uint16_t    err_code = 0U;
+  std::string err_message;
+
+  auto was_error = [&]()
+    {
+      return (err_code > 0U) || (err_message.size() > 0U);
+    };
+
+  auto set_error = [&](uint16_t new_code, std::string_view new_msg)
+    {
+      if(!was_error())
+      {
+        err_code = new_code;
+        err_message.assign(new_msg);
+      }
+    };
+
   // TODO: Do tftp protocol
-  sleep(2);
+  while(true)
+  {
+    sleep(2);
+
+
+
+
+    break;
+  }
   cancel();
+  stopped_ = true;
   return ClientSessionResult::fail_run;
 }
 
@@ -421,5 +450,9 @@ auto ClientSession::run(int argc, char * argv[]) -> ClientSessionResult
 
 // -----------------------------------------------------------------------------
 
+void ClientSession::need_break()
+{
+  need_break_ = true;
+}
 
 } // namespace tftp
