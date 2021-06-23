@@ -22,6 +22,8 @@ namespace tftp
 
 //------------------------------------------------------------------------------
 
+/** \brief Result of ClientSession::run()
+ */
 enum class ClientSessionResult: int
 {
   fail_init,
@@ -31,6 +33,11 @@ enum class ClientSessionResult: int
 
 //------------------------------------------------------------------------------
 
+/** \brief Class of TFTP client session
+ *
+ *  Simple use (without logging):
+ *  auto result = ClientSession().run(argc, argv);
+ */
 class ClientSession
 {
 protected:
@@ -51,26 +58,70 @@ protected:
    */
   void log(LogLvl lvl, std::string_view msg) const;
 
+  /** \brief Init session
+   *
+   *  Doing:
+   *  - check file
+   *  - open file
+   *  - open socket
+   *  - check some arguments
+   *  \return True is initialize success, else - false
+   */
   bool init_session();
 
+  /** \brief Run client TFTP session
+   *
+   *  Need already inited
+   *  \return Value of enum type ClientSessionResult
+   */
   auto run_session() -> ClientSessionResult;
 
 public:
 
+  /** \brief Default constructor
+   */
   ClientSession();
 
+  /** \brief Constructor with output info stream
+   *
+   *  \param [out] stream Pointer to output stream
+   */
   ClientSession(std::ostream * stream);
 
+  /** \brief Main constructor with parse cmd arguments
+   *
+   *  Internal execute init()
+   *  \param [out] stream Pointer to output stream
+   *  \param [in] argc Count of arguments (array items)
+   *  \param [in] argv Array with arguments
+   */
   ClientSession(
       std::ostream * stream,
       int argc,
       char * argv[]);
 
+  /** \brief Initialize session
+   *
+   *  Internal execute init_session()
+   *  \param [in] argc Count of arguments (array items)
+   *  \param [in] argv Array with arguments
+   *  \return True is initialize success, else - false
+   */
   bool init(int argc, char * argv[]);
 
+  /** \brief Run client TFTP session with init
+   *
+   *  Internal execute init() and run_session()
+   *  \param [in] argc Count of arguments (array items)
+   *  \param [in] argv Array with arguments
+   *  \return Value of enum type ClientSessionResult
+   */
   auto run(int argc, char * argv[]) -> ClientSessionResult;
 
-
+  /** \brief Check opened any file
+   *
+   *  \return True if in/out file stream opened
+   */
   bool active() const;
 
   /** \brief Pull data from network (receive)
@@ -99,7 +150,15 @@ public:
       SmBufEx::iterator buf_end,
       const size_t & position) -> ssize_t;
 
+  /** \brief Close all opened files and close opened socket
+   */
   void close();
+
+  /** \brief Close all opened files and close opened socket
+   *
+   *  Local file will delete if stream was opened
+   */
+  void cancel();
 
 };
 
