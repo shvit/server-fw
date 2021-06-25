@@ -131,6 +131,7 @@ bool Session::switch_to(const State & new_state)
               (new_state == State::error_and_stop);
         break;
       case State::finish: // no way to switch
+      case State::request: // request not for server
         break;
     }
   }
@@ -337,7 +338,7 @@ void  Session::construct_error(SmBufEx & buf)
 {
   if(!was_error())
   {
-    error_code_ = 0;
+    error_code_ = 0U;
     error_message_ = "Undefined error";
   }
 
@@ -348,8 +349,6 @@ void  Session::construct_error(SmBufEx & buf)
   L_DBG("Construct error pkt #"+std::to_string(error_code_)+
         " '"+std::string(error_message_)+"'; "+
         std::to_string(buf.data_size())+" octets");
-
-
 }
 
 // -----------------------------------------------------------------------------
@@ -598,6 +597,9 @@ void Session::run()
 
       case State::finish: // ---------------------------------------------------
         break; // never do this
+
+      case State::request: // --------------------------------------------------
+        break; // never do this, not for server!
     }
   } // end main loop
 

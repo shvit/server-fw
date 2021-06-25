@@ -184,6 +184,19 @@ public:
       const size_t & buf_size,
       fLogMsg cb_logging);
 
+  /** \brief Fill options values from buffer
+   *
+   *  Used for parse received TFTP packet
+   *  \param [in] buf Buffer
+   *  \param [in] buf_size Buffer size
+   *  \param [in] cb_logging Callback for logging
+   *  \return True if no fatal errors, else - false
+   */
+  bool buffer_parse_ack(
+      const SmBuf & buf,
+      const size_t & buf_size,
+      fLogMsg cb_logging=nullptr);
+
   /** \brief Set request type
    *
    *  \param [in] val New value

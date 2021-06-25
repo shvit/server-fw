@@ -5,7 +5,7 @@
  *      Author: svv
  */
 
-#include <future>
+//#include <future>
 #include <iostream>
 #include <string>
 
@@ -15,7 +15,7 @@
 int main(int argc, char* argv[])
 {
   tftp::ClientSession s(&std::cout);
-
+/*
   auto f_run = std::async(
       std::bind(
           & tftp::ClientSession::run,
@@ -24,6 +24,9 @@ int main(int argc, char* argv[])
           argv));
 
   auto ret = f_run.get();
+*/
+
+  auto ret = s.run(argc, argv);
 
   if(ret != tftp::ClientSessionResult::ok) return EXIT_FAILURE;
 

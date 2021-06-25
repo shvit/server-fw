@@ -212,6 +212,15 @@ public:
    *  \return Two booleans {was set address, was set port} (true if success)
    */
   auto set_string(std::string_view new_value) -> std::tuple<bool,bool>;
+
+  /** \brief Compare address only
+   *
+   *  Algoirithm: equal family and equal address bytes
+   *  Port is ignore
+   *  \param [in] right Second argumant
+   *  \return True if addersses is equal, else - false
+   */
+  bool eqv_addr_only(const Addr & right);
 };
 
 // -----------------------------------------------------------------------------

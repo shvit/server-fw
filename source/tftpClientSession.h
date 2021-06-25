@@ -42,7 +42,8 @@ enum class ClientSessionResult: int
 class ClientSession
 {
 protected:
-  std::ostream *   pstream_;
+  aState           stat_;       ///< State machine
+  std::ostream *   pstream_;    ///< Output stream pointer (nullptr if no need)
   ClientSettings   settings_;   ///< Settings for TFTP client
   Addr             local_addr_; ///< Local address
   int              socket_;     ///< Socket
@@ -50,9 +51,35 @@ protected:
   std::ifstream    file_in_;    ///< Input file stream
   std::ofstream    file_out_;   ///< Output file stream
   size_t           file_size_;  ///< Size for processed data
+  uint16_t         error_code_;    ///< First error info - code
+  std::string      error_message_; ///< First error info - message
 
   std::atomic_bool need_break_; ///< Flag for stop session
   std::atomic_bool stopped_;    ///< Flag for stop session
+
+  /** \brief Switch state machine no new state
+   *
+   *  \param [in] new_state New state
+   *  \return True if success, else - false
+   */
+  bool switch_to(const State & new_state);
+
+  /** \brief Set error code and message
+   *
+   *  If values was assigned, then ignore new code and message
+   *  (First error has high priority)
+   *  \param [in] e_cod Error code
+   *  \param [in] e_msg Error message
+   */
+  void set_error_if_first(
+      const uint16_t e_cod,
+      std::string_view e_msg);
+
+  /** \brief Check was error or not
+   *
+   *  \return Teue if error code and message assigned, else - false
+   */
+  bool was_error() const;
 
   /** \brief Local used logger method
    *
@@ -61,6 +88,20 @@ protected:
    *  \param [in] msg Text message
    */
   void log(LogLvl lvl, std::string_view msg) const;
+
+  /** \brief Get current tftp block number
+   *
+   *  Calculate tftp block number as 16-bit value
+   *  \param [in] step Step if need calculate next block number; default 0
+   *  \return Block number value
+   */
+  auto blk_num_local() const -> uint16_t;
+
+  /** \brief Get tftp block size
+   *
+   *  \return Block size value
+   */
+  auto block_size() const -> uint16_t;
 
   /** \brief Init session
    *
@@ -79,6 +120,47 @@ protected:
    *  \return Value of enum type ClientSessionResult
    */
   auto run_session() -> ClientSessionResult;
+
+  /** \brief Construct tftp request
+   *
+   *  \param [in,out] buf Buffer for data packet
+   */
+  void construct_request(SmBufEx & buf) const;
+
+  /** \brief Construct error block
+   *
+   *  Anyway construct tftp error packet
+   *  Get data from error_code_ and error_message_
+   *  If error not was set, use: code=0, message="Undefined error"
+   *  \param [in,out] buf Buffer for data packet
+   */
+  void construct_error(SmBufEx & buf);
+
+  /** \brief Construct data block
+   *
+   *  \param [in,out] buf Buffer for data packet
+   */
+  void construct_data(SmBufEx & buf);
+
+  /** \brief Construct data block acknowledge
+   *
+   *  \param [in,out] buf Buffer for data packet
+   */
+  void construct_ack(SmBufEx & buf);
+
+  /** \brief Try to receive packet if need
+   *
+   *  No wait - not blocking.
+   *  \return True if continue loop, False for break loop
+   */
+  bool transmit_no_wait(const SmBufEx & buf);
+
+  /** \brief Try to receive packet if exist
+   *
+   *  No wait - not blocking.
+   *  \return True if continue loop, False for break loop
+   */
+  auto receive_no_wait(SmBufEx & buf) -> TripleResult;
 
 public:
 
@@ -165,6 +247,8 @@ public:
   void cancel();
 
   void need_break();
+
+  bool is_finished() const;
 
 };
 

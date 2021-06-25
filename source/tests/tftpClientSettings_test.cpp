@@ -147,7 +147,7 @@ START_ITER("Try to load fail options");
   TEST_CHECK_TRUE (b.log_wrn == 6U);
   TEST_CHECK_TRUE (b.log_inf == 0U);
   TEST_CHECK_TRUE (b.log_dbg == 2U);
-  TEST_CHECK_TRUE (b.opt.transfer_mode() == tftp::TransfMode::unknown);
+  TEST_CHECK_TRUE (b.opt.transfer_mode() == tftp::TransfMode::octet);
   TEST_CHECK_FALSE(b.opt.was_set_blksize());
   TEST_CHECK_FALSE(b.opt.was_set_timeout());
   TEST_CHECK_FALSE(b.opt.was_set_windowsize());
