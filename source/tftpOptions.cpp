@@ -116,6 +116,7 @@ bool Options::was_set_any() const
 
 //------------------------------------------------------------------------------
 
+#define OPT_L_DBG(MSG) if(log != nullptr) L_DBG(MSG);
 #define OPT_L_INF(MSG) if(log != nullptr) L_INF(MSG);
 #define OPT_L_WRN(MSG) if(log != nullptr) L_WRN(MSG);
 #define OPT_L_ERR(MSG) if(log != nullptr) L_ERR(MSG);
@@ -165,6 +166,67 @@ bool Options::buffer_parse(
   }
 
   // Init options
+  if(ret)
+  {
+    while(curr_pos < buf_size)
+    {
+      std::string str_opt{buf.get_string(
+          curr_pos,
+          buf_size-curr_pos)};
+      do_lower(str_opt);
+      curr_pos += str_opt.size()+1U;
+      if(curr_pos >= buf_size) break;
+
+      std::string str_val{buf.get_string(
+          curr_pos,
+          buf_size-curr_pos)};
+      curr_pos += str_val.size()+1U;
+
+      bool fl=false;
+      if(str_opt == constants::name_blksize) { fl=true; set_blksize(str_val, log); }
+      else
+      if(str_opt == constants::name_timeout) { fl=true; set_timeout(str_val, log); }
+      else
+      if(str_opt == constants::name_tsize) { fl=true; set_tsize(str_val, log); }
+      else
+      if(str_opt == constants::name_windowsize) { fl=true; set_windowsize(str_val, log); }
+      else
+      {
+        OPT_L_WRN("Unknown option '"+str_opt+"'='"+str_val+"'; Ignore!");
+      }
+      if(fl) OPT_L_INF("Recognize option '"+str_opt+"' value '"+str_val+"'");
+    }
+  }
+
+  return ret;
+}
+
+//------------------------------------------------------------------------------
+
+bool Options::buffer_parse_ack(
+    const SmBuf & buf,
+    const size_t & buf_size,
+    fLogMsg log)
+{
+  operator=(Options{});
+
+  bool ret = buf_size >= sizeof(uint16_t);
+
+  size_t curr_pos=0U;
+  if(ret)
+  {
+    if(auto opcode = buf.get_be<int16_t>(curr_pos);
+       (ret = opcode == 6U))
+    {
+      OPT_L_DBG("Recognize OACK pkt");
+      curr_pos += 2U;
+    }
+    else
+    {
+      OPT_L_WRN("Wrong pkt opcode  ("+std::to_string(opcode)+")");
+    }
+  }
+
   if(ret)
   {
     while(curr_pos < buf_size)

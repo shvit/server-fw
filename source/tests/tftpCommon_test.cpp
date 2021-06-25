@@ -48,6 +48,7 @@ START_ITER("Check to_string()")
 
   CHK_TO_STRING(State, need_init);
   CHK_TO_STRING(State, error_and_stop);
+  CHK_TO_STRING(State, request);
   CHK_TO_STRING(State, ack_options);
   CHK_TO_STRING(State, data_tx);
   CHK_TO_STRING(State, data_rx);

@@ -130,6 +130,7 @@ enum class State: int
 {
   need_init=0,
   error_and_stop,
+  request,
   ack_options,
   data_tx,
   data_rx,
@@ -138,6 +139,8 @@ enum class State: int
   retransmit,
   finish,
 };
+
+using aState = std::atomic<State>;
 
 // -----------------------------------------------------------------------------
 
@@ -283,6 +286,7 @@ constexpr auto to_string(const State & val) -> std::string_view
   {
     CASE_OPER_TO_STR_VIEW(need_init);
     CASE_OPER_TO_STR_VIEW(error_and_stop);
+    CASE_OPER_TO_STR_VIEW(request);
     CASE_OPER_TO_STR_VIEW(ack_options);
     CASE_OPER_TO_STR_VIEW(data_tx);
     CASE_OPER_TO_STR_VIEW(data_rx);
@@ -410,21 +414,21 @@ auto get_gid_by_name(const std::string & name) -> gid_t;
  *  Warning! Use only inside methods with base class tftp::Base
  *  \param [in] MSG Text message
  */
-#define L_DBG(MSG) LOG(debug,   MSG)
+#define L_DBG(MSG) LOG(debug, MSG)
 
 /** \brief Logging with context as LOG_INFO message
  *
  *  Warning! Use only inside methods with base class tftp::Base
  *  \param [in] MSG Text message
  */
-#define L_INF(MSG) LOG(info,    MSG)
+#define L_INF(MSG) LOG(info, MSG)
 
 /** \brief Logging with context as LOG_NOTICEg message
  *
  *  Warning! Use only inside methods with base class tftp::Base
  *  \param [in] MSG Text message
  */
-#define L_NTC(MSG) LOG(notice,  MSG)
+#define L_NTC(MSG) LOG(notice, MSG)
 
 /** \brief Logging with context as LOG_WARNING message
  *
@@ -438,7 +442,7 @@ auto get_gid_by_name(const std::string & name) -> gid_t;
  *  Warning! Use only inside methods with base class tftp::Base
  *  \param [in] MSG Text message
  */
-#define L_ERR(MSG) LOG(err,     MSG)
+#define L_ERR(MSG) LOG(err, MSG)
 
 /** \brief Logging with context and throw std::runtime_error
  *

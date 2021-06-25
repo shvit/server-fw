@@ -49,11 +49,10 @@ protected:
   Addr               cl_addr_;       ///< Client address
   int                socket_;        ///< Socket
   size_t             stage_;         ///< Full (!) number of processed block
-  //DataMgr            manager_;       ///< Data manager
   uint16_t           error_code_;    ///< First error info - code
   std::string        error_message_; ///< First error info - message
   Options            opt_;           ///< TFTP protocol options
-  pDataMgr           file_man_;
+  pDataMgr           file_man_;      ///< Data manager
 
   /** \brief Main constructor
    *

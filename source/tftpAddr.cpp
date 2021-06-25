@@ -317,4 +317,34 @@ auto Addr::set_string(std::string_view new_value) -> std::tuple<bool,bool>
 
 // -----------------------------------------------------------------------------
 
+bool Addr::eqv_addr_only(const Addr & right)
+{
+  bool ret = family() == right.family();
+
+  if(ret)
+  {
+    switch(family())
+    {
+      case AF_INET:
+        ret = as_in().sin_addr.s_addr == right.as_in().sin_addr.s_addr;
+        break;
+
+      case AF_INET6:
+        ret = (as_in6().sin6_addr.__in6_u.__u6_addr32[0] == right.as_in6().sin6_addr.__in6_u.__u6_addr32[0]) &&
+              (as_in6().sin6_addr.__in6_u.__u6_addr32[1] == right.as_in6().sin6_addr.__in6_u.__u6_addr32[1]) &&
+              (as_in6().sin6_addr.__in6_u.__u6_addr32[2] == right.as_in6().sin6_addr.__in6_u.__u6_addr32[2]) &&
+              (as_in6().sin6_addr.__in6_u.__u6_addr32[3] == right.as_in6().sin6_addr.__in6_u.__u6_addr32[3]);
+        break;
+
+      default:
+        ret = false;
+        break;
+    }
+  }
+
+  return ret;
+}
+
+// -----------------------------------------------------------------------------
+
 } // namespace tftp
