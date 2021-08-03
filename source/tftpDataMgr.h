@@ -78,7 +78,7 @@ public:
    *  \return True on success, else - false
    */
   virtual bool init(
-      pSettings & sett,
+      Base & sett,
       fSetError cb_error,
       const Options & opt) = 0;
 

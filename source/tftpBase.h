@@ -84,6 +84,8 @@ public:
    */
   auto get_ptr() const -> const pSettings &;
 
+  auto get_ptr() -> pSettings &;
+
   /** Destructor
    */
   virtual ~Base();

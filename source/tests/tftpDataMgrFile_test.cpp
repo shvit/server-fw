@@ -78,7 +78,7 @@ START_ITER("write() check - store data files");
     opt.request_type_ = tftp::SrvReq::write;
     opt.filename_ = curr_file_name;
 
-    TEST_CHECK_TRUE(init_res=dm.init(dm.settings_, nullptr, opt));
+    TEST_CHECK_TRUE(init_res=dm.init(dm, nullptr, opt));
 
     if(init_res)
     {
@@ -111,7 +111,7 @@ START_ITER("write() check - store data files");
     opt2.request_type_ = tftp::SrvReq::write;
     opt2.filename_ = std::string{curr_file_name}+".md5";
 
-    TEST_CHECK_TRUE(init_res = dm.init(dm.settings_, nullptr, opt2));
+    TEST_CHECK_TRUE(init_res = dm.init(dm, nullptr, opt2));
 
     if(init_res)
     {
@@ -144,7 +144,7 @@ START_ITER("write() check - store data files");
     opt3.request_type_ = tftp::SrvReq::read;
     opt3.filename_ = hash;
 
-    TEST_CHECK_TRUE(init_res = dm_find.init(dm.settings_, nullptr, opt3));
+    TEST_CHECK_TRUE(init_res = dm_find.init(dm, nullptr, opt3));
   }
 }
 
@@ -168,7 +168,7 @@ START_ITER("read() check - read data files by name");
     opt.request_type_ = tftp::SrvReq::read;
     opt.filename_ = curr_file_name;
 
-    TEST_CHECK_TRUE(init_res = dm.init(dm.settings_, nullptr, opt));
+    TEST_CHECK_TRUE(init_res = dm.init(dm, nullptr, opt));
 
     if(init_res)
     {
@@ -222,7 +222,7 @@ START_ITER("tx() check - read data files by md5");
     opt.request_type_ = tftp::SrvReq::read;
     opt.filename_ = curr_file_name;
 
-    TEST_CHECK_TRUE(init_res = dm.init(dm.settings_, nullptr, opt));
+    TEST_CHECK_TRUE(init_res = dm.init(dm, nullptr, opt));
 
     if(init_res)
     {

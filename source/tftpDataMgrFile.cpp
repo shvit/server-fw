@@ -55,11 +55,11 @@ bool DataMgrFile::active() const
 // -----------------------------------------------------------------------------
 
 bool DataMgrFile::init(
-    pSettings & sett,
+    Base & sett,
     fSetError cb_error,
     const Options & opt)
 {
-  settings_ = sett;
+  settings_ = sett.get_ptr();
   set_error_ = cb_error;
   request_type_ = opt.request_type();
 
