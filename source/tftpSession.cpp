@@ -269,7 +269,7 @@ bool Session::init()
       file_man_ = std::make_unique<DataMgrFile>();
 
       init_stream = file_man_->init(
-          settings_,
+          *this,
           std::bind(
               & Session::set_error_if_first,
               this,

@@ -66,6 +66,11 @@ auto Base::get_ptr() const -> const pSettings &
   return settings_;
 }
 
+auto Base::get_ptr() -> pSettings &
+{
+  return settings_;
+}
+
 // -----------------------------------------------------------------------------
 
 auto Base::server_addr() const -> Addr

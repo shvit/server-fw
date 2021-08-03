@@ -1,26 +1,17 @@
-/**
- * \file tftpDataMgrFile.h
- * \brief Data manager class for files header
+/*
+ * tftpDataMgrFileRead.h
  *
- *  Data manager for files
- *
- *  License GPL-3.0
- *
- *  \date 29-may-2021
- *  \author Vitaliy Shirinkin, e-mail: vitaliy.shirinkin@gmail.com
- *
- *  \version 0.2
+ *  Created on: 3 авг. 2021 г.
+ *      Author: svv
  */
 
-#ifndef SOURCE_TFTP_DATA_MGR_H_
-#define SOURCE_TFTP_DATA_MGR_H_
+#ifndef SOURCE_TFTPDATAMGRFILEREAD_H_
+#define SOURCE_TFTPDATAMGRFILEREAD_H_
 
 #include <fstream>
 #include <experimental/filesystem>
-//#include <experimental/bits/fs_fwd.h>
 
 #include "tftpCommon.h"
-//#include "tftpBase.h"
 #include "tftpLogger.h"
 #include "tftpDataMgr.h"
 
@@ -34,16 +25,16 @@ using Path = filesystem::path;
 
 using Perms = filesystem::perms;
 
-// -----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 /** \brief Data manage streams for files
  */
-class DataMgrFile: public DataMgr, public Base
+
+class DataMgrFileRead: public DataMgr, public Logger
 {
 protected:
   Path          filename_; ///< File path with name; constructed after init()
   std::ifstream file_in_;  ///< Input file stream
-  std::ofstream file_out_; ///< Output file stream
 
   /** \brief Recursive search file by md5 in directory
    *
@@ -52,10 +43,10 @@ protected:
    *  \param [in] md5sum Sum of MD5
    *  \return Tuple<found/not found; Path to real file>
    */
-  auto search_by_md5(
-      const Path & path,
-      std::string_view md5sum)
-          -> std::tuple<bool, Path>;
+//  auto search_by_md5(
+//      const Path & path,
+//      std::string_view md5sum)
+//          -> std::tuple<bool, Path>;
 
   /** \brief Recursive search file by md5 in ALL directories
    *
@@ -65,8 +56,8 @@ protected:
    *  \param [in] md5sum Sum of MD5
    *  \return Tuple<found/not found; Path to real file>
    */
-  auto full_search_md5(std::string_view md5sum)
-      -> std::tuple<bool, Path>;
+//  auto full_search_md5(std::string_view md5sum)
+//      -> std::tuple<bool, Path>;
 
   /** \brief Recursive search file by name in ALL directories
    *
@@ -75,8 +66,9 @@ protected:
    *  \param [in] name Root search directory
    *  \return Tuple<found/not found; Path to real file>
    */
-  auto full_search_name(std::string_view name)
-      -> std::tuple<bool, Path>;
+//  auto full_search_name(std::string_view name)
+//      -> std::tuple<bool, Path>;
+
 
 public:
 
@@ -84,23 +76,23 @@ public:
    *
    *  No need public construct. Construct allowed only from Session
    */
-  DataMgrFile();
+  DataMgrFileRead();
 
-  DataMgrFile(const DataMgrFile &) = delete; ///< Deleted/unused
+  //DataMgrFileRead(const DataMgrFileRead &) = delete; ///< Deleted/unused
 
-  DataMgrFile(DataMgrFile &) = delete; ///< Deleted/unused
+  //DataMgrFileRead(DataMgrFileRead &) = delete; ///< Deleted/unused
 
-  DataMgrFile(DataMgrFile &&) = delete; ///< Deleted/unused
+  //DataMgrFileRead(DataMgrFileRead &&) = delete; ///< Deleted/unused
 
-  DataMgrFile & operator=(const DataMgrFile &) = delete; ///< Deleted/unused
+  //DataMgrFileRead & operator=(const DataMgrFileRead &) = delete; ///< Deleted/unused
 
-  DataMgrFile & operator=(DataMgrFile &) = delete; ///< Deleted/unused
+  //DataMgrFileRead & operator=(DataMgrFileRead &) = delete; ///< Deleted/unused
 
-  DataMgrFile & operator=(DataMgrFile &&) = delete; ///< Deleted/unused
+  //DataMgrFileRead & operator=(DataMgrFileRead &&) = delete; ///< Deleted/unused
 
   /** Destructor
    */
-  virtual ~DataMgrFile() override;
+  virtual ~DataMgrFileRead() override;
 
   /** Check active (opened stream)
    *
@@ -154,8 +146,9 @@ public:
   virtual void close() override;
 };
 
-// -----------------------------------------------------------------------------
+
+
 
 } // namespace tftp
 
-#endif /* SOURCE_TFTP_DATA_MGR_H_ */
+#endif /* SOURCE_TFTPDATAMGRFILEREAD_H_ */

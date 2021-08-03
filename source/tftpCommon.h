@@ -90,6 +90,8 @@ enum class SrvReq: uint16_t
   write=2,   ///< Write request
 };
 
+using Direction = SrvReq;
+
 // -----------------------------------------------------------------------------
 
 /** \bief Server transfer mode enum
@@ -104,6 +106,8 @@ enum class TransfMode: uint16_t
   binary,     ///< Binary transfer mode (fake mode, auto change to octet)
   mail,
 };
+
+using Direction = SrvReq;
 
 // -----------------------------------------------------------------------------
 
