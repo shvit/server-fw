@@ -27,6 +27,9 @@ using Perms = filesystem::perms;
 
 //------------------------------------------------------------------------------
 
+namespace ext
+{
+
 /** \brief Data manage streams for files
  */
 
@@ -147,7 +150,7 @@ public:
 };
 
 
-
+} // namespace ext
 
 } // namespace tftp
 

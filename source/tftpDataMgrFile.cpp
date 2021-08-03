@@ -436,6 +436,21 @@ auto DataMgrFile::full_search_name(std::string_view name)
 
   return {false, Path()};
 }
+
+//##############################################################################
+
+namespace ext
+{
+
+DataMgrFile::DataMgrFile():
+    DataMgr(),
+    Logger(),
+    filename_{}
+{
+}
+
+} //namespace ext
+
 // -----------------------------------------------------------------------------
 
 } // namespace tftp

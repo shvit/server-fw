@@ -156,6 +156,25 @@ public:
 
 // -----------------------------------------------------------------------------
 
+namespace ext
+{
+
+class DataMgrFile: public DataMgr, public Logger
+{
+protected:
+
+  Path filename_; ///< File path with name; constructed after init()
+
+public:
+
+  DataMgrFile();
+
+};
+
+// -----------------------------------------------------------------------------
+
+} // namespace ext
+
 } // namespace tftp
 
 #endif /* SOURCE_TFTP_DATA_MGR_H_ */

@@ -10,6 +10,10 @@
 namespace tftp
 {
 
+namespace ext
+{
+
+
 //------------------------------------------------------------------------------
 
 DataMgrFileRead::DataMgrFileRead():
@@ -116,6 +120,8 @@ auto DataMgrFileRead::read(
 }
 
 //------------------------------------------------------------------------------
+
+} // namespace ext
 
 } // namespace tftp
 
