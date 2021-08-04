@@ -18,7 +18,7 @@
 #include <shared_mutex>
 
 #include "tftpCommon.h"
-#include "tftpSettings.h"
+#include "tftpSrvSettingsStor.h"
 
 namespace tftp
 {
