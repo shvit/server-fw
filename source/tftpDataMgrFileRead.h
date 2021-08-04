@@ -13,7 +13,7 @@
 
 #include "tftpCommon.h"
 #include "tftpLogger.h"
-#include "tftpDataMgr.h"
+#include "tftpDataMgrFile.h"
 
 using namespace std::experimental;
 
@@ -33,45 +33,11 @@ namespace ext
 /** \brief Data manage streams for files
  */
 
-class DataMgrFileRead: public DataMgr, public Logger
+class DataMgrFileRead: public DataMgrFile
 {
 protected:
-  Path          filename_; ///< File path with name; constructed after init()
+
   std::ifstream file_in_;  ///< Input file stream
-
-  /** \brief Recursive search file by md5 in directory
-   *
-   *  If finded OK, then open input file stream
-   *  \param [in] path Root search directory
-   *  \param [in] md5sum Sum of MD5
-   *  \return Tuple<found/not found; Path to real file>
-   */
-//  auto search_by_md5(
-//      const Path & path,
-//      std::string_view md5sum)
-//          -> std::tuple<bool, Path>;
-
-  /** \brief Recursive search file by md5 in ALL directories
-   *
-   *  If finded OK, then open input file stream
-   *  Used main server directory and search directories
-   *  \param [in] path Root search directory
-   *  \param [in] md5sum Sum of MD5
-   *  \return Tuple<found/not found; Path to real file>
-   */
-//  auto full_search_md5(std::string_view md5sum)
-//      -> std::tuple<bool, Path>;
-
-  /** \brief Recursive search file by name in ALL directories
-   *
-   *  If finded OK, then open input file stream
-   *  Used main server directory and search directories
-   *  \param [in] name Root search directory
-   *  \return Tuple<found/not found; Path to real file>
-   */
-//  auto full_search_name(std::string_view name)
-//      -> std::tuple<bool, Path>;
-
 
 public:
 
