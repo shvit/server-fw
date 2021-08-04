@@ -367,6 +367,27 @@ auto ArgParser::get_parsed_item(const int & id) const -> std::string
 
 // -----------------------------------------------------------------------------
 
+auto ArgParser::get_parsed_items(const int & id) const -> VecStr
+{
+  auto it = data_result_.first.find(id);
+
+  VecStr tmp_list;
+
+  if(it == data_result_.first.end()) return tmp_list;
+
+  if(it->second.size() == 0U) return tmp_list;
+
+  for(auto & item : it->second)
+  {
+    tmp_list.push_back(item.second);
+  }
+
+  return tmp_list;
+
+}
+
+// -----------------------------------------------------------------------------
+
 auto ArgParser::get_parsed_int(const int & id) const -> std::optional<int>
 {
   std::optional<int> ret;

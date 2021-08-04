@@ -34,7 +34,7 @@ int main(int argc, char* argv[])
 
   tftp::Srv server;
 
-  if(server.load_options(argc, argv))
+  if(server.load_options(nullptr, argc, argv))
   {
     if(server.get_is_daemon())
     {
