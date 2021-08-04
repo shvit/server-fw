@@ -22,8 +22,6 @@
 namespace tftp
 {
 
-using VecStr = std::vector<std::string>;
-
 // -----------------------------------------------------------------------------
 
 namespace constants
