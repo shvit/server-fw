@@ -56,12 +56,12 @@ START_ITER("Modify values and try again")
   //
   b.settings_->root_dir = "/temp/server_dir";
   b.settings_->lib_name = "/bin/hrenak";
-  b.settings_->local_base_.set_string("[fe80::1]:65012");
+  b.settings_->local_addr.set_string("[fe80::1]:65012");
   b.settings_->is_daemon = true;
   b.settings_->retransmit_count_ = 3U*tftp::constants::default_retransmit_count;
-  b.settings_->backup_dirs.push_back("/dir1");
-  b.settings_->backup_dirs.push_back("/dir2/");
-  b.settings_->backup_dirs.push_back("/dir3/");
+  b.settings_->search_dirs.push_back("/dir1");
+  b.settings_->search_dirs.push_back("/dir2/");
+  b.settings_->search_dirs.push_back("/dir3/");
 
   //std::cout << " * '" << b.settings_->retransmit_count_ << "'" << std::endl;
 

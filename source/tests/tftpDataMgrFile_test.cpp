@@ -138,7 +138,7 @@ START_ITER("write() check - store data files");
     std::string hash{md5_as_str(& file_md5[iter][0])};
     DataMgr_test dm_find;
     dm_find.settings_->root_dir.assign(local_dir);
-    dm_find.settings_->backup_dirs.push_back(local_dir);
+    dm_find.settings_->search_dirs.push_back(local_dir);
 
     Options::Options_test opt3;
     opt3.request_type_ = tftp::SrvReq::read;

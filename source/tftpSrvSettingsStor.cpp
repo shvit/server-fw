@@ -41,25 +41,24 @@ SrvSettingsStor::SrvSettingsStor():
   mutex_{},
   ap_{constants::srv_arg_settings},
   is_daemon{false},
-  local_base_{},
+  local_addr{},
   root_dir{},
-  backup_dirs{},
+  search_dirs{},
+  verb{constants::default_tftp_syslog_lvl},
+  retransmit_count_{constants::default_retransmit_count},
+  file_chown_user{},
+  file_chown_grp{},
+  file_chmod{constants::default_file_chmod},
   lib_dir{},
   lib_name{constants::default_fb_lib_name},
   db{},
   user{},
   pass{},
   role{},
-  dialect{constants::default_fb_dialect},
-  use_syslog{constants::default_tftp_syslog_lvl},
-  //log_{nullptr},
-  retransmit_count_{constants::default_retransmit_count},
-  file_chown_user{},
-  file_chown_grp{},
-  file_chmod{constants::default_file_chmod}
+  dialect{constants::default_fb_dialect}
 {
-  local_base_.set_family(AF_INET);
-  local_base_.set_port(constants::default_tftp_port);
+  local_addr.set_family(AF_INET);
+  local_addr.set_port(constants::default_tftp_port);
 }
 
 //------------------------------------------------------------------------------
@@ -124,7 +123,7 @@ bool SrvSettingsStor::load_options(fLogMsg cb_log, int argc, char * argv[])
     switch(item.first)
     {
       case 1: // listen
-        local_base_.set_string(ap_.get_parsed_item(item.first));
+        local_addr.set_string(ap_.get_parsed_item(item.first));
         break;
       case 2: // help
         ret = false;
@@ -132,9 +131,9 @@ bool SrvSettingsStor::load_options(fLogMsg cb_log, int argc, char * argv[])
         break;
       case 3: // verb, syslog
         {
-          use_syslog = 7;  // default
+          verb = 7;  // default
           auto tmp_val= ap_.get_parsed_int(item.first);
-          if(tmp_val.has_value()) use_syslog = tmp_val.value();
+          if(tmp_val.has_value()) verb = tmp_val.value();
         }
         break;
       case 4: // lib-dir
@@ -147,7 +146,7 @@ bool SrvSettingsStor::load_options(fLogMsg cb_log, int argc, char * argv[])
         root_dir = ap_.get_parsed_item(item.first);
         break;
       case 7: // search
-        backup_dirs = std::move(ap_.get_parsed_items(item.first));
+        search_dirs = std::move(ap_.get_parsed_items(item.first));
         break;
       case 8: // fb-db
         db = ap_.get_parsed_item(item.first);
@@ -211,7 +210,7 @@ bool SrvSettingsStor::load_options(fLogMsg cb_log, int argc, char * argv[])
   // 2 Parse main arguments
   if(auto cnt=res.second.size(); cnt == 0U)
   {
-    L_WRN("No server address found; used "+local_base_.str());
+    L_WRN("No server address found; used "+local_addr.str());
   }
   else
   if(cnt > 1U)
@@ -221,7 +220,7 @@ bool SrvSettingsStor::load_options(fLogMsg cb_log, int argc, char * argv[])
   }
   else
   {
-    local_base_.set_string(res.second[0U]);
+    local_addr.set_string(res.second[0U]);
   }
 
   L_DBG("Finish argument parse is "+(ret ? "SUCCESS" : "FAIL"));

@@ -124,7 +124,7 @@ public:
    *  Safe use
    *  \return Address and port
    */
-  auto get_local_base_str() const -> std::string;
+  auto get_local_addr_str() const -> std::string;
 
   /** \brief get chmod value
    *
