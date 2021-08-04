@@ -1,5 +1,5 @@
 /**
- * \file tftpSettings.h
+ * \file tftpSrvSettingsStor.h
  * \brief TFTP Settings class header
  *
  *  Storage class for TFTP settings
