@@ -79,6 +79,9 @@ class ClientSettings;
 
 using pClientSettings = std::unique_ptr<ClientSettings>;
 
+using VecStr = std::vector<std::string>;
+
+
 // -----------------------------------------------------------------------------
 
 /** \bief Server request enum
