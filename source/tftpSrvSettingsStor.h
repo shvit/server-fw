@@ -15,6 +15,8 @@
 #ifndef SOURCE_TFTPSETTINGS_H_
 #define SOURCE_TFTPSETTINGS_H_
 
+#include <shared_mutex>
+
 #include "tftpCommon.h"
 #include "tftpAddr.h"
 
@@ -47,6 +49,8 @@ namespace constants
 class SrvSettingsStor: public std::enable_shared_from_this<SrvSettingsStor>
 {
 protected:
+
+  mutable std::shared_mutex mutex_; ///< RW mutex for threading access
 
   /// No public constructor
   SrvSettingsStor();
@@ -87,6 +91,23 @@ public:
   /** \brief Destructor
    */
   virtual ~SrvSettingsStor();
+
+
+  /** \brief Create shared locker for settings_
+   *
+   *  Use for direct read operations with settings_
+   *  \return Lock object
+   */
+  auto begin_shared() const -> std::shared_lock<std::shared_mutex>;
+
+  /** \brief Create unique locker for settings_
+   *
+   *  Use for direct write/read operations with settings_
+   *  \return Lock object
+   */
+  auto begin_unique() const -> std::unique_lock<std::shared_mutex>;
+
+
 
   /** \brief Load settings from CMD arguments
    *

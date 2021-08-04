@@ -15,7 +15,6 @@
 #ifndef SOURCE_TFTPBASE_H_
 #define SOURCE_TFTPBASE_H_
 
-#include <shared_mutex>
 
 #include "tftpCommon.h"
 #include "tftpSrvSettingsStor.h"
@@ -50,7 +49,7 @@ protected:
    */
   pSrvSettingsStor settings_;
 
-  mutable std::shared_mutex mutex_; ///< RW mutex for threading access
+  //mutable std::shared_mutex mutex_; ///< RW mutex for threading access
 
   /** \brief Create shared locker for settings_
    *
