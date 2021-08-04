@@ -48,7 +48,7 @@ protected:
    *  - begin_shared()
    *  - begin_unique()
    */
-  pSettings settings_;
+  pSrvSettingsStor settings_;
 
   mutable std::shared_mutex mutex_; ///< RW mutex for threading access
 
@@ -66,11 +66,11 @@ protected:
    */
   auto begin_unique() const -> std::unique_lock<std::shared_mutex>;
 
-  /** \brief Constructor from Settings pointer
+  /** \brief Constructor from SrvSettingsStor pointer
    *
-   *  \param [in] src Settings instance
+   *  \param [in] src SrvSettingsStor instance
    */
-  Base(const pSettings & sett);
+  Base(const pSrvSettingsStor & sett);
 
 public:
 
@@ -78,13 +78,13 @@ public:
    */
   Base();
 
-  /** \brief Get pointer to Settings instance
+  /** \brief Get pointer to SrvSettingsStor instance
    *
    *  \return Shared pointer
    */
-  auto get_ptr() const -> const pSettings &;
+  auto get_ptr() const -> const pSrvSettingsStor &;
 
-  auto get_ptr() -> pSettings &;
+  auto get_ptr() -> pSrvSettingsStor &;
 
   /** Destructor
    */

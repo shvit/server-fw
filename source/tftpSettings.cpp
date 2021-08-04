@@ -24,14 +24,14 @@ namespace tftp
 
 // -----------------------------------------------------------------------------
 
-auto Settings::create() -> pSettings
+auto SrvSettingsStor::create() -> pSrvSettingsStor
 {
-  return std::make_shared<Settings>(Settings{});
+  return std::make_shared<SrvSettingsStor>(SrvSettingsStor{});
 }
 
 //------------------------------------------------------------------------------
 
-Settings::Settings():
+SrvSettingsStor::SrvSettingsStor():
   is_daemon{false},
   local_base_{},
   root_dir{},
@@ -56,13 +56,13 @@ Settings::Settings():
 
 //------------------------------------------------------------------------------
 
-Settings::~Settings()
+SrvSettingsStor::~SrvSettingsStor()
 {
 }
 
 //------------------------------------------------------------------------------
 
-bool Settings::load_options(int argc, char * argv[])
+bool SrvSettingsStor::load_options(int argc, char * argv[])
 {
   bool ret = true;
 
@@ -198,7 +198,7 @@ bool Settings::load_options(int argc, char * argv[])
 
 //------------------------------------------------------------------------------
 
-void Settings::out_help(std::ostream & stream, std::string_view app) const
+void SrvSettingsStor::out_help(std::ostream & stream, std::string_view app) const
 {
   out_id(stream);
 
@@ -233,7 +233,7 @@ void Settings::out_help(std::ostream & stream, std::string_view app) const
 
 // -----------------------------------------------------------------------------
 
-void Settings::out_id(std::ostream & stream) const
+void SrvSettingsStor::out_id(std::ostream & stream) const
 {
   stream << "Simple tftp firmware server 'server-fw' v" << constants::app_version << " licensed GPL-3.0" << std::endl
   << "(c) 2019-2021 Vitaliy.V.Shirinkin, e-mail: vitaliy.shirinkin@gmail.com" << std::endl;

@@ -30,12 +30,12 @@ Base::Base():
 
 // -----------------------------------------------------------------------------
 
-Base::Base(const pSettings & sett):
+Base::Base(const pSrvSettingsStor & sett):
     settings_{sett}
 {
   if(settings_.get() == nullptr)
   {
-    settings_ = Settings::create();
+    settings_ = SrvSettingsStor::create();
   }
 }
 
@@ -61,12 +61,12 @@ Base::~Base()
 
 // -----------------------------------------------------------------------------
 
-auto Base::get_ptr() const -> const pSettings &
+auto Base::get_ptr() const -> const pSrvSettingsStor &
 {
   return settings_;
 }
 
-auto Base::get_ptr() -> pSettings &
+auto Base::get_ptr() -> pSrvSettingsStor &
 {
   return settings_;
 }

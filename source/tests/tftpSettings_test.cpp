@@ -1,6 +1,6 @@
 /**
  * \file tftpSettings_test.cpp
- * \brief Unit-tests for class Settings
+ * \brief Unit-tests for class SrvSettingsStor
  *
  *  License GPL-3.0
  *
@@ -16,16 +16,16 @@
 
 using namespace unit_tests;
 
-UNIT_TEST_SUITE_BEGIN(Settings)
+UNIT_TEST_SUITE_BEGIN(SrvSettingsStor)
 
 //------------------------------------------------------------------------------
 
-/** \brief Helper class for unit-test access to Settings protected field
+/** \brief Helper class for unit-test access to SrvSettingsStor protected field
  */
-class Settings_test: public tftp::Settings
+class SrvSettingsStor_test: public tftp::SrvSettingsStor
 {
 public:
-  using Settings::Settings;
+  using SrvSettingsStor::SrvSettingsStor;
 };
 
 //------------------------------------------------------------------------------
@@ -35,7 +35,7 @@ UNIT_TEST_CASE_BEGIN(parse_arg, "Parse CMD arguments")
 // 1
 START_ITER("default options");
 {
-  Settings_test b;
+  SrvSettingsStor_test b;
   TEST_CHECK_FALSE(b.is_daemon);
   TEST_CHECK_TRUE(b.use_syslog == tftp::constants::default_tftp_syslog_lvl);
   TEST_CHECK_TRUE(b.local_base_.family() == AF_INET);
@@ -84,7 +84,7 @@ START_ITER("load options IPv4");
     "--file-chmod", "0766",
   };
 
-  Settings_test b;
+  SrvSettingsStor_test b;
   b.load_options(sizeof(tst_args)/sizeof(tst_args[0]),
                  const_cast<char **>(tst_args));
   TEST_CHECK_TRUE(b.is_daemon);
@@ -121,7 +121,7 @@ START_ITER("load options IPv6");
     "--root-dir", "/mnt/tftp",
   };
 
-  Settings_test b;
+  SrvSettingsStor_test b;
   b.load_options(sizeof(tst_args)/sizeof(tst_args[0]),
                  const_cast<char **>(tst_args));
   TEST_CHECK_FALSE(b.is_daemon);
