@@ -84,14 +84,24 @@ auto Base::server_addr() const -> Addr
 
 auto Base::begin_shared() const -> std::shared_lock<std::shared_mutex>
 {
-  return std::shared_lock{mutex_};
+  if(!settings_)
+  {
+    throw std::runtime_error("Empty storage (server settings)");
+  }
+
+  return settings_->begin_shared();
 }
 
 // -----------------------------------------------------------------------------
 
 auto Base::begin_unique() const -> std::unique_lock<std::shared_mutex>
 {
-  return std::unique_lock{mutex_};
+  if(!settings_)
+  {
+    throw std::runtime_error("Empty storage (server settings)");
+  }
+
+  return settings_->begin_unique();
 }
 
 // -----------------------------------------------------------------------------

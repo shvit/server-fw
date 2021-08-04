@@ -26,12 +26,19 @@ namespace tftp
 
 auto SrvSettingsStor::create() -> pSrvSettingsStor
 {
-  return std::make_shared<SrvSettingsStor>(SrvSettingsStor{});
+  class Enabler : public SrvSettingsStor
+  {
+  public:
+    Enabler() : SrvSettingsStor{} {}
+  };
+
+  return std::make_shared<Enabler>();
 }
 
 //------------------------------------------------------------------------------
 
 SrvSettingsStor::SrvSettingsStor():
+  mutex_{},
   is_daemon{false},
   local_base_{},
   root_dir{},
@@ -58,6 +65,22 @@ SrvSettingsStor::SrvSettingsStor():
 
 SrvSettingsStor::~SrvSettingsStor()
 {
+}
+
+// -----------------------------------------------------------------------------
+
+auto SrvSettingsStor::begin_shared() const
+    -> std::shared_lock<std::shared_mutex>
+{
+  return std::shared_lock{mutex_};
+}
+
+// -----------------------------------------------------------------------------
+
+auto SrvSettingsStor::begin_unique() const
+    -> std::unique_lock<std::shared_mutex>
+{
+  return std::unique_lock{mutex_};
 }
 
 //------------------------------------------------------------------------------
