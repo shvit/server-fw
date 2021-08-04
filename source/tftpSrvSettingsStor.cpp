@@ -1,5 +1,5 @@
 /**
- * \file tftpSettings.cpp
+ * \file tftpSrvSettingsStor.cpp
  * \brief TFTP Settings class module
  *
  *  Storage class for TFTP settings

@@ -1,5 +1,5 @@
 /**
- * \file tftpSettings_test.cpp
+ * \file tftpSrvSettingsStor_test.cpp
  * \brief Unit-tests for class SrvSettingsStor
  *
  *  License GPL-3.0
