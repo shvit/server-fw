@@ -239,6 +239,13 @@ public:
    */
   auto get_parsed_item(const int & id) const -> std::string;
 
+  /** \brief Get option list values by action ID
+   *
+   *  \param [in] id Action ID
+   *  \return String vector of values
+   */
+  auto get_parsed_items(const int & id) const -> VecStr;
+
   /** \brief Get option value integer by action ID
    *
    *  If result values count more 1, then return last value

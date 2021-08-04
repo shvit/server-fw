@@ -42,7 +42,7 @@ ClientSettings::~ClientSettings()
 
 bool ClientSettings::load_options(fLogMsg log, int argc, char * argv[])
 {
-  L_DBG("Start argument parse (argc is "+std::to_string(argc)+")");
+  L_DBG("Start argument parse (arg count "+std::to_string(argc)+")");
 
   bool ret = true;
 

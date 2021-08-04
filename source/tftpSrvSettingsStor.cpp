@@ -39,6 +39,7 @@ auto SrvSettingsStor::create() -> pSrvSettingsStor
 
 SrvSettingsStor::SrvSettingsStor():
   mutex_{},
+  ap_{constants::srv_arg_settings},
   is_daemon{false},
   local_base_{},
   root_dir{},
@@ -85,139 +86,145 @@ auto SrvSettingsStor::begin_unique() const
 
 //------------------------------------------------------------------------------
 
-bool SrvSettingsStor::load_options(
-    fLogMsg cb_logger,
-    int argc,
-    char * argv[])
+bool SrvSettingsStor::load_options(fLogMsg cb_log, int argc, char * argv[])
 {
+  auto log = [&](const LogLvl lvl, std::string_view msg)
+    {
+      if(cb_log) cb_log(lvl, msg);
+    };
+
+  L_DBG("Start argument parse (arg count "+std::to_string(argc)+")");
+
   bool ret = true;
 
-  static const char *optString = "l:L:s:S:h?";
+  const auto & res = ap_.run(
+      argc,
+      argv);
 
-  static const struct option longOpts[] =
+  // 1 Parse options
+  for(const auto & item : res.first)
   {
-      { "listen",     required_argument, NULL, 'l' }, // 0
-      { "ip",         required_argument, NULL, 'l' }, // 1
-      { "syslog",     required_argument, NULL, 's' }, // 2
-      { "help",             no_argument, NULL, 'h' }, // 3
-      { "lib-dir",    required_argument, NULL,  0  }, // 4
-      { "lib-name",   required_argument, NULL,  0  }, // 5
-      { "root-dir",   required_argument, NULL,  0  }, // 6
-      { "search",     required_argument, NULL,  0  }, // 7
-      { "fb-db",      required_argument, NULL,  0  }, // 8
-      { "fb-user",    required_argument, NULL,  0  }, // 9
-      { "fb-pass",    required_argument, NULL,  0  }, // 10
-      { "fb-role",    required_argument, NULL,  0  }, // 11
-      { "fb-dialect", required_argument, NULL,  0  }, // 12
-      { "daemon",           no_argument, NULL,  0  }, // 13
-      { "retransmit", required_argument, NULL,  0  }, // 14
-      { "file-chuser",required_argument, NULL,  0  }, // 15
-      { "file-chgrp", required_argument, NULL,  0  }, // 16
-      { "file-chmod", required_argument, NULL,  0  }, // 17
-      { NULL,               no_argument, NULL,  0  }  // always last
-  };
+    auto [res_chk, res_str] = ap_.chk_parsed_item(item.first);
 
-  backup_dirs.clear();
-
-  optind=1;
-  while(argc > 1)
-  {
-    int longIndex;
-    int opt = getopt_long(argc, argv, optString, longOpts, & longIndex);
-    if(opt == -1) break; // end parsing
-    switch(opt)
+    switch(res_chk)
     {
-    case 'l':
-      if(optarg) local_base_.set_string(std::string{optarg});
-      break;
-    case 's':
-    case 'S':
-      {
-        if(optarg)
-        {
-          try
-          {
-            int lvl = LOG_PRI(std::stoi(optarg));
-            use_syslog = lvl;
-          } catch (...) { };
-        }
-      }
-      break;
-    case 'h':
-    case 'H':
-    case '?':
-      ret = false; // Help message cout
-      break;
-    case 0:
+      case ResCheck::err_wrong_data:  // wrong do, check code!
+      case ResCheck::not_found:       // wrong do, check code!
+      case ResCheck::err_no_req_value:
+        L_ERR(res_str);
+        ret = false;
+        continue;
+      case ResCheck::wrn_many_arg:
+        L_WRN(res_str);
+        break;
+      case ResCheck::normal:
+        break;
+    }
 
-      switch(longIndex)
-      {
-      case 4: // --lib-dir
-        if(optarg) lib_dir.assign(optarg);
+    switch(item.first)
+    {
+      case 1: // listen
+        local_base_.set_string(ap_.get_parsed_item(item.first));
         break;
-      case 5: // --lib-name
-        if(optarg) lib_name.assign(optarg);
+      case 2: // help
+        ret = false;
+        //out_help();
         break;
-      case 6: // --root-dir
-        if(optarg) root_dir.assign(optarg);
-        break;
-      case 7: // --search
-        if(optarg) backup_dirs.emplace_back(optarg);
-        break;
-      case 8: // --fb-db
-        if(optarg) db.assign(optarg);
-        break;
-      case 9: // --fb-user
-        if(optarg) user.assign(optarg);
-        break;
-      case 10: // --fb-pass
-        if(optarg) pass.assign(optarg);
-        break;
-      case 11: // --fb-role
-        if(optarg) role.assign(optarg);
-        break;
-      case 12: // --fb-dialect
-        if(optarg)
+      case 3: // verb, syslog
         {
-          try
-          {
-            uint16_t dial = (std::stoul(optarg) & 0xFFFFU);
-            dialect = dial;
-          } catch (...) { };
+          use_syslog = 7;  // default
+          auto tmp_val= ap_.get_parsed_int(item.first);
+          if(tmp_val.has_value()) use_syslog = tmp_val.value();
         }
         break;
-      case 13: // --daemon
+      case 4: // lib-dir
+        lib_dir = ap_.get_parsed_item(item.first);
+        break;
+      case 5: // lib-name
+        lib_name = ap_.get_parsed_item(item.first);
+        break;
+      case 6: // root-dir
+        root_dir = ap_.get_parsed_item(item.first);
+        break;
+      case 7: // search
+        backup_dirs = std::move(ap_.get_parsed_items(item.first));
+        break;
+      case 8: // fb-db
+        db = ap_.get_parsed_item(item.first);
+        break;
+      case 9: // fb-user
+        user = ap_.get_parsed_item(item.first);
+        break;
+      case 10: // fb-pass
+        pass = ap_.get_parsed_item(item.first);
+        break;
+      case 11: // fb-role
+        role = ap_.get_parsed_item(item.first);
+        break;
+      case 12: // fb-dialect
+        {
+          dialect = constants::default_fb_dialect;  // default
+          auto tmp_val= ap_.get_parsed_int(item.first);
+          if(tmp_val.has_value())
+          {
+            if((tmp_val.value() >= 1) && (tmp_val.value() <= 3))
+            {
+              dialect = (uint16_t)tmp_val.value();
+            }
+          }
+        }
+        break;
+      case 13: // daemon
         is_daemon = true;
         break;
-      case 14: // --retransmit
-        if(optarg)
+      case 14: // retransmit
         {
-          try
+          retransmit_count_ = constants::default_retransmit_count;  // default
+          auto tmp_val= ap_.get_parsed_int(item.first);
+          if(tmp_val.has_value())
           {
-            uint16_t rtr = (std::stoul(optarg) & 0xFFFFU);
-            retransmit_count_ = rtr;
-          } catch (...) { };
+            if((tmp_val.value() > 0) && (tmp_val.value() < 65535))
+            {
+              retransmit_count_ = (uint16_t)tmp_val.value();
+            }
+          }
         }
         break;
-      case 15: // --file-chuser
-        if(optarg) file_chown_user.assign(optarg);
+      case 15: // file-chuser
+        file_chown_user = ap_.get_parsed_item(item.first);
         break;
-      case 16: // --file-chgrp
-        if(optarg) file_chown_grp.assign(optarg);
+      case 16: // file-chgrp
+        file_chown_grp = ap_.get_parsed_item(item.first);
         break;
-      case 17: // --file-chmod
-        if(optarg)
+      case 17: // file-chmod
         {
-          std::string tmp_str{optarg};
           std::size_t * pos=nullptr;
-          file_chmod = std::stoi(tmp_str, pos, 8);
+          file_chmod = std::stoi(ap_.get_parsed_item(item.first), pos, 8) & 0777;
         }
         break;
 
-      } // case (for long option)
-      break;
-    } // switch
+      default:
+        break;
+    }
   }
+
+  // 2 Parse main arguments
+  if(auto cnt=res.second.size(); cnt == 0U)
+  {
+    L_WRN("No server address found; used "+local_base_.str());
+  }
+  else
+  if(cnt > 1U)
+  {
+    L_ERR("Too many address found ("+std::to_string(cnt)+")");
+    // TODO: parse for multi listening
+  }
+  else
+  {
+    local_base_.set_string(res.second[0U]);
+  }
+
+  L_DBG("Finish argument parse is "+(ret ? "SUCCESS" : "FAIL"));
 
   return ret;
 }
@@ -226,6 +233,9 @@ bool SrvSettingsStor::load_options(
 
 void SrvSettingsStor::out_help(std::ostream & stream, std::string_view app) const
 {
+  ap_.out_help(stream, app);
+
+  /*
   out_id(stream);
 
   stream << "Some features:" << std::endl
@@ -255,14 +265,16 @@ void SrvSettingsStor::out_help(std::ostream & stream, std::string_view app) cons
   << "    Warning: if user/group not exist then use root" << std::endl
   << "  --file-chmod <permissions> Set permissions for created files (default 0664)" << std::endl
   << "    Warning: can set only r/w bits - maximum 0666; can't set x-bits and superbits" << std::endl;
+  */
 }
 
 // -----------------------------------------------------------------------------
 
 void SrvSettingsStor::out_id(std::ostream & stream) const
 {
-  stream << "Simple tftp firmware server 'server-fw' v" << constants::app_version << " licensed GPL-3.0" << std::endl
-  << "(c) 2019-2021 Vitaliy.V.Shirinkin, e-mail: vitaliy.shirinkin@gmail.com" << std::endl;
+  ap_.out_header(stream);
+  //stream << "Simple tftp firmware server 'server-fw' v" << constants::app_version << " licensed GPL-3.0" << std::endl
+  //<< "(c) 2019-2021 Vitaliy.V.Shirinkin, e-mail: vitaliy.shirinkin@gmail.com" << std::endl;
 }
 
 // -----------------------------------------------------------------------------
