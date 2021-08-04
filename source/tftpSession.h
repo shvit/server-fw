@@ -58,7 +58,7 @@ protected:
    *
    *  \param [in] new_settings Pointer to exist settings
    */
-  Session(pSettings new_settings);
+  Session(pSrvSettingsStor new_settings);
 
   /** \brief Construct option acknowledge
    *

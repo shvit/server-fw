@@ -25,7 +25,7 @@ namespace tftp
 
 // -----------------------------------------------------------------------------
 
-Session::Session(pSettings new_settings):
+Session::Session(pSrvSettingsStor new_settings):
     Base(new_settings),
     stat_{State::need_init},
     finished_{false},

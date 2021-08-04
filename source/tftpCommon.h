@@ -63,9 +63,9 @@ using pDataMgr = std::unique_ptr<DataMgr>;
 
 class DataMgrFile;
 
-class Settings;
+class SrvSettingsStor;
 
-using pSettings = std::shared_ptr<Settings>;
+using pSrvSettingsStor = std::shared_ptr<SrvSettingsStor>;
 
 class Options;
 

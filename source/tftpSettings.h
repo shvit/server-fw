@@ -37,19 +37,19 @@ namespace constants
 // -----------------------------------------------------------------------------
 
 /**
- * \brief Settings storage class
+ * \brief Server settings storage class
  *
  *  Class for store server settings.
  *  Can't simple construct - make it shareable
- *  Create only from Settings::create() as shared pointer
+ *  Create only from SrvSettingsStor::create() as shared pointer
  */
 
-class Settings: public std::enable_shared_from_this<Settings>
+class SrvSettingsStor: public std::enable_shared_from_this<SrvSettingsStor>
 {
 protected:
 
   /// No public constructor
-  Settings();
+  SrvSettingsStor();
 
 public:
 
@@ -82,11 +82,11 @@ public:
    *
    *  \return Shared pointer to this class
    */
-  static auto create() -> pSettings;
+  static auto create() -> pSrvSettingsStor;
 
   /** \brief Destructor
    */
-  virtual ~Settings();
+  virtual ~SrvSettingsStor();
 
   /** \brief Load settings from CMD arguments
    *
