@@ -48,7 +48,7 @@ bool Srv::socket_open()
   {
     auto lk = begin_shared();
 
-    socket_ = socket(settings_->local_base_.family(),
+    socket_ = socket(settings_->local_addr.family(),
                      SOCK_DGRAM,
                      0);
   }
@@ -69,8 +69,8 @@ bool Srv::socket_open()
     auto lk = begin_shared();
 
     bind_result = bind(socket_,
-                       settings_->local_base_.as_sockaddr_ptr(),
-                       settings_->local_base_.data_size());
+                       settings_->local_addr.as_sockaddr_ptr(),
+                       settings_->local_addr.data_size());
   }
   if(bind_result != 0)
   {
@@ -104,7 +104,7 @@ bool Srv::init()
 
   bool ret = socket_open();
 
-  if(ret) L_INF("Server listening "+get_local_base_str());
+  if(ret) L_INF("Server listening "+get_local_addr_str());
 
   L_INF("Server initialise is "+(ret ? "SUCCESSFUL" : "FAIL"));
 

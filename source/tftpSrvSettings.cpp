@@ -112,7 +112,7 @@ auto SrvSettings::server_addr() const -> Addr
 {
   auto lk = begin_shared(); // read lock
 
-  return Addr{settings_->local_base_};
+  return Addr{settings_->local_addr};
 }
 
 // -----------------------------------------------------------------------------
@@ -183,7 +183,7 @@ auto SrvSettings::get_serach_dir() const -> VecStr
   auto lk = begin_shared(); // read lock
 
   VecStr ret;
-  for(const auto & one_dir: settings_->backup_dirs)
+  for(const auto & one_dir: settings_->search_dirs)
   {
     ret.emplace_back(one_dir);
   }
@@ -193,11 +193,11 @@ auto SrvSettings::get_serach_dir() const -> VecStr
 
 // -----------------------------------------------------------------------------
 
-auto SrvSettings::get_local_base_str() const -> std::string
+auto SrvSettings::get_local_addr_str() const -> std::string
 {
   auto lk = begin_shared(); // read lock
 
-  return settings_->local_base_.str();
+  return settings_->local_addr.str();
 }
 
 // -----------------------------------------------------------------------------

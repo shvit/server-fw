@@ -45,13 +45,13 @@ namespace constants
   {
     {0, {}, ArgExistVaue::no, "", "Simple tftp firmware server 'server-fw' v"+std::string{constants::app_version}+" licensed GPL-3.0" , ""},
     {0, {}, ArgExistVaue::no, "", "Github project page https://github.com/shvit/server-fw", ""},
-    {0, {}, ArgExistVaue::no, "", "(c) 2019-2021 Vitaliy.V.Shirinkin, e-mail: vitaliy.shirinkin@gmafor DB clientil.com", ""},
+    {0, {}, ArgExistVaue::no, "", "(c) 2019-2021 Vitaliy.V.Shirinkin, e-mail: vitaliy.shirinkin@gmail.com", ""},
     {0, {}, ArgExistVaue::no, "", "--", ""},
     {0, {}, ArgExistVaue::no, "", "Some features:", ""},
     {0, {}, ArgExistVaue::no, "", "  - Recursive search requested files by md5 sum in search directory", ""},
     {0, {}, ArgExistVaue::no, "", "  - Use Firebird SQL server as file storage (optional requirement)", ""},
     {0, {}, ArgExistVaue::no, "", "Usage:", ""},
-    {0, {}, ArgExistVaue::no, "", "./server-fw [<options ...>]", "{<IPv4>|[<IPv6>]}[:<UPD port>]"},
+    {0, {}, ArgExistVaue::no, "", "./server-fw [<options ...>] {<IPv4>|[<IPv6>]}[:<UPD port>]", ""},
     {0, {}, ArgExistVaue::no, "", "Default listening is 0.0.0.0:"+std::to_string(constants::default_tftp_port), ""},
     {0, {}, ArgExistVaue::no, "", "(sample IPv4 \"192.168.0.1:69\", sample IPv6 \"[::1]:69\")", ""},
     {0, {}, ArgExistVaue::no, "", "Possible options:", ""},
@@ -101,29 +101,25 @@ protected:
 public:
 
   bool        is_daemon;   ///< Flag showing run as daemon
-  Addr        local_base_; ///< Listening server family/address/port
+  Addr        local_addr; ///< Listening server family/address/port
   std::string root_dir;    ///< Root directory of TFTP server
-  VecStr      backup_dirs; ///< Search directories
+  VecStr      search_dirs; ///< Secondary search directories (0..N)
+  int         verb;           ///< Syslog pass level logging message
+  uint16_t    retransmit_count_;
+  std::string file_chown_user;
+  std::string file_chown_grp;
+  int         file_chmod;
 
   // firebird connect info
   std::string lib_dir;  ///< Directory with access library
   std::string lib_name; ///< Firebird access library filename
-  std::string db;      ///< Database of firebird
-  std::string user;    ///< User name access firebird
-  std::string pass;    ///< Password access firebird
-  std::string role;    ///< Role access firebird
-  uint16_t    dialect; ///< Firebird server dialect
+  std::string db;       ///< Database of firebird
+  std::string user;     ///< User name access firebird
+  std::string pass;     ///< Password access firebird
+  std::string role;     ///< Role access firebird
+  uint16_t    dialect;  ///< Firebird server dialect
 
   //logger
-  int use_syslog; ///< Syslog pass level logging message
-  //fLogMsg log_;   ///< External callback for logging message
-
-  // protocol
-  uint16_t retransmit_count_;
-
-  std::string file_chown_user;
-  std::string file_chown_grp;
-  int         file_chmod;
 
   /** \brief Public creator
    *
