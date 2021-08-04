@@ -17,7 +17,7 @@
 #include <iostream>
 #include <regex>
 
-#include "tftpSettings.h"
+#include "tftpSrvSettingsStor.h"
 
 namespace tftp
 {

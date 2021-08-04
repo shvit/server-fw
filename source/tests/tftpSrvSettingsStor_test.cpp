@@ -11,7 +11,7 @@
  */
 
 #include "../tftpCommon.h"
-#include "../tftpSettings.h"
+#include "../tftpSrvSettingsStor.h"
 #include "test.h"
 
 using namespace unit_tests;

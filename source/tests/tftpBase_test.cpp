@@ -14,7 +14,7 @@
 
 #include "../tftpCommon.h"
 #include "../tftpBase.h"
-#include "../tftpSettings.h"
+#include "../tftpSrvSettingsStor.h"
 #include "test.h"
 
 UNIT_TEST_SUITE_BEGIN(Base)
