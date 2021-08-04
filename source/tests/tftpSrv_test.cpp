@@ -66,6 +66,7 @@ UNIT_TEST_CASE_BEGIN(Srv, "Server main check")
 
   tftp::Srv srv1;
   TEST_CHECK_TRUE(srv1.load_options(
+      nullptr,
       sizeof(tst_arg)/sizeof(tst_arg[0]),
       const_cast<char **>(tst_arg)));
 

@@ -51,7 +51,7 @@ SrvSettingsStor::SrvSettingsStor():
   role{},
   dialect{constants::default_fb_dialect},
   use_syslog{constants::default_tftp_syslog_lvl},
-  log_{nullptr},
+  //log_{nullptr},
   retransmit_count_{constants::default_retransmit_count},
   file_chown_user{},
   file_chown_grp{},
@@ -85,7 +85,10 @@ auto SrvSettingsStor::begin_unique() const
 
 //------------------------------------------------------------------------------
 
-bool SrvSettingsStor::load_options(int argc, char * argv[])
+bool SrvSettingsStor::load_options(
+    fLogMsg cb_logger,
+    int argc,
+    char * argv[])
 {
   bool ret = true;
 

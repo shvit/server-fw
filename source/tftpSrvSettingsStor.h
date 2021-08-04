@@ -73,7 +73,7 @@ public:
 
   //logger
   int use_syslog; ///< Syslog pass level logging message
-  fLogMsg log_;   ///< External callback for logging message
+  //fLogMsg log_;   ///< External callback for logging message
 
   // protocol
   uint16_t retransmit_count_;
@@ -91,7 +91,6 @@ public:
   /** \brief Destructor
    */
   virtual ~SrvSettingsStor();
-
 
   /** \brief Create shared locker for settings_
    *
@@ -111,11 +110,15 @@ public:
 
   /** \brief Load settings from CMD arguments
    *
+   *  \param [in] cb_logger Callback logger
    *  \param [in] argc Count of elements in argv
    *  \param [in] argv Array of arguments
    *  \return True if success, else - false
    */
-  bool load_options(int argc, char * argv[]);
+  bool load_options(
+      fLogMsg cb_logger,
+      int argc,
+      char * argv[]);
 
   void out_id(std::ostream & stream) const;
 

@@ -31,7 +31,8 @@ Base::Base():
 // -----------------------------------------------------------------------------
 
 Base::Base(const pSrvSettingsStor & sett):
-    settings_{sett}
+    SrvSettings(sett),
+    Logger()
 {
   if(settings_.get() == nullptr)
   {
@@ -58,7 +59,7 @@ auto Base::operator=(const Base & src) -> Base &
 Base::~Base()
 {
 }
-
+/*
 // -----------------------------------------------------------------------------
 
 auto Base::get_ptr() const -> const pSrvSettingsStor &
@@ -103,9 +104,9 @@ auto Base::begin_unique() const -> std::unique_lock<std::shared_mutex>
 
   return settings_->begin_unique();
 }
-
+*/
 // -----------------------------------------------------------------------------
-
+/*
 void Base::log(LogLvl lvl, std::string_view msg) const
 {
   auto lk = begin_shared(); // read lock
@@ -121,18 +122,18 @@ void Base::log(LogLvl lvl, std::string_view msg) const
 
   if(settings_->log_) settings_->log_(lvl, msg);
 }
-
+*/
 // -----------------------------------------------------------------------------
-
+/*
 void Base::set_logger(fLogMsg new_logger)
 {
   auto lk = begin_unique(); // write lock
 
   settings_->log_ = new_logger;
 }
-
+*/
 // -----------------------------------------------------------------------------
-
+/*
 auto Base::get_root_dir() const -> std::string
 {
   auto lk = begin_shared(); // read lock
@@ -181,9 +182,9 @@ auto Base::get_retransmit_count() const -> uint16_t
 
   return settings_->retransmit_count_;
 }
-
+*/
 // -----------------------------------------------------------------------------
-
+/*
 auto Base::get_connection() const
   -> std::tuple<std::string,
                 std::string,
@@ -208,6 +209,7 @@ auto Base::get_local_base_str() const -> std::string
 
   return settings_->local_base_.str();
 }
+
 // -----------------------------------------------------------------------------
 
 bool Base::get_is_daemon() const
@@ -232,18 +234,18 @@ auto Base::get_serach_dir() const -> VecStr
 
   return ret;
 }
-
+*/
 // -----------------------------------------------------------------------------
-
+/*
 bool Base::load_options(int argc, char* argv[])
 {
   auto lk = begin_unique(); // write lock
 
   return settings_->load_options(argc, argv);
 }
-
+*/
 // -----------------------------------------------------------------------------
-
+/*
 void Base::out_help(std::ostream & stream, std::string_view app) const
 {
   auto lk = begin_shared(); // read lock
@@ -282,6 +284,6 @@ auto Base::get_file_chown_grp() const -> std::string
 
   return std::string{settings_->file_chown_grp};
 }
-
+*/
 
 } // namespace tftp

@@ -85,8 +85,10 @@ START_ITER("load options IPv4");
   };
 
   SrvSettingsStor_test b;
-  b.load_options(sizeof(tst_args)/sizeof(tst_args[0]),
-                 const_cast<char **>(tst_args));
+  b.load_options(
+      nullptr,
+      sizeof(tst_args)/sizeof(tst_args[0]),
+      const_cast<char **>(tst_args));
   TEST_CHECK_TRUE(b.is_daemon);
   TEST_CHECK_TRUE(b.use_syslog == 7);
   TEST_CHECK_TRUE(b.local_base_.family() == 2U);
@@ -122,8 +124,10 @@ START_ITER("load options IPv6");
   };
 
   SrvSettingsStor_test b;
-  b.load_options(sizeof(tst_args)/sizeof(tst_args[0]),
-                 const_cast<char **>(tst_args));
+  b.load_options(
+      nullptr,
+      sizeof(tst_args)/sizeof(tst_args[0]),
+      const_cast<char **>(tst_args));
   TEST_CHECK_FALSE(b.is_daemon);
   TEST_CHECK_TRUE(b.use_syslog == tftp::constants::default_tftp_syslog_lvl);
   TEST_CHECK_TRUE(b.local_base_.family() == AF_INET6);
