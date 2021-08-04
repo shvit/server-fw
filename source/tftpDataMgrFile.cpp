@@ -444,13 +444,143 @@ namespace ext
 
 DataMgrFile::DataMgrFile():
     DataMgr(),
-    Logger(),
     filename_{}
 {
 }
 
-} //namespace ext
+// -----------------------------------------------------------------------------
+
+bool DataMgrFile::search_by_md5(
+    const Path & path,
+    std::string_view md5sum)
+{
+  for(auto & curr_iter : filesystem::recursive_directory_iterator(path))
+  {
+    Path curr=curr_iter.path();
+    std::string ext{curr.extension()};
+    do_lower(ext);
+    if(ext != ".md5") continue;
+
+    // read first line
+    std::ifstream file_md5{curr, std::ios_base::in};
+    std::string line1(4096,0);
+    file_md5.getline(line1.data(), line1.size(), '\n');
+
+    // check md5
+    std::regex regex_md5_sum(constants::regex_template_md5);
+    std::smatch sm_sum;
+    if(std::regex_search(line1, sm_sum, regex_md5_sum))
+    {
+      if(sm_sum[1].str() == md5sum) // md5 matched!
+      {
+        L_DBG("Match md5 sum at file '"+curr.string()+"'");
+
+        // Try same filename without extension
+        curr.replace_extension("");
+        if(filesystem::exists(curr))
+        {
+          swap(filename_,curr);
+          return true;
+        }
+
+        // Try filename from md5 file
+        if(sm_sum.suffix().str().size())
+        {
+          curr.replace_filename(sm_sum.suffix().str());
+          if(filesystem::exists(curr))
+          {
+            swap(filename_,curr);
+            return true;
+          }
+        }
+
+        L_DBG("Matched MD5 file not found!");
+      }
+    }
+  }
+
+  return false;
+}
 
 // -----------------------------------------------------------------------------
+
+bool DataMgrFile::full_search_md5(std::string_view md5sum)
+{/*
+  // Search in main dir
+  Path curr_dir{get_root_dir()};
+  if(filesystem::exists(curr_dir) &&
+     filesystem::is_directory(curr_dir))
+  {
+    if(search_by_md5(curr_dir, md5sum)) return true;
+  }
+
+  // Search in secondary dirs
+  for(const auto & path : get_serach_dir())
+  {
+    Path curr_dir{path};
+    if(filesystem::exists(curr_dir) &&
+       filesystem::is_directory(curr_dir))
+    {
+      if(search_by_md5(curr_dir, md5sum)) return true;
+    }
+  }
+*/
+  return false;
+}
+
+// -----------------------------------------------------------------------------
+
+bool DataMgrFile::full_search_name(std::string_view name)
+{
+  /*
+  // Search in main dir
+  Path curr_file{get_root_dir()};
+  curr_file /= name;
+  if(filesystem::exists(curr_file) &&
+     filesystem::is_regular_file(curr_file))
+  {
+    std::swap(filename_, curr_file);
+    return true;
+  }
+
+  // Search in secondary dirs
+  for(const auto & path : get_serach_dir())
+  {
+    Path curr_file{path};
+    curr_file /= name;
+    if(filesystem::exists(curr_file) &&
+       filesystem::is_regular_file(curr_file))
+    {
+      std::swap(filename_, curr_file);
+      return true;
+    }
+  }
+*/
+  return false;
+}
+
+// -----------------------------------------------------------------------------
+
+bool DataMgrFile::find(std::string_view name)
+{
+  filename_.clear();
+
+  if(match_md5(name))
+  {
+    if(full_search_md5(name)) return true;
+  }
+
+  return full_search_name(name);
+}
+
+
+
+
+
+
+// -----------------------------------------------------------------------------
+
+} //namespace ext
+
 
 } // namespace tftp

@@ -17,9 +17,7 @@ namespace ext
 //------------------------------------------------------------------------------
 
 DataMgrFileRead::DataMgrFileRead():
-    DataMgr(),
-    Logger(),
-    filename_{},
+    DataMgrFile(),
     file_in_{}
 {
 }

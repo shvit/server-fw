@@ -19,6 +19,7 @@
 #include "tftpBase.h"
 
 #include "tftpSmBufEx.h"
+#include "tftpLogger.h"
 
 namespace tftp
 {
@@ -117,16 +118,14 @@ public:
 namespace ext
 {
 
-class DataMgr
+class DataMgr: public Logger
 {
 protected:
 
   // Processing info
-  Direction     dir_data_;  ///< Direction of data (read/write)
   size_t        file_size_; ///< File size
 
   fSetError     set_error_; ///< Callback error parsing to top level
-  //fLogMsg       log_msg_;   ///< Callback logging to top level
 
   /** \brief Forward error to top level
    *
@@ -143,7 +142,7 @@ protected:
    *  Match by regex used 'regex_template_md5'
    *  /return True if md5, else - false
    */
-  bool match_md5(const std::string & val) const;
+  bool match_md5(std::string_view val) const;
 
 public:
 

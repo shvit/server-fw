@@ -63,7 +63,8 @@ namespace ext
 // -----------------------------------------------------------------------------
 
 DataMgr::DataMgr():
-    dir_data_{Direction::unknown},
+    Logger(),
+    //dir_data_{Direction::unknown},
     file_size_{0U},
     set_error_{nullptr}
     //log_msg_{nullptr}
@@ -87,12 +88,14 @@ void DataMgr::set_error_if_first(
 
 // -----------------------------------------------------------------------------
 
-bool DataMgr::match_md5(const std::string & val) const
+bool DataMgr::match_md5(std::string_view val) const
 {
   std::regex regex_md5_pure(constants::regex_template_md5);
   std::smatch sm;
 
-  return std::regex_search(val, sm, regex_md5_pure) &&
+  std::string str_val{val};
+
+  return std::regex_search(str_val, sm, regex_md5_pure) &&
          (sm.prefix().str().size() == 0U) &&
          (sm.suffix().str().size() == 0U);
 }

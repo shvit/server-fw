@@ -21,7 +21,6 @@
 
 #include "tftpCommon.h"
 //#include "tftpBase.h"
-#include "tftpLogger.h"
 #include "tftpDataMgr.h"
 
 using namespace std::experimental;
@@ -154,20 +153,52 @@ public:
   virtual void close() override;
 };
 
-// -----------------------------------------------------------------------------
+//##############################################################################
 
 namespace ext
 {
 
-class DataMgrFile: public DataMgr, public Logger
+class DataMgrFile: public DataMgr
 {
 protected:
 
   Path filename_; ///< File path with name; constructed after init()
 
+  /** \brief Recursive search file by md5 in directory
+   *
+   *  If finded OK, then open input file stream
+   *  \param [in] path Root search directory
+   *  \param [in] md5sum Sum of MD5
+   *  \return Tuple<found/not found; Path to real file>
+   */
+  bool search_by_md5(
+      const Path & path,
+      std::string_view md5sum);
+
+  /** \brief Recursive search file by md5 in ALL directories
+   *
+   *  If finded OK, then open input file stream
+   *  Used main server directory and search directories
+   *  \param [in] path Root search directory
+   *  \param [in] md5sum Sum of MD5
+   *  \return Tuple<found/not found; Path to real file>
+   */
+  bool full_search_md5(std::string_view md5sum);
+
+  /** \brief Recursive search file by name in ALL directories
+   *
+   *  If finded OK, then open input file stream
+   *  Used main server directory and search directories
+   *  \param [in] name Root search directory
+   *  \return Tuple<found/not found; Path to real file>
+   */
+  bool full_search_name(std::string_view name);
+
 public:
 
   DataMgrFile();
+
+  bool find(std::string_view name);
 
 };
 
