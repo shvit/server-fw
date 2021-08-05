@@ -23,7 +23,7 @@ namespace tftp
 
 // -----------------------------------------------------------------------------
 
-Base::Base():
+SrvBase::SrvBase():
     SrvSettings(SrvSettingsStor::create()),
     Logger(nullptr)
 {
@@ -31,7 +31,7 @@ Base::Base():
 
 // -----------------------------------------------------------------------------
 
-Base::Base(const Base & src):
+SrvBase::SrvBase(const SrvBase & src):
     SrvSettings(src.settings_),
     Logger(src.log_)
 {
@@ -39,7 +39,7 @@ Base::Base(const Base & src):
 
 // -----------------------------------------------------------------------------
 
-auto Base::operator=(const Base & src) -> Base &
+auto SrvBase::operator=(const SrvBase & src) -> SrvBase &
 {
   settings_ = src.settings_;
   log_ = src.log_;
@@ -49,7 +49,7 @@ auto Base::operator=(const Base & src) -> Base &
 
 // -----------------------------------------------------------------------------
 
-Base::~Base()
+SrvBase::~SrvBase()
 {
 }
 

@@ -34,7 +34,7 @@ public:
   virtual bool active() const override { return true; };
 
   virtual bool init(
-      tftp::Base & sett,
+      tftp::SrvBase & sett,
       tftp::fSetError cb_error,
       const tftp::Options & opt) override { set_error_ = cb_error; return true; };
 
@@ -90,7 +90,7 @@ START_ITER("check set_error_if_first()")
       ++ret;
     };
 
-  tftp::Base b;
+  tftp::SrvBase b;
   tftp::Options o{};
 
   dm.init(b, cb, o);

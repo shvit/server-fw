@@ -32,7 +32,7 @@ namespace tftp
  *  - Access to server settings
  *  - Logging messages
  */
-class Base: public SrvSettings, public Logger
+class SrvBase: public SrvSettings, public Logger
 {
 protected:
 
@@ -42,7 +42,7 @@ protected:
    *  - SrvSettings (inherited from SrvSettings)
    *  - pSrvSettingsStor (inherited from SrvSettings)
    *  - fLogMsg (inherited from Logger)
-   *  - any child classes from Base
+   *  - any child classes from SrvBase
    *  For unknown type throw exception std::runtime_error
    *  \param [in] arg Source value
    */
@@ -53,11 +53,11 @@ public:
 
   /** \brief Default constructor
    */
-  Base();
+  SrvBase();
 
   /** \brief Copy constructor
    */
-  Base(const Base &);
+  SrvBase(const SrvBase &);
 
   /** \brief Any allowed type constructor
    *
@@ -66,25 +66,25 @@ public:
    *  \param [in] args Variadic arguments
    */
   template<typename ... Ts>
-  Base(Ts && ... args);
+  SrvBase(Ts && ... args);
 
   /** Destructor
    */
-  virtual ~Base();
+  virtual ~SrvBase();
 
   /** \brief Copy operator self type
    *
-   *  \param [in] src Other Base value
+   *  \param [in] src Other SrvBase value
    *  \return Self reference
    */
-  auto operator=(const Base & src) -> Base &;
+  auto operator=(const SrvBase & src) -> SrvBase &;
 
 };
 
 // -----------------------------------------------------------------------------
 
 template<typename T>
-void Base::set_value(T && arg)
+void SrvBase::set_value(T && arg)
 {
   using TT = std::decay_t<T>;
   if constexpr (std::is_same_v<TT, SrvSettings> ||
@@ -94,7 +94,7 @@ void Base::set_value(T && arg)
     operator=(std::forward<T>(arg));
   }
   else
-  if constexpr (std::is_convertible_v<T, Base>)
+  if constexpr (std::is_convertible_v<T, SrvBase>)
   {
     operator=(std::forward<T>(arg));
   }
@@ -107,8 +107,8 @@ void Base::set_value(T && arg)
 // -----------------------------------------------------------------------------
 
 template<typename ... Ts>
-Base::Base(Ts && ... args):
-    Base()
+SrvBase::SrvBase(Ts && ... args):
+    SrvBase()
 {
   (set_value(std::forward<Ts>(args)), ...);
 }

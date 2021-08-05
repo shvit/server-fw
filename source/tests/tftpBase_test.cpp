@@ -17,21 +17,21 @@
 #include "../tftpSrvSettingsStor.h"
 #include "test.h"
 
-UNIT_TEST_SUITE_BEGIN(Base)
+UNIT_TEST_SUITE_BEGIN(SrvBase)
 
 //------------------------------------------------------------------------------
 
-class Base_test: public tftp::Base
+class SrvBase_test: public tftp::SrvBase
 {
 public:
-  using tftp::Base::settings_;
+  using tftp::SrvBase::settings_;
 };
 
 //------------------------------------------------------------------------------
 
 UNIT_TEST_CASE_BEGIN(main, "")
 
-  Base_test b;
+  SrvBase_test b;
 
 START_ITER("Default values")
 {

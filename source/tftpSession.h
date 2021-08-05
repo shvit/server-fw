@@ -38,7 +38,7 @@ namespace tftp
  *  - Run main loop run()
  *
  */
-class Session: public Base
+class Session: public SrvBase
 {
 protected:
 
@@ -224,7 +224,7 @@ auto Session::create(Ts && ... args) -> pSession
 
 template<typename ... Ts>
 Session::Session(Ts && ... args):
-    Base(std::forward<Ts>(args) ...),
+    SrvBase(std::forward<Ts>(args) ...),
     stat_{State::need_init},
     finished_{false},
     my_addr_{},

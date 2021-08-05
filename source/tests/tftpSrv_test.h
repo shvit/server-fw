@@ -21,7 +21,7 @@ namespace Srv
 {
 //------------------------------------------------------------------------------
 
-class TestServer: public tftp::Base
+class TestServer: public tftp::SrvBase
 {
 public:
   static size_t indicator_value_;
