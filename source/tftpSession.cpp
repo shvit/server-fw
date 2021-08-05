@@ -24,7 +24,7 @@ namespace tftp
 {
 
 // -----------------------------------------------------------------------------
-
+/*
 Session::Session(pSrvSettingsStor new_settings):
     Base(new_settings),
     stat_{State::need_init},
@@ -53,7 +53,7 @@ Session::Session(const Base & base):
     Session(base.get_ptr())
 {
 }
-
+*/
 // -----------------------------------------------------------------------------
 
 Session::~Session()

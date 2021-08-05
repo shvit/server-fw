@@ -20,9 +20,15 @@
 
 #include "tftpSession.h"
 #include "tftpSmBuf.h"
+#include "tftpSrvSettings.h"
+#include "tftpLogger.h"
 
 namespace tftp
 {
+
+using RuntimeSession = std::pair<pSession, std::thread>;
+
+using RuntimeSessions = std::list<RuntimeSession>;
 
 // -----------------------------------------------------------------------------
 
@@ -38,14 +44,11 @@ class Srv: public Base
 {
 protected:
 
-  /// List of running sessions
-  std::list<std::tuple<Session, std::thread>> sessions_;
+  RuntimeSessions sessions_; ///< List of running sessions
 
-  /// Socket for tftp  port listener
-  int socket_;
+  int socket_;  ///< Socket for tftp  port listener
 
-  /// Flag "need stop"
-  bool stop_;
+  bool stop_; ///< Flag "need stop"
 
   /** \brief Open socket and listening
    *
@@ -62,6 +65,8 @@ public:
   /** \brief Default constructor
    */
   Srv();
+
+  //Srv(fLogMsg cb_log);
 
   /** \brief Destructor
    */

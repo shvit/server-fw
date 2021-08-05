@@ -61,11 +61,15 @@ class Srv;
 
 class Session;
 
+using pSession = std::unique_ptr<Session>;
+
 class DataMgr;
 
 using pDataMgr = std::unique_ptr<DataMgr>;
 
 class DataMgrFile;
+
+class SrvSettings;
 
 class SrvSettingsStor;
 
