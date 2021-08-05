@@ -155,6 +155,9 @@ protected:
 
 public:
 
+  template<typename ... Ts>
+  static auto create(Ts && ... args) -> pSession;
+
   // Deny copy/move
   Session(const Session & ) = delete;
   Session(      Session & ) = delete;
@@ -208,6 +211,14 @@ public:
   bool is_finished() const;
 
 };
+
+// -----------------------------------------------------------------------------
+
+template<typename ... Ts>
+auto Session::create(Ts && ... args) -> pSession
+{
+  return std::make_unique<Session>(std::forward<Ts>(args) ...);
+}
 
 // -----------------------------------------------------------------------------
 
