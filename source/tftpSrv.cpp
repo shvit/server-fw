@@ -149,14 +149,10 @@ void Srv::main_loop()
       L_INF("Receive initial pkt (data size "+std::to_string(bsize)+
               " bytes) from "+client_addr.str());
 
-      pSession new_sess = std::make_unique<Session>(*this);
-
-      bool ret = new_sess->prepare(
-          client_addr,
-          pkt_buf,
-          (size_t) bsize);
-
-      if(ret)
+      if(auto new_sess = Session::create(*this);
+         new_sess->prepare(client_addr,
+                           pkt_buf,
+                           (size_t) bsize))
       {
         auto bakup_ptr = new_sess.get();
 
