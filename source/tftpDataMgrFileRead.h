@@ -78,7 +78,7 @@ public:
    *  \return True if initialize success, else - false
    */
   virtual bool init(
-      Base & sett,
+      SrvBase & sett,
       fSetError cb_error,
       const Options & opt) override;
 

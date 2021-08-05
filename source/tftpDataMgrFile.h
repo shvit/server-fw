@@ -37,7 +37,7 @@ using Perms = filesystem::perms;
 
 /** \brief Data manage streams for files
  */
-class DataMgrFile: public DataMgr, public Base
+class DataMgrFile: public DataMgr, public SrvBase
 {
 protected:
   Path          filename_; ///< File path with name; constructed after init()
@@ -116,7 +116,7 @@ public:
    *  \return True if initialize success, else - false
    */
   virtual bool init(
-      Base & sett,
+      SrvBase & sett,
       fSetError cb_error,
       const Options & opt) override;
 

@@ -31,7 +31,7 @@ namespace tftp
 
 DataMgrFile::DataMgrFile():
     DataMgr(),
-    Base(),
+    SrvBase(),
     filename_{},
     file_in_{},
     file_out_{}
@@ -55,7 +55,7 @@ bool DataMgrFile::active() const
 // -----------------------------------------------------------------------------
 
 bool DataMgrFile::init(
-    Base & sett,
+    SrvBase & sett,
     fSetError cb_error,
     const Options & opt)
 {

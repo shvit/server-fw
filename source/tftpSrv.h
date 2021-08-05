@@ -38,11 +38,11 @@ using RuntimeSessions = std::list<RuntimeSession>;
  * \brief TFTP main server class 'tftp::Srv'
  *
  *  Class for one listening pair IP:PORT.
- *  Parent class tftp::Base has all server settings storage.
+ *  Parent class tftp::SrvBase has all server settings storage.
  *
  */
 
-class Srv: public Base
+class Srv: public SrvBase
 {
 protected:
 
@@ -66,7 +66,7 @@ public:
 
   /** \brief Variadic constructor
    *
-   *  Pass all arguments to Base constructor
+   *  Pass all arguments to SrvBase constructor
    *  \param [in] args Variadic arguments
    */
   template<typename ... Ts>
@@ -102,7 +102,7 @@ public:
 
 template<typename ... Ts>
 Srv::Srv(Ts && ... args):
-  Base(std::forward<Ts>(args) ...),
+  SrvBase(std::forward<Ts>(args) ...),
   sessions_{},
   socket_{-1},
   stop_{false}

@@ -147,7 +147,7 @@ bool Session::prepare(
       pkt_data,
       pkt_data_size,
       std::bind(
-          & Base::log,
+          & SrvBase::log,
           this,
           std::placeholders::_1,
           std::placeholders::_2));

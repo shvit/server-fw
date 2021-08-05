@@ -32,7 +32,7 @@ DataMgrFileRead::~DataMgrFileRead()
 //------------------------------------------------------------------------------
 
 bool DataMgrFileRead::init(
-    Base & sett,
+    SrvBase & sett,
     fSetError cb_error,
     const Options & opt)
 {
