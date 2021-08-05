@@ -20,6 +20,7 @@
 #include "tftpCommon.h"
 #include "tftpArgParser.h"
 #include "tftpAddr.h"
+#include "tftpFileNewAttr.h"
 
 
 namespace tftp
@@ -104,9 +105,7 @@ public:
   VecStr      search_dirs;       ///< Secondary search directories (0..N)
   int         verb;              ///< Syslog pass level logging message
   uint16_t    retransmit_count_; ///< Retransmit count for TFTP protocol
-  std::string file_chown_user;   ///< Owner user for created files
-  std::string file_chown_grp;    ///< Owner group for created files
-  int         file_chmod;        ///< File mode for created files
+  FileNewAttr file_new_attr;     ///< Attributes for created files
   // firebird connect info
   std::string lib_dir;  ///< Directory with access library
   std::string lib_name; ///< Firebird access library filename

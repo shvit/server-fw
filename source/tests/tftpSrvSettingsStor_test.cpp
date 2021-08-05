@@ -55,7 +55,7 @@ START_ITER("default options");
   TEST_CHECK_TRUE(b.role == "");
   TEST_CHECK_TRUE(b.dialect == 3U);
   TEST_CHECK_TRUE(b.retransmit_count_ == tftp::constants::default_retransmit_count);
-  TEST_CHECK_TRUE(b.file_chmod == tftp::constants::default_file_chmod);
+  TEST_CHECK_TRUE(b.file_new_attr.mode() == tftp::constants::default_file_chmod_value);
 }
 
 // 2
@@ -108,9 +108,9 @@ START_ITER("load options IPv4");
   TEST_CHECK_TRUE(b.role == "none");
   TEST_CHECK_TRUE(b.dialect == 3U);
   TEST_CHECK_TRUE(b.retransmit_count_ == 59U);
-  TEST_CHECK_TRUE(b.file_chown_user == "usr1");
-  TEST_CHECK_TRUE(b.file_chown_grp == "grp2");
-  TEST_CHECK_TRUE(b.file_chmod == 0766);
+  TEST_CHECK_TRUE(b.file_new_attr.own_user() == "usr1");
+  TEST_CHECK_TRUE(b.file_new_attr.own_grp() == "grp2");
+  TEST_CHECK_TRUE(b.file_new_attr.mode() == 0766);
 }
 
 // 3

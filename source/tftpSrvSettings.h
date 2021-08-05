@@ -1,8 +1,13 @@
-/*
- * tftpSrvSettings.h
+/**
+ * \file tftpSrvSettings.h
+ * \brief SrvSettings class header
  *
- *  Created on: 4 авг. 2021 г.
- *      Author: svv
+ *  License GPL-3.0
+ *
+ *  \date 04-aug-2021
+ *  \author Vitaliy Shirinkin, e-mail: vitaliy.shirinkin@gmail.com
+ *
+ *  \version 0.2
  */
 
 #ifndef SOURCE_TFTPSRVSETTINGS_H_
@@ -16,11 +21,15 @@ namespace tftp
 
 // -----------------------------------------------------------------------------
 
+/** \brief Server settings helper
+ *
+ *  Use for easy access to server storage class
+ */
 class SrvSettings
 {
 protected:
 
-  pSrvSettingsStor settings_;
+  pSrvSettingsStor settings_; ///< Server settings storage
 
   /** \brief Create shared locker for settings_
    *
@@ -38,14 +47,34 @@ protected:
 
 public:
 
+  /** \brief Default constructor
+   */
   SrvSettings();
 
+  /** \brief Constructor from storage
+   *
+   *  \param [in] sett Pointer to settings
+   */
   SrvSettings(const pSrvSettingsStor & sett);
 
+  /** \brief Copy constructor
+   *
+   *  \param [in] src Self type source
+   */
   SrvSettings(const SrvSettings & src);
 
+  /** \brief Setter for storage
+   *
+   *  \param [in] sett Pointer to settings
+   *  \return Self reference
+   */
   auto operator=(const pSrvSettingsStor & sett) -> SrvSettings &;
 
+  /** \brief Copy operator
+   *
+   *  \param [in] src Self type source
+   *  \return Self reference
+   */
   auto operator=(const SrvSettings & src) -> SrvSettings &;
 
   /** \brief Load settings from CMD arguments

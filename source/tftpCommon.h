@@ -47,8 +47,10 @@ namespace constants
   constexpr int              default_tftp_syslog_lvl  = 6;
 
   /// Default chmod for created files
-  constexpr int              default_file_chmod       = 0664;
+  constexpr int default_file_chmod_value = 0664;
 
+  /// Default chmod mask for new values (no super bits)
+  constexpr int default_file_chmod_mask = 0777;
 }
 
 // -----------------------------------------------------------------------------

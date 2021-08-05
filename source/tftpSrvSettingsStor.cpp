@@ -46,9 +46,10 @@ SrvSettingsStor::SrvSettingsStor():
   search_dirs{},
   verb{constants::default_tftp_syslog_lvl},
   retransmit_count_{constants::default_retransmit_count},
-  file_chown_user{},
-  file_chown_grp{},
-  file_chmod{constants::default_file_chmod},
+  file_new_attr{},
+  //file_chown_user{},
+  //file_chown_grp{},
+  //file_chmod{constants::default_file_chmod},
   lib_dir{},
   lib_name{constants::default_fb_lib_name},
   db{},
@@ -190,15 +191,18 @@ bool SrvSettingsStor::load_options(fLogMsg cb_log, int argc, char * argv[])
         }
         break;
       case 15: // file-chuser
-        file_chown_user = ap_.get_parsed_item(item.first);
+        //file_chown_user = ap_.get_parsed_item(item.first);
+        file_new_attr.set_own_user(ap_.get_parsed_item(item.first));
         break;
       case 16: // file-chgrp
-        file_chown_grp = ap_.get_parsed_item(item.first);
+        //file_chown_grp = ap_.get_parsed_item(item.first);
+        file_new_attr.set_own_grp(ap_.get_parsed_item(item.first));
         break;
       case 17: // file-chmod
         {
           std::size_t * pos=nullptr;
-          file_chmod = std::stoi(ap_.get_parsed_item(item.first), pos, 8) & 0777;
+          //file_chmod = std::stoi(ap_.get_parsed_item(item.first), pos, 8) & 0777;
+          file_new_attr.set_mode(std::stoi(ap_.get_parsed_item(item.first), pos, 8));
         }
         break;
 
