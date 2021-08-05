@@ -18,7 +18,7 @@
 #include <atomic>
 
 #include "tftpCommon.h"
-#include "tftpBase.h"
+#include "tftpSrvBase.h"
 #include "tftpDataMgr.h"
 #include "tftpOptions.h"
 #include "tftpAddr.h"

@@ -13,7 +13,7 @@
 #include <netinet/in.h>
 
 #include "../tftpCommon.h"
-#include "../tftpBase.h"
+#include "../tftpSrvBase.h"
 #include "../tftpSrvSettingsStor.h"
 #include "test.h"
 

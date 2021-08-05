@@ -1,5 +1,5 @@
 /**
- * \file tftpBase.h
+ * \file tftpSrvBase.h
  * \brief Base TFTP server class header
  *
  *  Base class for TFTP server

@@ -16,7 +16,7 @@
 #define SOURCE_TFTPIDATAMGR_H_
 
 #include "tftpCommon.h"
-#include "tftpBase.h"
+#include "tftpSrvBase.h"
 
 #include "tftpSmBufEx.h"
 #include "tftpLogger.h"
