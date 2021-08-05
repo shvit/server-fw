@@ -54,12 +54,6 @@ protected:
   Options            opt_;           ///< TFTP protocol options
   pDataMgr           file_man_;      ///< Data manager
 
-  /** \brief Main constructor
-   *
-   *  \param [in] new_settings Pointer to exist settings
-   */
-  //Session(pSrvSettingsStor new_settings);
-
   /** \brief Construct option acknowledge
    *
    *  \param [in,out] buf Buffer for data packet
@@ -161,32 +155,20 @@ protected:
 
 public:
 
-  template<typename ... Ts>
-  Session(Ts && ... args);
-
-
-  /** \brief Default Constructor
-   */
-  //Session();
-
-  /** \brief Constructor from base class
-   *
-   *  \param [in] base Base class instance
-   */
-  //Session(const Base & base);
-
-  // Deny copy
+  // Deny copy/move
   Session(const Session & ) = delete;
   Session(      Session & ) = delete;
-  auto operator=(const Session & val) = delete;
-  auto operator=(Session & val) = delete;
+  Session(      Session &&) = delete;
+  Session & operator=(const Session & val) = delete;
+  Session & operator=(Session & val) = delete;
+  Session & operator=(Session && val) = delete;
 
-  /** \brief Move operator
+  /** \brief Main variadic constructor
    *
-   *  \param [in] val Moved value
-   *  \return Self reference
+   *  \param [in] args Variadic values
    */
-  auto operator=(Session && val) -> Session &;
+  template<typename ... Ts>
+  Session(Ts && ... args);
 
   /** \brief Destructor
    */

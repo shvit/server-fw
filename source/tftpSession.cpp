@@ -24,62 +24,9 @@ namespace tftp
 {
 
 // -----------------------------------------------------------------------------
-/*
-Session::Session(pSrvSettingsStor new_settings):
-    Base(new_settings),
-    stat_{State::need_init},
-    finished_{false},
-    my_addr_{},
-    cl_addr_{},
-    socket_{0},
-    stage_{0U},
-    error_code_{0U},
-    error_message_{""},
-    opt_{},
-    file_man_{nullptr}
-{
-}
-
-// -----------------------------------------------------------------------------
-
-Session::Session():
-    Session(nullptr)
-{
-}
-
-// -----------------------------------------------------------------------------
-
-Session::Session(const Base & base):
-    Session(base.get_ptr())
-{
-}
-*/
-// -----------------------------------------------------------------------------
 
 Session::~Session()
 {
-}
-
-// -----------------------------------------------------------------------------
-
-auto Session::operator=(Session && val) -> Session &
-{
-  if(this != & val)
-  {
-    settings_ = val.settings_;
-    stat_.store(val.stat_);
-    finished_.store(val.finished_);
-    my_addr_       = val.my_addr_;
-    cl_addr_       = val.cl_addr_;
-    socket_        = val.socket_;
-    stage_         = val.stage_;
-    error_code_    = val.error_code_;
-    std::swap(error_message_, val.error_message_);
-    std::swap(opt_, val.opt_);
-    std::swap(file_man_, val.file_man_);
-  }
-
-  return *this;
 }
 
 // -----------------------------------------------------------------------------
