@@ -29,11 +29,7 @@ namespace tftp
 
 namespace constants
 {
-  //constexpr uint16_t         default_tftp_port        = 69;
-  //constexpr uint16_t         default_retransmit_count = 3U;
   constexpr uint16_t         default_fb_dialect       = 3U;
-  //constexpr int              default_tftp_syslog_lvl  = 6;
-  constexpr int              default_file_chmod       = 0664;
   constexpr std::string_view default_fb_lib_name      = "libfbclient.so";
 
 
@@ -45,7 +41,7 @@ namespace constants
   {
     {0, {}, ArgExistVaue::no, "", "Simple tftp firmware server 'server-fw' v"+std::string{constants::app_version}+" licensed GPL-3.0" , ""},
     {0, {}, ArgExistVaue::no, "", "Github project page https://github.com/shvit/server-fw", ""},
-    {0, {}, ArgExistVaue::no, "", "(c) 2019-2021 Vitaliy.V.Shirinkin, e-mail: vitaliy.shirinkin@gmail.com", ""},
+//    {0, {}, ArgExistVaue::no, "", "(c) 2019-2021 Vitaliy.V.Shirinkin, e-mail: vitaliy.shirinkin@gmail.com", ""},
     {0, {}, ArgExistVaue::no, "", "--", ""},
     {0, {}, ArgExistVaue::no, "", "Some features:", ""},
     {0, {}, ArgExistVaue::no, "", "  - Recursive search requested files by md5 sum in search directory", ""},
@@ -92,10 +88,12 @@ class SrvSettingsStor: public std::enable_shared_from_this<SrvSettingsStor>
 protected:
 
   mutable std::shared_mutex mutex_; ///< RW mutex for threading access
-
   ArgParser ap_; ///< Argument parser
 
-  /// No public constructor
+  /** \brief Default constructor
+   *
+   *  No public use, construct only from create()
+   */
   SrvSettingsStor();
 
 public:
@@ -109,7 +107,6 @@ public:
   std::string file_chown_user;
   std::string file_chown_grp;
   int         file_chmod;
-
   // firebird connect info
   std::string lib_dir;  ///< Directory with access library
   std::string lib_name; ///< Firebird access library filename
@@ -118,8 +115,6 @@ public:
   std::string pass;     ///< Password access firebird
   std::string role;     ///< Role access firebird
   uint16_t    dialect;  ///< Firebird server dialect
-
-  //logger
 
   /** \brief Public creator
    *
