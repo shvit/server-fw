@@ -1,5 +1,5 @@
 /**
- * \file tftpBase.h
+ * \file tftpSrvBase.cpp
  * \brief Base TFTP server class module
  *
  *  Base class for TFTP server
@@ -16,7 +16,7 @@
 #include <sys/syscall.h>
 #include <syslog.h>
 
-#include "tftpBase.h"
+#include "tftpSrvBase.h"
 
 namespace tftp
 {

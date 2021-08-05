@@ -9,7 +9,6 @@
 #include <unistd.h>
 
 #include "tftpClientSession.h"
-#include "tftpBase.h"
 
 namespace tftp
 {

@@ -15,7 +15,7 @@
 
 #include "test.h"
 #include "../tftpSrv.h"
-#include "../tftpBase.h"
+#include "../tftpSrvBase.h"
 
 namespace Srv
 {

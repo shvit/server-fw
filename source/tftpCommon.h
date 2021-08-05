@@ -55,7 +55,7 @@ namespace constants
 
 class Addr;
 
-class Base;
+class SrvBase;
 
 class Srv;
 
