@@ -33,11 +33,20 @@ Logger::Logger(const Logger & new_cb)
 }
 
 //------------------------------------------------------------------------------
-
+/*
 Logger::Logger(Logger && new_cb)
 {
   log_ = new_cb.log_;
   new_cb.log_ = nullptr;
+}
+*/
+
+//------------------------------------------------------------------------------
+
+auto Logger::operator=(fLogMsg new_cb) -> Logger &
+{
+  log_ = new_cb;
+  return *this;
 }
 
 //------------------------------------------------------------------------------
@@ -55,14 +64,14 @@ auto Logger::operator=(const Logger & new_cb) -> Logger &
 }
 
 //------------------------------------------------------------------------------
-
+/*
 auto Logger::operator=(Logger && new_cb) -> Logger &
 {
   log_ = new_cb.log_;
   new_cb.log_ = nullptr;
   return *this;
 }
-
+*/
 //------------------------------------------------------------------------------
 
 void Logger::log(LogLvl lvl, std::string_view msg) const

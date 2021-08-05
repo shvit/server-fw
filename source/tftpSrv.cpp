@@ -149,23 +149,21 @@ void Srv::main_loop()
       L_INF("Receive initial pkt (data size "+std::to_string(bsize)+
               " bytes) from "+client_addr.str());
 
-      tftp::Session sss(*this);
+      pSession new_sess = std::make_unique<Session>(*this);
 
-      bool ret = sss.prepare(
+      bool ret = new_sess->prepare(
           client_addr,
           pkt_buf,
           (size_t) bsize);
 
       if(ret)
       {
-        auto new_session = sessions_.emplace(sessions_.end());
+        auto bakup_ptr = new_sess.get();
 
-        std::get<0>(* new_session) = std::move(sss);
-
-        std::get<1>(* new_session) = std::thread(
-            & tftp::Session::run,
-            & std::get<0>(* new_session));
-
+        sessions_.emplace_back(
+            RuntimeSession{
+                std::move(new_sess),
+                std::thread{& Session::run, bakup_ptr}});
       }
     }
     else
@@ -179,9 +177,9 @@ void Srv::main_loop()
     usleep(1000);
     for(auto it = sessions_.begin(); it != sessions_.end(); ++it)
     {
-      if(std::get<0>(* it).is_finished())
+      if(it->first->is_finished())
       {
-        std::get<1>(* it).join();
+        it->second.join();
         sessions_.erase(it);
         break;
       }

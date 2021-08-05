@@ -29,13 +29,11 @@ public:
 
   Logger(const Logger & new_cb);
 
-  Logger(Logger && new_cb);
-
   virtual ~Logger();
 
   auto operator=(const Logger & new_cb) -> Logger &;
 
-  auto operator=(Logger && new_cb) -> Logger &;
+  auto operator=(fLogMsg new_cb) -> Logger &;
 
   void log(LogLvl lvl, std::string_view msg) const;
 

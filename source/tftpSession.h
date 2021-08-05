@@ -58,7 +58,7 @@ protected:
    *
    *  \param [in] new_settings Pointer to exist settings
    */
-  Session(pSrvSettingsStor new_settings);
+  //Session(pSrvSettingsStor new_settings);
 
   /** \brief Construct option acknowledge
    *
@@ -161,15 +161,19 @@ protected:
 
 public:
 
+  template<typename ... Ts>
+  Session(Ts && ... args);
+
+
   /** \brief Default Constructor
    */
-  Session();
+  //Session();
 
   /** \brief Constructor from base class
    *
    *  \param [in] base Base class instance
    */
-  Session(const Base & base);
+  //Session(const Base & base);
 
   // Deny copy
   Session(const Session & ) = delete;
@@ -224,6 +228,26 @@ public:
 };
 
 // -----------------------------------------------------------------------------
+
+template<typename ... Ts>
+Session::Session(Ts && ... args):
+    Base(std::forward<Ts>(args) ...),
+    stat_{State::need_init},
+    finished_{false},
+    my_addr_{},
+    cl_addr_{},
+    socket_{0},
+    stage_{0U},
+    error_code_{0U},
+    error_message_{""},
+    opt_{},
+    file_man_{nullptr}
+{
+}
+
+// -----------------------------------------------------------------------------
+
+
 
 } // namespace tftp
 
