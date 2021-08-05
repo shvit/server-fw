@@ -26,6 +26,8 @@
 namespace tftp
 {
 
+// -----------------------------------------------------------------------------
+
 using RuntimeSession = std::pair<pSession, std::thread>;
 
 using RuntimeSessions = std::list<RuntimeSession>;
@@ -48,7 +50,7 @@ protected:
 
   int socket_;  ///< Socket for tftp  port listener
 
-  bool stop_; ///< Flag "need stop"
+  std::atomic_bool stop_; ///< Flag "need stop"
 
   /** \brief Open socket and listening
    *
@@ -62,9 +64,13 @@ protected:
 
 public:
 
-  /** \brief Default constructor
+  /** \brief Variadic constructor
+   *
+   *  Pass all arguments to Base constructor
+   *  \param [in] args Variadic arguments
    */
-  Srv();
+  template<typename ... Ts>
+  Srv(Ts && ... args);
 
   //Srv(fLogMsg cb_log);
 
@@ -86,11 +92,22 @@ public:
    */
   void main_loop();
 
-  /** \brief Set exit flag for break inside main_loop()
+  /** \brief Set exit flag for break main_loop()
    */
   void stop();
 
 };
+
+// -----------------------------------------------------------------------------
+
+template<typename ... Ts>
+Srv::Srv(Ts && ... args):
+  Base(std::forward<Ts>(args) ...),
+  sessions_{},
+  socket_{-1},
+  stop_{false}
+{
+}
 
 // -----------------------------------------------------------------------------
 
