@@ -26,16 +26,6 @@ namespace tftp
 
 // -----------------------------------------------------------------------------
 
-Srv::Srv():
-    Base(),
-    sessions_{},
-    socket_{-1},
-    stop_{false}
-{
-}
-
-// -----------------------------------------------------------------------------
-
 Srv::~Srv()
 {
 }
@@ -115,7 +105,7 @@ bool Srv::init()
 
 void Srv::stop()
 {
-  stop_ = true;
+  stop_.store(true);
 }
 
 // -----------------------------------------------------------------------------
@@ -128,7 +118,7 @@ void Srv::main_loop()
   }
 
   // prepare loop
-  stop_ = false;
+  stop_.store(false);
   Addr  client_addr;
   SmBuf pkt_buf(0xFFFFU, 0);
 
