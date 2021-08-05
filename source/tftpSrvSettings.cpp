@@ -1,12 +1,14 @@
-/*
- * tftpSrvSettings.cpp
+/**
+ * \file tftpSrvSettings.cpp
+ * \brief SrvSettings class module
  *
- *  Created on: 4 авг. 2021 г.
- *      Author: svv
+ *  License GPL-3.0
+ *
+ *  \date 04-aug-2021
+ *  \author Vitaliy Shirinkin, e-mail: vitaliy.shirinkin@gmail.com
+ *
+ *  \version 0.2
  */
-
-
-
 
 #include "tftpSrvSettings.h"
 
@@ -206,7 +208,7 @@ int SrvSettings::get_file_chmod() const
 {
   auto lk = begin_shared(); // read lock
 
-  return settings_->file_chmod;
+  return settings_->file_new_attr.mode();
 }
 
 // -----------------------------------------------------------------------------
@@ -215,7 +217,7 @@ auto SrvSettings::get_file_chown_user() const -> std::string
 {
   auto lk = begin_shared(); // read lock
 
-  return std::string{settings_->file_chown_user};
+  return std::string{settings_->file_new_attr.own_user()};
 }
 
 // -----------------------------------------------------------------------------
@@ -224,7 +226,7 @@ auto SrvSettings::get_file_chown_grp() const -> std::string
 {
   auto lk = begin_shared(); // read lock
 
-  return std::string{settings_->file_chown_grp};
+  return std::string{settings_->file_new_attr.own_grp()};
 }
 
 // -----------------------------------------------------------------------------
