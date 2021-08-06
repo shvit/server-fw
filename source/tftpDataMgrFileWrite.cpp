@@ -1,13 +1,18 @@
-/*
- * tftpDataMgrFileWrite.cpp
+/**
+ * \file tftpDataMgrFileWrite.cpp
+ * \brief DataMgrFileWrite class module
  *
- *  Created on: 3 авг. 2021 г.
- *      Author: svv
+ *  License GPL-3.0
+ *
+ *  \date 03-aug-2021
+ *  \author Vitaliy Shirinkin, e-mail: vitaliy.shirinkin@gmail.com
+ *
+ *  \version 0.2
  */
 
 #include <string.h>
-//#include <sys/types.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 #include "tftpDataMgrFileWrite.h"
 
@@ -109,19 +114,19 @@ void DataMgrFileWrite::close()
        (grp.size() > 0U))
     {
       L_DBG("Try set chown '"+user+"':'"+grp+"'");
-      /*
+
       auto ret = chown(
           filename_.c_str(),
           get_uid_by_name(user),
           get_gid_by_name(grp));
+
       if(ret < 0)
       {
-        L_WRN("Wrong chown operation:"+
+        L_WRN("Wrong chown operation file '"+filename_.string()+"': "+
               std::string{strerror_r(errno,
                                      err_msg_buf.data(),
                                      err_msg_buf.size())});
       }
-      */
     }
 
     // CHMOD
@@ -155,7 +160,16 @@ void DataMgrFileWrite::cancel()
   {
     fs_ .close();
 
-    // DELETE FILE!
+    // Delete file
+    if(filesystem::exists(filename_) &&
+       filesystem::is_regular_file(filename_))
+    {
+      std::error_code e;
+      if(!filesystem::remove(filename_, e))
+      {
+        L_WRN("Error delete file '"+filename_.string()+"': "+e.message());
+      }
+    }
   }
 }
 
