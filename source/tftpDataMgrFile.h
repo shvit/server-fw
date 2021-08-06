@@ -42,8 +42,6 @@ protected:
 
   Path filename_; ///< File path with name; constructed after init()
 
-  VecStr dirs_; ///< Directories for search file
-
   /** \brief Recursive search file by md5 in directory
    *
    *  On success set filename_
@@ -69,14 +67,9 @@ protected:
 
 public:
 
-  //[[deprecated]]
-  //DataMgrFile();
-
   DataMgrFile(
       fLogMsg logger,
-      fSetError err_setter,
-      std::string_view new_filename,
-      VecStr && new_dirs);
+      fSetError err_setter);
 
   /** \brief Full search file in ALL directories, recursive
    *
@@ -88,7 +81,10 @@ public:
    *  \param [in] name Filename or MD5 sum
    *  \return True on success, else - false
    */
-  bool full_search(std::string_view name);
+  bool full_search(
+      std::string_view name,
+      std::string_view root_dir,
+      const VecStr & search_dirs = {});
 
   /** \brief Recursive search file by name in directories
    *
@@ -100,9 +96,9 @@ public:
    *  \param [in] only_root Search only first (main) directory
    *  \return True on success, else - false
    */
-  bool search_root_by_name(
-      std::string_view name,
-      bool only_root=false);
+  //bool search_root_by_name(
+  //    std::string_view name,
+  //    bool only_root=false);
 
 
 };

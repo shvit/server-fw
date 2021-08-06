@@ -45,12 +45,11 @@ DataMgrFileWrite::DataMgrFileWrite(
     std::string root_dir):
         DataMgrFile(
             logger,
-            err_setter,
-            root_dir,
-            {}),
+            err_setter),
         fs_{},
         attr_{}
 {
+  filename_ = root_dir;
   filename_ /= filename;
 }
 

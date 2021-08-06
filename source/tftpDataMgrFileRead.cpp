@@ -16,7 +16,8 @@ auto DataMgrFileRead::create(
     fLogMsg logger,
     fSetError err_setter,
     std::string_view filename,
-    std::string root_dir) -> pDataMgrFileRead
+    std::string_view root_dir,
+    const VecStr & search_dirs) -> pDataMgrFileRead
 {
   class Enabler : public DataMgrFileRead
   {
@@ -25,11 +26,22 @@ auto DataMgrFileRead::create(
         fLogMsg logger,
         fSetError err_setter,
         std::string_view filename,
-        std::string root_dir):
-            DataMgrFileRead(logger, err_setter, filename, root_dir) {};
+        std::string_view root_dir,
+        const VecStr & search_dirs):
+            DataMgrFileRead(
+                logger,
+                err_setter,
+                filename,
+                root_dir,
+                search_dirs) {};
   };
 
-  return std::make_unique<Enabler>(logger, err_setter, filename, root_dir);
+  return std::make_unique<Enabler>(
+      logger,
+      err_setter,
+      filename,
+      root_dir,
+      search_dirs);
 }
 
 //------------------------------------------------------------------------------
@@ -38,15 +50,14 @@ DataMgrFileRead::DataMgrFileRead(
     fLogMsg logger,
     fSetError err_setter,
     std::string_view filename,
-    std::string root_dir):
+    std::string_view root_dir,
+    const VecStr & search_dirs):
         DataMgrFile(
             logger,
-            err_setter,
-            filename,
-            {root_dir}),
+            err_setter),
         fs_{}
 {
-  DataMgrFile::full_search(filename);
+  full_search(filename, root_dir, search_dirs);
 }
 
 //------------------------------------------------------------------------------

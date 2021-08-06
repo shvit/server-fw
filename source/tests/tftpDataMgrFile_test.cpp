@@ -32,9 +32,7 @@ public:
       std::string root_dir):
           tftp::DataMgrFile(
               logger,
-              err_setter,
-              filename,
-              {root_dir}) {};
+              err_setter) {};
 
   virtual bool active() const override { return true; };
 
@@ -54,7 +52,6 @@ public:
 
   virtual void cancel() override {};
 
-  using tftp::DataMgrFile::dirs_;
   using tftp::DataMgrFile::match_md5;
   using tftp::DataMgrFile::active;
 };

@@ -32,17 +32,13 @@ namespace tftp
 
 DataMgrFile::DataMgrFile(
     fLogMsg logger,
-    fSetError err_setter,
-    std::string_view new_filename,
-    VecStr && new_dirs):
+    fSetError err_setter):
         DataMgr(),
         Logger(logger),
-        filename_{new_filename},
-        dirs_{new_dirs}
+        filename_{}
 {
   set_error_ = err_setter;
 }
-
 
 // -----------------------------------------------------------------------------
 
@@ -121,10 +117,16 @@ bool DataMgrFile::search_rec_by_name(
 
 // -----------------------------------------------------------------------------
 
-bool DataMgrFile::full_search(std::string_view name)
+bool DataMgrFile::full_search(
+    std::string_view name,
+    std::string_view root_dir,
+    const VecStr & search_dirs)
 {
   filename_.clear();
-  for(const auto & path : dirs_)
+
+  if(search_rec_by_name(root_dir, name)) return true;
+
+  for(const auto & path : search_dirs)
   {
     Path curr_dir{path};
     if(filesystem::exists(curr_dir) &&
