@@ -67,4 +67,11 @@ void Logger::log(LogLvl lvl, std::string_view msg) const
 
 //------------------------------------------------------------------------------
 
+auto Logger::get_logger() const -> fLogMsg
+{
+  return log_;
+}
+
+//------------------------------------------------------------------------------
+
 } // namespace tftp

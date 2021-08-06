@@ -74,6 +74,8 @@ public:
    */
   void log(LogLvl lvl, std::string_view msg) const;
 
+  auto get_logger() const -> fLogMsg;
+
 };
 
 //------------------------------------------------------------------------------

@@ -18,7 +18,8 @@
 
 #include "tftpSession.h"
 #include "tftpSmBufEx.h"
-#include "tftpDataMgrFile.h"
+#include "tftpDataMgrFileRead.h"
+#include "tftpDataMgrFileWrite.h"
 
 namespace tftp
 {
@@ -212,18 +213,40 @@ bool Session::init()
     // Try 2 - File
     if(!init_stream)
     {
-      file_man_.release();
-      file_man_ = std::make_unique<DataMgrFile>();
+      switch(opt_.request_type())
+      {
+        case SrvReq::read:
+          file_man_ = DataMgrFileRead::create(
+              get_logger(),
+              std::bind(
+                  & Session::set_error_if_first,
+                  this,
+                  std::placeholders::_1,
+                  std::placeholders::_2),
+                  opt_.filename(),
+                  get_root_dir());
+          break;
+        case SrvReq::write:
+          file_man_ = DataMgrFileWrite::create(
+              get_logger(),
+              std::bind(
+                  & Session::set_error_if_first,
+                  this,
+                  std::placeholders::_1,
+                  std::placeholders::_2),
+                  opt_.filename(),
+                  get_root_dir());
 
-      init_stream = file_man_->init(
-          *this,
-          std::bind(
-              & Session::set_error_if_first,
-              this,
-              std::placeholders::_1,
-              std::placeholders::_2),
-          opt_);
+
+          break;
+        case SrvReq::unknown:
+          break;
+      }
+
+      if(file_man_.get()) init_stream = file_man_->init();
     }
+
+    if(!init_stream) file_man_.release();
 
     if(!init_stream)
     {

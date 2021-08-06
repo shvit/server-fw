@@ -9,55 +9,42 @@
 #define SOURCE_TFTPDATAMGRFILEREAD_H_
 
 #include <fstream>
-#include <experimental/filesystem>
 
 #include "tftpCommon.h"
 #include "tftpLogger.h"
 #include "tftpDataMgrFile.h"
 
-using namespace std::experimental;
-
 namespace tftp
 {
 
-/// Alias for filesystem::path
-using Path = filesystem::path;
-
-using Perms = filesystem::perms;
-
 //------------------------------------------------------------------------------
 
-namespace ext
-{
-
-/** \brief Data manage streams for files
+/** \brief Data manage streams for READ files
  */
-
 class DataMgrFileRead: public DataMgrFile
 {
 protected:
 
-  std::ifstream file_in_;  ///< Input file stream
-
-public:
+  std::ifstream fs_;  ///< Input file stream
 
   /** \brief Default constructor
    *
-   *  No need public construct. Construct allowed only from Session
+   *  No need public construct. Construct from create()
    */
-  DataMgrFileRead();
+   DataMgrFileRead(
+      fLogMsg logger,
+      fSetError err_setter,
+      std::string_view filename,
+      std::string root_dir);
 
-  //DataMgrFileRead(const DataMgrFileRead &) = delete; ///< Deleted/unused
+public:
 
-  //DataMgrFileRead(DataMgrFileRead &) = delete; ///< Deleted/unused
+  static auto create(
+      fLogMsg logger,
+      fSetError err_setter,
+      std::string_view filename,
+      std::string root_dir) -> pDataMgrFileRead;
 
-  //DataMgrFileRead(DataMgrFileRead &&) = delete; ///< Deleted/unused
-
-  //DataMgrFileRead & operator=(const DataMgrFileRead &) = delete; ///< Deleted/unused
-
-  //DataMgrFileRead & operator=(DataMgrFileRead &) = delete; ///< Deleted/unused
-
-  //DataMgrFileRead & operator=(DataMgrFileRead &&) = delete; ///< Deleted/unused
 
   /** Destructor
    */
@@ -77,10 +64,7 @@ public:
    *  \param [in] opt Options of tftp protocol
    *  \return True if initialize success, else - false
    */
-  virtual bool init(
-      SrvBase & sett,
-      fSetError cb_error,
-      const Options & opt) override;
+  virtual bool init() override;
 
   /** \brief Pull data from network (receive)
    *
@@ -113,10 +97,12 @@ public:
    *  Overrided virtual method for file streams
    */
   virtual void close() override;
+
+  virtual void cancel() override;
+
 };
 
-
-} // namespace ext
+//------------------------------------------------------------------------------
 
 } // namespace tftp
 

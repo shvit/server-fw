@@ -29,7 +29,7 @@ auto SrvSettingsStor::create() -> pSrvSettingsStor
   class Enabler : public SrvSettingsStor
   {
   public:
-    Enabler() : SrvSettingsStor{} {}
+    Enabler(): SrvSettingsStor() {}
   };
 
   return std::make_shared<Enabler>();
