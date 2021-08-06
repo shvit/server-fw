@@ -13,11 +13,10 @@ namespace tftp
 namespace ext
 {
 
-
 //------------------------------------------------------------------------------
 
 DataMgrFileRead::DataMgrFileRead():
-    DataMgrFile(),
+    ext::DataMgrFile(),
     file_in_{}
 {
 }

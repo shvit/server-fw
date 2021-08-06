@@ -91,6 +91,7 @@ using pClientSettings = std::unique_ptr<ClientSettings>;
 
 using VecStr = std::vector<std::string>;
 
+class FileNewAttr;
 
 // -----------------------------------------------------------------------------
 
