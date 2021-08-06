@@ -442,15 +442,27 @@ auto DataMgrFile::full_search_name(std::string_view name)
 namespace ext
 {
 
+// -----------------------------------------------------------------------------
+
 DataMgrFile::DataMgrFile():
-    DataMgr(),
-    filename_{}
+    DataMgrFile("", {})
 {
 }
 
 // -----------------------------------------------------------------------------
 
-bool DataMgrFile::search_by_md5(
+DataMgrFile::DataMgrFile(std::string_view new_filename, VecStr && new_dirs):
+    DataMgr(),
+    //Logger(nullptr),
+    filename_{new_filename},
+    dirs_{new_dirs}
+{
+}
+
+
+// -----------------------------------------------------------------------------
+
+bool DataMgrFile::search_rec_by_md5(
     const Path & path,
     std::string_view md5sum)
 {
@@ -504,49 +516,55 @@ bool DataMgrFile::search_by_md5(
 
 // -----------------------------------------------------------------------------
 
-bool DataMgrFile::full_search_md5(std::string_view md5sum)
-{/*
-  // Search in main dir
-  Path curr_dir{get_root_dir()};
-  if(filesystem::exists(curr_dir) &&
-     filesystem::is_directory(curr_dir))
+bool DataMgrFile::search_rec_by_name(
+    const Path & path,
+    std::string_view name)
+{
+  for(auto & curr_iter : filesystem::recursive_directory_iterator(path))
   {
-    if(search_by_md5(curr_dir, md5sum)) return true;
-  }
+    Path curr=curr_iter.path();
 
-  // Search in secondary dirs
-  for(const auto & path : get_serach_dir())
-  {
-    Path curr_dir{path};
-    if(filesystem::exists(curr_dir) &&
-       filesystem::is_directory(curr_dir))
+    if(curr.filename() == name)
     {
-      if(search_by_md5(curr_dir, md5sum)) return true;
+      swap(filename_, curr);
+      L_DBG("Matched file found ("+curr.string()+")");
+      return true;
     }
   }
-*/
+
   return false;
 }
 
 // -----------------------------------------------------------------------------
 
-bool DataMgrFile::full_search_name(std::string_view name)
+bool DataMgrFile::full_search(std::string_view name)
 {
-  /*
-  // Search in main dir
-  Path curr_file{get_root_dir()};
-  curr_file /= name;
-  if(filesystem::exists(curr_file) &&
-     filesystem::is_regular_file(curr_file))
+  filename_.clear();
+  for(const auto & path : dirs_)
   {
-    std::swap(filename_, curr_file);
-    return true;
+    Path curr_dir{path};
+    if(filesystem::exists(curr_dir) &&
+       filesystem::is_directory(curr_dir))
+    {
+      if(search_rec_by_name(curr_dir, name)) return true;
+
+      if(search_rec_by_md5(curr_dir, name)) return true;
+    }
   }
 
-  // Search in secondary dirs
-  for(const auto & path : get_serach_dir())
+  return false;
+}
+
+// -----------------------------------------------------------------------------
+
+bool DataMgrFile::search_root_by_name(
+    std::string_view name,
+    bool only_root)
+{
+  filename_.clear();
+  if(dirs_.size())
   {
-    Path curr_file{path};
+    Path curr_file{dirs_[0U]};
     curr_file /= name;
     if(filesystem::exists(curr_file) &&
        filesystem::is_regular_file(curr_file))
@@ -555,23 +573,11 @@ bool DataMgrFile::full_search_name(std::string_view name)
       return true;
     }
   }
-*/
+
   return false;
 }
 
 // -----------------------------------------------------------------------------
-
-bool DataMgrFile::find(std::string_view name)
-{
-  filename_.clear();
-
-  if(match_md5(name))
-  {
-    if(full_search_md5(name)) return true;
-  }
-
-  return full_search_name(name);
-}
 
 
 
