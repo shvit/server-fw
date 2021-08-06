@@ -224,7 +224,8 @@ bool Session::init()
                   std::placeholders::_1,
                   std::placeholders::_2),
                   opt_.filename(),
-                  get_root_dir());
+                  get_root_dir(),
+                  get_serach_dir());
           break;
         case SrvReq::write:
           file_man_ = DataMgrFileWrite::create(

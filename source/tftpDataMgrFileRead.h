@@ -35,7 +35,8 @@ protected:
       fLogMsg logger,
       fSetError err_setter,
       std::string_view filename,
-      std::string root_dir);
+      std::string_view root_dir,
+      const VecStr & search_dirs);
 
 public:
 
@@ -43,7 +44,8 @@ public:
       fLogMsg logger,
       fSetError err_setter,
       std::string_view filename,
-      std::string root_dir) -> pDataMgrFileRead;
+      std::string_view root_dir,
+      const VecStr & search_dirs) -> pDataMgrFileRead;
 
 
   /** Destructor
