@@ -71,6 +71,12 @@ using pDataMgr = std::unique_ptr<DataMgr>;
 
 class DataMgrFile;
 
+class DataMgrFileRead;
+class DataMgrFileWrite;
+
+using pDataMgrFileRead = std::unique_ptr<DataMgrFileRead>;
+using pDataMgrFileWrite = std::unique_ptr<DataMgrFileWrite>;
+
 class SrvSettings;
 
 class SrvSettingsStor;

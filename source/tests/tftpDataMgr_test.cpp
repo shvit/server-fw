@@ -33,10 +33,7 @@ public:
 
   virtual bool active() const override { return true; };
 
-  virtual bool init(
-      tftp::SrvBase & sett,
-      tftp::fSetError cb_error,
-      const tftp::Options & opt) override { set_error_ = cb_error; return true; };
+  virtual bool init() override { return true; };
 
   virtual auto write(
       tftp::SmBufEx::const_iterator buf_begin,
@@ -49,6 +46,8 @@ public:
       const size_t & position) -> ssize_t override { return 0; };
 
   virtual void close() override {};
+
+  virtual void cancel() override {};
 
   using tftp::DataMgr::set_error_;
   using tftp::DataMgr::match_md5;
@@ -93,7 +92,7 @@ START_ITER("check set_error_if_first()")
   tftp::SrvBase b;
   tftp::Options o{};
 
-  dm.init(b, cb, o);
+  dm.set_error_ = cb;
   dm.set_error_if_first(1,"error 1");
   dm.set_error_if_first(5,"error 5");
   TEST_CHECK_TRUE(ret == 2U);
