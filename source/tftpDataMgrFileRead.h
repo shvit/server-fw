@@ -1,8 +1,13 @@
-/*
- * tftpDataMgrFileRead.h
+/**
+ * \file tftpDataMgrFileRead.h
+ * \brief DataMgrFileRead class header
  *
- *  Created on: 3 авг. 2021 г.
- *      Author: svv
+ *  License GPL-3.0
+ *
+ *  \date 03-aug-2021
+ *  \author Vitaliy Shirinkin, e-mail: vitaliy.shirinkin@gmail.com
+ *
+ *  \version 0.2
  */
 
 #ifndef SOURCE_TFTPDATAMGRFILEREAD_H_
