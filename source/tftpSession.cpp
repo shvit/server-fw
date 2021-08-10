@@ -244,13 +244,13 @@ bool Session::init()
           break;
       }
 
-      if(file_man_.get()) init_stream = file_man_->init();
+      if(file_man_.get()) init_stream = file_man_->open();
     }
-
-    if(!init_stream) file_man_.release();
 
     if(!init_stream)
     {
+      file_man_.release();
+
       // Ignore if error was set from DataMgr
       set_error_if_first(0, "Unknown stream initialize error; break session");
     }

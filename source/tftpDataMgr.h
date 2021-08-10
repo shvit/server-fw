@@ -31,6 +31,7 @@ namespace tftp
  * Class with file/database stream operations.
  * Create/close/read/write streams.
  * For use need override abstract methods
+ * Search file at constructor
  */
 class DataMgr
 {
@@ -70,14 +71,14 @@ public:
    */
   virtual bool active() const = 0;
 
-  /** \brief Initialize streams - abstract method
+  /** \brief Open streams - abstract method
    *
    *  \param [in] sett Settings of tftp server
    *  \param [in] cb_error Callback for error forward
    *  \param [in] opt Options of tftp protocol
    *  \return True on success, else - false
    */
-  virtual bool init() = 0;
+  virtual bool open() = 0;
 
   /** \brief Write data stream operations - abstract method
    *

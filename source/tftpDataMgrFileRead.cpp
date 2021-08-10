@@ -73,7 +73,7 @@ DataMgrFileRead::~DataMgrFileRead()
 
 //------------------------------------------------------------------------------
 
-bool DataMgrFileRead::init()
+bool DataMgrFileRead::open()
 {
   bool ret = filesystem::exists(filename_);
 
