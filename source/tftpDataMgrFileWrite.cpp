@@ -66,7 +66,7 @@ DataMgrFileWrite::~DataMgrFileWrite()
 
 //------------------------------------------------------------------------------
 
-bool DataMgrFileWrite::init()
+bool DataMgrFileWrite::open()
 {
   bool ret = !filesystem::exists(filename_);
 

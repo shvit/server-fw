@@ -71,7 +71,7 @@ public:
    *  \param [in] opt Options of tftp protocol
    *  \return True if initialize success, else - false
    */
-  virtual bool init() override;
+  virtual bool open() override;
 
   /** \brief Pull data from network (receive)
    *

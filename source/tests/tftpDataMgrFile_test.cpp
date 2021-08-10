@@ -36,7 +36,7 @@ public:
 
   virtual bool active() const override { return true; };
 
-  virtual bool init() override { return true; };
+  virtual bool open() override { return true; };
 
   virtual auto write(
       tftp::SmBufEx::const_iterator buf_begin,
