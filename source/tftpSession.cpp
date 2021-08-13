@@ -240,7 +240,8 @@ bool Session::init()
 
 
           break;
-        case SrvReq::unknown:
+        case SrvReq::unknown: // fake
+          L_WRN("Fake server request processed!");
           break;
       }
 
