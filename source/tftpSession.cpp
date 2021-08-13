@@ -453,8 +453,16 @@ void Session::run()
             switch_to(State::error_and_stop);
             break;
           case SrvReq::read:
-            switch_to(State::data_tx);
-            stage_ = 1U;
+            if(opt_.was_set_any())
+            {
+              switch_to(State::ack_rx);
+              stage_ = 0U;
+            }
+            else
+            {
+              switch_to(State::data_tx);
+              stage_ = 1U;
+            }
             break;
           case SrvReq::write:
             if(opt_.was_set_any())
