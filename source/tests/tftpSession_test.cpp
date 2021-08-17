@@ -28,6 +28,10 @@ UNIT_TEST_SUITE_BEGIN(Session)
 class Session_test: public tftp::Session
 {
 public:
+  Session_test():
+    tftp::Session(tftp::SrvSettings(tftp::SrvSettingsStor::create()),
+                  tftp::Logger()) {};
+
   using tftp::Session::opt_;
   using tftp::Session::stage_;
   using tftp::Session::cl_addr_;

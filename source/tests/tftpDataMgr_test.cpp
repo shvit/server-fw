@@ -89,7 +89,7 @@ START_ITER("check set_error_if_first()")
       ++ret;
     };
 
-  tftp::SrvBase b;
+  //tftp::SrvBase b;
   tftp::Options o{};
 
   dm.set_error_ = cb;

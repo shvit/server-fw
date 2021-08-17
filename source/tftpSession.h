@@ -18,7 +18,8 @@
 #include <atomic>
 
 #include "tftpCommon.h"
-#include "tftpSrvBase.h"
+#include "tftpLogger.h"
+#include "tftpSrvSettings.h"
 #include "tftpDataMgr.h"
 #include "tftpOptions.h"
 #include "tftpAddr.h"
@@ -38,7 +39,7 @@ namespace tftp
  *  - Run main loop run()
  *
  */
-class Session: public SrvBase
+class Session: public SrvSettings, public Logger
 {
 protected:
 
@@ -153,25 +154,35 @@ protected:
    */
   auto windowsize() const -> size_t;
 
+  /** \brief Main used constructor with settings and logger
+   *
+   *  No direct use. Only from static create()
+   *  \param [in] curr_sett_srv Current server settings
+   *  \param [in] curr_logger Current logger
+   *
+   */
+  Session(const SrvSettings & curr_sett_srv, const Logger & curr_logger);
+
 public:
 
-  template<typename ... Ts>
-  static auto create(Ts && ... args) -> pSession;
+  /** \brief Public creator for server session
+   *
+   *  \param [in] curr_sett_srv Current server settings
+   *  \param [in] curr_logger Current logger
+   *  \return Unique pointer of Session
+   */
+  static auto create(
+      const SrvSettings & curr_sett_srv,
+      const Logger & curr_logger) -> pSession;
 
-  // Deny copy/move
+  // Deny copy/move/default
+  Session() = delete;
   Session(const Session & ) = delete;
   Session(      Session & ) = delete;
   Session(      Session &&) = delete;
   Session & operator=(const Session & val) = delete;
   Session & operator=(Session & val) = delete;
   Session & operator=(Session && val) = delete;
-
-  /** \brief Main variadic constructor
-   *
-   *  \param [in] args Variadic values
-   */
-  template<typename ... Ts>
-  Session(Ts && ... args);
 
   /** \brief Destructor
    */
@@ -213,34 +224,6 @@ public:
 };
 
 // -----------------------------------------------------------------------------
-
-template<typename ... Ts>
-auto Session::create(Ts && ... args) -> pSession
-{
-  return std::make_unique<Session>(std::forward<Ts>(args) ...);
-}
-
-// -----------------------------------------------------------------------------
-
-template<typename ... Ts>
-Session::Session(Ts && ... args):
-    SrvBase(std::forward<Ts>(args) ...),
-    stat_{State::need_init},
-    finished_{false},
-    my_addr_{},
-    cl_addr_{},
-    socket_{0},
-    stage_{0U},
-    error_code_{0U},
-    error_message_{""},
-    opt_{},
-    file_man_{nullptr}
-{
-}
-
-// -----------------------------------------------------------------------------
-
-
 
 } // namespace tftp
 

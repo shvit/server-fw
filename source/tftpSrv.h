@@ -42,7 +42,7 @@ using RuntimeSessions = std::list<RuntimeSession>;
  *
  */
 
-class Srv: public SrvBase
+class Srv: public SrvSettings, public Logger
 {
 protected:
 
@@ -64,15 +64,12 @@ protected:
 
 public:
 
-  /** \brief Variadic constructor
+  /** \brief Default constructor
    *
    *  Pass all arguments to SrvBase constructor
    *  \param [in] args Variadic arguments
    */
-  template<typename ... Ts>
-  Srv(Ts && ... args);
-
-  //Srv(fLogMsg cb_log);
+  Srv();
 
   /** \brief Destructor
    */
@@ -97,17 +94,6 @@ public:
   void stop();
 
 };
-
-// -----------------------------------------------------------------------------
-
-template<typename ... Ts>
-Srv::Srv(Ts && ... args):
-  SrvBase(std::forward<Ts>(args) ...),
-  sessions_{},
-  socket_{-1},
-  stop_{false}
-{
-}
 
 // -----------------------------------------------------------------------------
 

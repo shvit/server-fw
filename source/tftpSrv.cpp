@@ -26,6 +26,17 @@ namespace tftp
 
 // -----------------------------------------------------------------------------
 
+Srv::Srv():
+    SrvSettings(SrvSettingsStor::create()),
+    Logger(),
+    sessions_{},
+    socket_{-1},
+    stop_{false}
+{
+}
+
+// -----------------------------------------------------------------------------
+
 Srv::~Srv()
 {
 }
@@ -139,7 +150,8 @@ void Srv::main_loop()
       L_INF("Receive initial pkt (data size "+std::to_string(bsize)+
               " bytes) from "+client_addr.str());
 
-      if(auto new_sess = Session::create(*this);
+      //if(auto new_sess = Session::create(*this);
+      if(auto new_sess = Session::create(*this, *this);
          new_sess->prepare(client_addr,
                            pkt_buf,
                            (size_t) bsize))

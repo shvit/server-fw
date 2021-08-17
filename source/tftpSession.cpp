@@ -26,6 +26,43 @@ namespace tftp
 
 // -----------------------------------------------------------------------------
 
+auto Session::create(
+    const SrvSettings & curr_sett_srv,
+    const Logger & curr_logger) -> pSession
+{
+  class Enabler : public Session
+  {
+  public:
+    Enabler(
+        const SrvSettings & curr_sett_srv,
+        const Logger & curr_logger):
+            Session(curr_sett_srv, curr_logger)
+    {};
+  };
+
+  return std::make_unique<Enabler>(curr_sett_srv, curr_logger);
+}
+
+// -----------------------------------------------------------------------------
+
+Session::Session(const SrvSettings & curr_sett_srv, const Logger & curr_logger):
+    SrvSettings(curr_sett_srv),
+    Logger(curr_logger),
+    stat_{State::need_init},
+    finished_{false},
+    my_addr_{},
+    cl_addr_{},
+    socket_{0},
+    stage_{0U},
+    error_code_{0U},
+    error_message_{""},
+    opt_{},
+    file_man_{nullptr}
+{
+}
+
+// -----------------------------------------------------------------------------
+
 Session::~Session()
 {
 }
@@ -147,11 +184,7 @@ bool Session::prepare(
   ret = ret && opt_.buffer_parse(
       pkt_data,
       pkt_data_size,
-      std::bind(
-          & SrvBase::log,
-          this,
-          std::placeholders::_1,
-          std::placeholders::_2));
+      log_);
 
 
   L_INF("Session prepare is "+(ret ? "SUCCESSFUL" : "FAIL"));

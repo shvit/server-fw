@@ -15,13 +15,12 @@
 
 #include "test.h"
 #include "../tftpSrv.h"
-#include "../tftpSrvBase.h"
 
 namespace Srv
 {
 //------------------------------------------------------------------------------
 
-class TestServer: public tftp::SrvBase
+class TestServer//: public tftp::SrvSettings//, public tftp::Logger
 {
 public:
   static size_t indicator_value_;
