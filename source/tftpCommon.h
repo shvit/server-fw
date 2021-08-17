@@ -61,9 +61,9 @@ class SrvBase;
 
 class Srv;
 
-class Session;
+class SrvSession;
 
-using pSession = std::unique_ptr<Session>;
+using pSrvSession = std::unique_ptr<SrvSession>;
 
 class DataMgr;
 

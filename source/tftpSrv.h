@@ -18,7 +18,7 @@
 #include <list>
 #include <thread>
 
-#include "tftpSession.h"
+#include "tftpSrvSession.h"
 #include "tftpSmBuf.h"
 #include "tftpSrvSettings.h"
 #include "tftpLogger.h"
@@ -28,9 +28,9 @@ namespace tftp
 
 // -----------------------------------------------------------------------------
 
-using RuntimeSession = std::pair<pSession, std::thread>;
+using RuntimeSrvSession = std::pair<pSrvSession, std::thread>;
 
-using RuntimeSessions = std::list<RuntimeSession>;
+using RuntimeSrvSessions = std::list<RuntimeSrvSession>;
 
 // -----------------------------------------------------------------------------
 
@@ -46,7 +46,7 @@ class Srv: public SrvSettings, public Logger
 {
 protected:
 
-  RuntimeSessions sessions_; ///< List of running sessions
+  RuntimeSrvSessions sessions_; ///< List of running sessions
 
   int socket_;  ///< Socket for tftp  port listener
 

@@ -1,5 +1,5 @@
 /**
- * \file tftpSession.cpp
+ * \file tftpSrvSession.cpp
  * \brief TFTP session class
  *
  *  TFTP session class
@@ -16,7 +16,7 @@
 #include <regex>
 #include <unistd.h>
 
-#include "tftpSession.h"
+#include "tftpSrvSession.h"
 #include "tftpSmBufEx.h"
 #include "tftpDataMgrFileRead.h"
 #include "tftpDataMgrFileWrite.h"
@@ -26,17 +26,17 @@ namespace tftp
 
 // -----------------------------------------------------------------------------
 
-auto Session::create(
+auto SrvSession::create(
     const SrvSettings & curr_sett_srv,
-    const Logger & curr_logger) -> pSession
+    const Logger & curr_logger) -> pSrvSession
 {
-  class Enabler : public Session
+  class Enabler : public SrvSession
   {
   public:
     Enabler(
         const SrvSettings & curr_sett_srv,
         const Logger & curr_logger):
-            Session(curr_sett_srv, curr_logger)
+            SrvSession(curr_sett_srv, curr_logger)
     {};
   };
 
@@ -45,7 +45,7 @@ auto Session::create(
 
 // -----------------------------------------------------------------------------
 
-Session::Session(const SrvSettings & curr_sett_srv, const Logger & curr_logger):
+SrvSession::SrvSession(const SrvSettings & curr_sett_srv, const Logger & curr_logger):
     SrvSettings(curr_sett_srv),
     Logger(curr_logger),
     stat_{State::need_init},
@@ -63,13 +63,13 @@ Session::Session(const SrvSettings & curr_sett_srv, const Logger & curr_logger):
 
 // -----------------------------------------------------------------------------
 
-Session::~Session()
+SrvSession::~SrvSession()
 {
 }
 
 // -----------------------------------------------------------------------------
 
-bool Session::switch_to(const State & new_state)
+bool SrvSession::switch_to(const State & new_state)
 {
   bool ret = (stat_ == new_state);
 
@@ -137,35 +137,35 @@ bool Session::switch_to(const State & new_state)
 
 // -----------------------------------------------------------------------------
 
-bool Session::is_finished() const
+bool SrvSession::is_finished() const
 {
   return (stat_ == State::finish);
 }
 
 // -----------------------------------------------------------------------------
 
-auto Session::block_size() const -> uint16_t
+auto SrvSession::block_size() const -> uint16_t
 {
   return opt_.blksize();
 }
 
 // -----------------------------------------------------------------------------
 
-auto Session::blk_num_local() const -> uint16_t
+auto SrvSession::blk_num_local() const -> uint16_t
 {
   return (stage_ & 0x000000000000FFFFU);
 }
 
 // -----------------------------------------------------------------------------
 
-void Session::socket_close()
+void SrvSession::socket_close()
 {
   close(socket_);
 }
 
 // -----------------------------------------------------------------------------
 
-bool Session::prepare(
+bool SrvSession::prepare(
     const Addr & remote_addr,
     const SmBuf  & pkt_data,
     const size_t & pkt_data_size)
@@ -193,7 +193,7 @@ bool Session::prepare(
 
 // -----------------------------------------------------------------------------
 
-bool Session::init()
+bool SrvSession::init()
 {
   L_INF("Session initialize started");
 
@@ -252,7 +252,7 @@ bool Session::init()
           file_man_ = DataMgrFileRead::create(
               get_logger(),
               std::bind(
-                  & Session::set_error_if_first,
+                  & SrvSession::set_error_if_first,
                   this,
                   std::placeholders::_1,
                   std::placeholders::_2),
@@ -264,7 +264,7 @@ bool Session::init()
           file_man_ = DataMgrFileWrite::create(
               get_logger(),
               std::bind(
-                  & Session::set_error_if_first,
+                  & SrvSession::set_error_if_first,
                   this,
                   std::placeholders::_1,
                   std::placeholders::_2),
@@ -297,7 +297,7 @@ bool Session::init()
 
 // -----------------------------------------------------------------------------
 
-void Session::construct_opt_reply(SmBufEx & buf)
+void SrvSession::construct_opt_reply(SmBufEx & buf)
 {
   buf.clear();
 
@@ -339,7 +339,7 @@ void Session::construct_opt_reply(SmBufEx & buf)
 
 // -----------------------------------------------------------------------------
 
-void  Session::construct_error(SmBufEx & buf)
+void  SrvSession::construct_error(SmBufEx & buf)
 {
   if(!was_error())
   {
@@ -358,7 +358,7 @@ void  Session::construct_error(SmBufEx & buf)
 
 // -----------------------------------------------------------------------------
 
-void Session::construct_data(SmBufEx & buf)
+void SrvSession::construct_data(SmBufEx & buf)
 {
   buf.clear();
 
@@ -385,7 +385,7 @@ void Session::construct_data(SmBufEx & buf)
 
 // -----------------------------------------------------------------------------
 
-void Session::construct_ack(SmBufEx & buf)
+void SrvSession::construct_ack(SmBufEx & buf)
 {
   buf.clear();
 
@@ -395,7 +395,7 @@ void Session::construct_ack(SmBufEx & buf)
 }
 
 // -----------------------------------------------------------------------------
-void Session::run()
+void SrvSession::run()
 {
   L_INF("Running session");
 
@@ -616,7 +616,7 @@ void Session::run()
 
 // -----------------------------------------------------------------------------
 
-void Session::set_error_if_first(
+void SrvSession::set_error_if_first(
     const uint16_t e_cod,
     std::string_view e_msg)
 {
@@ -633,14 +633,14 @@ void Session::set_error_if_first(
 
 // -----------------------------------------------------------------------------
 
-bool Session::was_error()
+bool SrvSession::was_error()
 {
   return (error_code_ > 0U) || (error_message_.size() > 0U);
 }
 
 // -----------------------------------------------------------------------------
 
-bool Session::transmit_no_wait(const SmBufEx & buf)
+bool SrvSession::transmit_no_wait(const SmBufEx & buf)
 {
   bool ret = false;
 
@@ -685,7 +685,7 @@ bool Session::transmit_no_wait(const SmBufEx & buf)
 
 // -----------------------------------------------------------------------------
 
-auto Session::receive_no_wait(SmBufEx & buf) -> TripleResult
+auto SrvSession::receive_no_wait(SmBufEx & buf) -> TripleResult
 {
   Addr rx_client;
   rx_client.data_size() = rx_client.size();
@@ -829,14 +829,14 @@ auto Session::receive_no_wait(SmBufEx & buf) -> TripleResult
 
 // -----------------------------------------------------------------------------
 
-bool Session::is_window_close(const size_t & curr_stage) const
+bool SrvSession::is_window_close(const size_t & curr_stage) const
 {
   return (curr_stage % windowsize()) == 0U;
 }
 
 // -----------------------------------------------------------------------------
 
-void Session::step_back_window(size_t & curr_stage)
+void SrvSession::step_back_window(size_t & curr_stage)
 {
   size_t new_stage = curr_stage;
   if(curr_stage > 0U)
@@ -858,7 +858,7 @@ void Session::step_back_window(size_t & curr_stage)
 
 // -----------------------------------------------------------------------------
 
-auto Session::windowsize() const -> size_t
+auto SrvSession::windowsize() const -> size_t
 {
   if(opt_.windowsize() < 1) return 1U;
                        else return (size_t)opt_.windowsize();

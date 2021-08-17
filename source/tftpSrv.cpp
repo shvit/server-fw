@@ -150,8 +150,7 @@ void Srv::main_loop()
       L_INF("Receive initial pkt (data size "+std::to_string(bsize)+
               " bytes) from "+client_addr.str());
 
-      //if(auto new_sess = Session::create(*this);
-      if(auto new_sess = Session::create(*this, *this);
+      if(auto new_sess = SrvSession::create(*this, *this);
          new_sess->prepare(client_addr,
                            pkt_buf,
                            (size_t) bsize))
@@ -159,9 +158,9 @@ void Srv::main_loop()
         auto bakup_ptr = new_sess.get();
 
         sessions_.emplace_back(
-            RuntimeSession{
+            RuntimeSrvSession{
                 std::move(new_sess),
-                std::thread{& Session::run, bakup_ptr}});
+                std::thread{& SrvSession::run, bakup_ptr}});
       }
     }
     else

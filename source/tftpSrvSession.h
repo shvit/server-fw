@@ -1,5 +1,5 @@
 /**
- * \file tftpSession.h
+ * \file tftpSrvSession.h
  * \brief TFTP session class header
  *
  *  TFTP session class header
@@ -30,7 +30,7 @@ namespace tftp
 // -----------------------------------------------------------------------------
 
 /**
- * \brief TFTP session class 'tftp::Session'
+ * \brief TFTP session class 'tftp::SrvSession'
  *
  *  Class for emulate p2p UDP/IP session when request received by server.
  *  For use class:
@@ -39,7 +39,7 @@ namespace tftp
  *  - Run main loop run()
  *
  */
-class Session: public SrvSettings, public Logger
+class SrvSession: public SrvSettings, public Logger
 {
 protected:
 
@@ -161,7 +161,7 @@ protected:
    *  \param [in] curr_logger Current logger
    *
    */
-  Session(const SrvSettings & curr_sett_srv, const Logger & curr_logger);
+  SrvSession(const SrvSettings & curr_sett_srv, const Logger & curr_logger);
 
 public:
 
@@ -169,24 +169,24 @@ public:
    *
    *  \param [in] curr_sett_srv Current server settings
    *  \param [in] curr_logger Current logger
-   *  \return Unique pointer of Session
+   *  \return Unique pointer of SrvSession
    */
   static auto create(
       const SrvSettings & curr_sett_srv,
-      const Logger & curr_logger) -> pSession;
+      const Logger & curr_logger) -> pSrvSession;
 
   // Deny copy/move/default
-  Session() = delete;
-  Session(const Session & ) = delete;
-  Session(      Session & ) = delete;
-  Session(      Session &&) = delete;
-  Session & operator=(const Session & val) = delete;
-  Session & operator=(Session & val) = delete;
-  Session & operator=(Session && val) = delete;
+  SrvSession() = delete;
+  SrvSession(const SrvSession & ) = delete;
+  SrvSession(      SrvSession & ) = delete;
+  SrvSession(      SrvSession &&) = delete;
+  SrvSession & operator=(const SrvSession & val) = delete;
+  SrvSession & operator=(SrvSession & val) = delete;
+  SrvSession & operator=(SrvSession && val) = delete;
 
   /** \brief Destructor
    */
-  virtual ~Session();
+  virtual ~SrvSession();
 
   /** \brief Session initialize
    *

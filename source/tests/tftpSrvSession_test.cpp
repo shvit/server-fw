@@ -1,6 +1,6 @@
 /**
- * \file tftpSession_test.cpp
- * \brief Unit-tests for class Session
+ * \file tftpSrvSession_test.cpp
+ * \brief Unit-tests for class SrvSession
  *
  *  License GPL-3.0
  *
@@ -13,32 +13,32 @@
 #include <netinet/in.h>
 
 #include "../tftpCommon.h"
-#include "../tftpSession.h"
+#include "../tftpSrvSession.h"
 #include "test.h"     
 
 using namespace unit_tests;
 
-UNIT_TEST_SUITE_BEGIN(Session)
+UNIT_TEST_SUITE_BEGIN(SrvSession)
 
 //------------------------------------------------------------------------------
 
-/** \brief Helper class for access to Session protected field
+/** \brief Helper class for access to SrvSession protected field
  *
  */
-class Session_test: public tftp::Session
+class SrvSession_test: public tftp::SrvSession
 {
 public:
-  Session_test():
-    tftp::Session(tftp::SrvSettings(tftp::SrvSettingsStor::create()),
+  SrvSession_test():
+    tftp::SrvSession(tftp::SrvSettings(tftp::SrvSettingsStor::create()),
                   tftp::Logger()) {};
 
-  using tftp::Session::opt_;
-  using tftp::Session::stage_;
-  using tftp::Session::cl_addr_;
-  using tftp::Session::was_error;
-  using tftp::Session::set_error_if_first;
-  using tftp::Session::is_window_close;
-  using tftp::Session::step_back_window;
+  using tftp::SrvSession::opt_;
+  using tftp::SrvSession::stage_;
+  using tftp::SrvSession::cl_addr_;
+  using tftp::SrvSession::was_error;
+  using tftp::SrvSession::set_error_if_first;
+  using tftp::SrvSession::is_window_close;
+  using tftp::SrvSession::step_back_window;
 };
 
 //------------------------------------------------------------------------------
@@ -64,7 +64,7 @@ UNIT_TEST_CASE_BEGIN(sess_init, "check prepare()")
     't','s','i','z','e',0,'2','0','0','0','1','2','3',0
   };
 
-  Session_test s1;
+  SrvSession_test s1;
 
   TEST_CHECK_FALSE(s1.prepare(b_addr, b_pkt, b_pkt.size()));
   TEST_CHECK_TRUE(s1.opt_.request_type() == tftp::SrvReq::unknown);
@@ -99,7 +99,7 @@ UNIT_TEST_CASE_BEGIN(sess_win, "check windows")
 
 START_ITER("windowsize==1")
 {
-  Session_test s1;
+  SrvSession_test s1;
   size_t stage = 0U;
   TEST_CHECK_TRUE(s1.opt_.windowsize() == 1U);
   TEST_CHECK_TRUE(s1.is_window_close(stage));
@@ -111,7 +111,7 @@ START_ITER("windowsize==1")
 
 START_ITER("windowsize==5")
 {
-  Session_test s1;
+  SrvSession_test s1;
 
   tftp::Addr b_addr;
   b_addr.set_family(AF_INET);
@@ -139,7 +139,7 @@ START_ITER("windowsize==5")
 
 START_ITER("step_back_window()")
 {
-  Session_test s1;
+  SrvSession_test s1;
 
   tftp::Addr b_addr;
   b_addr.set_family(AF_INET);
