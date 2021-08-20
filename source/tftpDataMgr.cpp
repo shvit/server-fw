@@ -21,12 +21,20 @@ namespace tftp
 
 // -----------------------------------------------------------------------------
 
-DataMgr::DataMgr():
+DataMgr::DataMgr(fSetError err_setter):
     request_type_{SrvReq::unknown},
     file_size_{0U},
-    set_error_{nullptr}
+    set_error_{err_setter}
 {
+
 }
+
+// -----------------------------------------------------------------------------
+
+//DataMgr::DataMgr():
+//    DataMgr(nullptr)
+//{
+//}
 
 // -----------------------------------------------------------------------------
 

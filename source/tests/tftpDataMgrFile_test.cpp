@@ -1,6 +1,6 @@
 /**
  * \file tftpDataMgrFile_test.cpp
- * \brief Unit-tests for class DataMgrFile
+ * \brief Unit-tests for class DataMgrFile, DataMgrFileRead, DataMgrFileWrite
  *
  *  License GPL-3.0
  *
@@ -12,6 +12,8 @@
 
 #include "test.h"
 #include "../tftpDataMgrFile.h"
+#include "../tftpDataMgrFileRead.h"
+#include "../tftpDataMgrFileWrite.h"
 #include "tftpOptions_test.h"
 
 UNIT_TEST_SUITE_BEGIN(DataMgrFile)
@@ -58,216 +60,208 @@ public:
 
 //------------------------------------------------------------------------------
 
-UNIT_TEST_CASE_BEGIN(files_check, "check with files operations")
-/*
+UNIT_TEST_CASE_BEGIN(file_write_read, "Check classes DataMgrFile*")
+
 // Prepare
 TEST_CHECK_TRUE(check_local_directory());
+//std::cout << " * dir=" << local_dir.string() << std::endl;
 
-// RX
-START_ITER("write() check - store data files");
+auto get_dir_name = [&](const size_t & it) -> std::string { return "dir_"+std::to_string(it+1); };
+
+auto get_file_name = [&](const size_t & it) -> std::string { return "file_"+std::to_string(it+1); };
+
+auto get_md5_name = [&](const size_t & it) -> std::string { return get_file_name(it)+".md5"; };
+
+constexpr size_t block=512U;
+std::vector<char> buff(block);
+std::vector<char> buff2(block);
+
+
+// STAGE 1 - Create all files
+for(size_t iter=0; iter < file_sizes.size(); ++iter)
 {
-  for(size_t iter=0; iter < file_sizes.size(); ++iter)
+  auto curr_dir = local_dir;
+  curr_dir /= get_dir_name(iter);
+
+  TEST_CHECK_FALSE(filesystem::exists(curr_dir));
+  TEST_CHECK_TRUE(filesystem::create_directories(curr_dir));
+}
+
+for(size_t iter=0; iter < file_sizes.size(); ++iter)
+{
+  bool success_file_rx=true;
+
+  auto curr_dir = local_dir;
+  curr_dir /= get_dir_name(iter);
+
+  auto dm = tftp::DataMgrFileWrite::create(
+      nullptr,
+      nullptr,
+      get_file_name(iter),
+      curr_dir.string());
+
+  TEST_CHECK_FALSE(dm->active());
+
+  // 1 - create file with data and cancel (delete) his
+  TEST_CHECK_TRUE(dm->open());
+  TEST_CHECK_TRUE(dm->active());
+  if(dm->active())
   {
-    bool success_file_rx=true;
-
-    std::string curr_file_name = "file" + std::to_string(iter+1);
-
-    DataMgr_test dm(nullptr,nullptr,curr_file_name, local_dir.string());
-    //dm.dirs_.push_back(local_dir.string());
-    TEST_CHECK_FALSE(dm.active());
-
-    // 1 - create file with data
-    bool init_res;
-
-    Options::Options_test opt;
-    opt.request_type_ = tftp::SrvReq::write;
-    opt.filename_ = curr_file_name;
-
-    TEST_CHECK_TRUE(init_res=dm.init());
-
-    if(init_res)
+    for(size_t stage=0; stage*block < file_sizes[iter]; ++stage)
     {
-      size_t block=512;
-      std::vector<char> buff(block, 0);
+      size_t left_size = file_sizes[iter] - stage*block;
+      if(left_size > block) left_size = block;
 
-      for(size_t stage=0; stage*block < file_sizes[iter]; ++stage)
-      {
-        size_t left_size = file_sizes[iter] - stage*block;
-        if(left_size > block) left_size = block;
+      fill_buffer(buff.data(), left_size, stage*block, iter);
 
-        fill_buffer(buff.data(), left_size, stage*block, iter);
-
-        success_file_rx =
-            success_file_rx &&
-            (dm.write(buff.begin(),
-                   buff.begin()+left_size,
-                   stage*block) >= 0);
-      }
-      TEST_CHECK_TRUE(success_file_rx);
-
-      TEST_CHECK_TRUE(dm.active());
-      dm.close();
-
-      TEST_CHECK_FALSE(dm.active());
+      success_file_rx =
+          success_file_rx &&
+          (dm->write(buff.begin(),
+                 buff.begin()+left_size,
+                 stage*block) >= 0);
     }
+    TEST_CHECK_TRUE(success_file_rx);
 
-    // 2 - create file .md5
-    DataMgr_test dm2(nullptr,nullptr,std::string{curr_file_name}+".md5", local_dir.string());
+    TEST_CHECK_TRUE(dm->active());
+    TEST_CHECK_TRUE(filesystem::exists(dm->get_filename()));
 
-    //Options::Options_test opt2;
-    //opt2.request_type_ = tftp::SrvReq::write;
-    //opt2.filename_ = std::string{curr_file_name}+".md5";
+    dm->cancel();
+    TEST_CHECK_FALSE(dm->active());
+    TEST_CHECK_FALSE(filesystem::exists(dm->get_filename()));
+  }
 
-    TEST_CHECK_TRUE(init_res = dm2.init());
-
-    if(init_res)
+  // 2 - create file with data and normal close
+  TEST_CHECK_TRUE(dm->open());
+  TEST_CHECK_TRUE(dm->active());
+  if(dm->active())
+  {
+    for(size_t stage=0; stage*block < file_sizes[iter]; ++stage)
     {
-      std::vector<char> buff_data(file_sizes[iter], 0);
-      fill_buffer(buff_data.data(), file_sizes[iter], 0, iter);
-      MD5((unsigned char*) buff_data.data(),
-          file_sizes[iter],
-          (unsigned char *) & file_md5[iter][0]);
+      size_t left_size = file_sizes[iter] - stage*block;
+      if(left_size > block) left_size = block;
 
-      std::string md5_file{md5_as_str(& file_md5[iter][0])};
-      md5_file.append(" ").append(curr_file_name);
+      fill_buffer(buff.data(), left_size, stage*block, iter);
 
-      TEST_CHECK_TRUE(dm2.write(
-          static_cast<tftp::Buf::iterator>(& *md5_file.begin()),
-          static_cast<tftp::Buf::iterator>(& *md5_file.end()),
-          0) >= 0);
-
-      TEST_CHECK_TRUE(dm2.active());
-      dm2.close();
-      TEST_CHECK_FALSE(dm2.active());
+      success_file_rx =
+          success_file_rx &&
+          (dm->write(buff.begin(),
+                 buff.begin()+left_size,
+                 stage*block) >= 0);
     }
+    TEST_CHECK_TRUE(success_file_rx);
 
-    // 3 - find file by md5 in root server directory
-    std::string hash{md5_as_str(& file_md5[iter][0])};
-    DataMgr_test dm_find(nullptr,nullptr,hash, local_dir.string());
+    TEST_CHECK_TRUE(dm->active());
+    TEST_CHECK_TRUE(filesystem::exists(dm->get_filename()));
 
-    //dm_find.settings_->root_dir.assign(local_dir);
-    //dm_find.settings_->search_dirs.push_back(local_dir);
+    dm->close();
+    TEST_CHECK_FALSE(dm->active());
+    TEST_CHECK_TRUE(filesystem::exists(dm->get_filename()));
 
-    //Options::Options_test opt3;
-    //opt3.request_type_ = tftp::SrvReq::read;
-    //opt3.filename_ = hash;
+    TEST_CHECK_TRUE(filesystem::file_size(dm->get_filename()) == file_sizes[iter]);
+  }
 
-    TEST_CHECK_TRUE(init_res = dm_find.init());
+  // 3 - try create file when hie exist (error return)
+  TEST_CHECK_FALSE(dm->open());
+  TEST_CHECK_FALSE(dm->active());
+
+  // 4 - create file .md5
+  auto dm2 = tftp::DataMgrFileWrite::create(
+      nullptr,
+      nullptr,
+      get_md5_name(iter),
+      curr_dir.string());
+
+  TEST_CHECK_TRUE(dm2->open());
+  TEST_CHECK_TRUE(dm2->active());
+
+  if(dm2->active())
+  {
+    std::vector<char> buff_data(file_sizes[iter], 0);
+    fill_buffer(buff_data.data(), file_sizes[iter], 0, iter);
+    MD5((unsigned char*) buff_data.data(),
+        file_sizes[iter],
+        (unsigned char *) & file_md5[iter][0]);
+
+    std::string md5_file{md5_as_str(& file_md5[iter][0])};
+    md5_file.append(" ").append(get_file_name(iter));
+
+    TEST_CHECK_TRUE(dm2->write(
+        static_cast<tftp::Buf::iterator>(& *md5_file.begin()),
+        static_cast<tftp::Buf::iterator>(& *md5_file.end()),
+        0) >= 0);
+
+    TEST_CHECK_TRUE(dm2->active());
+    dm2->close();
+    TEST_CHECK_FALSE(dm2->active());
   }
 }
 
-// 2.1 TX
-START_ITER("read() check - read data files by name");
+// STAGE 2 - Read all files
+for(size_t iter=0; iter < file_sizes.size(); ++iter)
 {
-  for(size_t iter=0; iter < file_sizes.size(); ++iter)
+  auto dm = tftp::DataMgrFileRead::create(
+      nullptr,
+      nullptr,
+      get_file_name(iter),
+      local_dir.string(),
+      {});
+
+  TEST_CHECK_FALSE(dm->active());
+
+  // 1 - search and read exist files by his name
+  TEST_CHECK_TRUE(dm->open());
+  TEST_CHECK_TRUE(dm->active());
+  if(dm->active())
   {
-    bool success_tx=true;
-
-    std::string curr_file_name{"file"};
-    curr_file_name.append(std::to_string(iter+1));
-
-    DataMgr_test dm;
-    dm.settings_->root_dir.assign(local_dir);
-    TEST_CHECK_FALSE(dm.active());
-
-    bool init_res;
-
-    Options::Options_test opt;
-    opt.request_type_ = tftp::SrvReq::read;
-    opt.filename_ = curr_file_name;
-
-    TEST_CHECK_TRUE(init_res = dm.init(dm, nullptr, opt));
-
-    if(init_res)
+    for(size_t stage = 0; stage * block < file_sizes[iter]; ++stage)
     {
-      size_t block=512;
-      std::vector<char> buff_ethalon(block, 0);
-      std::vector<char> buff_checked(block, 0);
+      size_t left_size = file_sizes[iter] - stage * block;
+      if(left_size > block) left_size = block;
 
-      for(size_t stage = 0; stage * block < file_sizes[iter]; ++stage)
-      {
-        size_t left_size = file_sizes[iter] - stage * block;
-        if(left_size > block) left_size = block;
+      fill_buffer(buff.data(), left_size, stage * block, iter);
 
-        fill_buffer(buff_ethalon.data(), left_size, stage * block, iter);
+      TEST_CHECK_TRUE(dm->read(buff2.begin(),
+                               buff2.begin()+left_size,
+                               stage * block) == (ssize_t)left_size);
 
-        success_tx = success_tx && (
-            dm.read(buff_checked.begin(),
-                  buff_checked.begin()+left_size,
-                  stage * block) == (ssize_t)left_size);
-
-        for(size_t chk_pos = 0; chk_pos < left_size; ++chk_pos)
-        {
-          success_tx = success_tx &&
-              (buff_ethalon[chk_pos] == buff_checked[chk_pos]);
-        }
-      }
-
-      TEST_CHECK_TRUE(dm.active());
-      dm.close();
-      TEST_CHECK_FALSE(dm.active());
-      TEST_CHECK_TRUE(success_tx);
+      TEST_CHECK_TRUE(std::equal(buff.cbegin(),
+                                 buff.cbegin() + left_size,
+                                 buff2.cbegin()));
     }
+
+    TEST_CHECK_TRUE(dm->active());
+    dm->close();
+    TEST_CHECK_FALSE(dm->active());
   }
-}
 
-// 2.2 TX
-START_ITER("tx() check - read data files by md5");
-{
-  for(size_t iter=0; iter < file_sizes.size(); ++iter)
-  {
-    bool success_tx=true;
+  // search and read exist files by his MD5
 
-    std::string curr_file_name{md5_as_str(& file_md5[iter][0])};
+  std::cout << " * MD5=" << md5_as_str(&file_md5[iter][0]) << std::endl;
 
-    DataMgr_test dm;
-    dm.settings_->root_dir.assign(local_dir);
-    TEST_CHECK_FALSE(dm.active());
+  auto dm2 = tftp::DataMgrFileRead::create(
+      nullptr,
+      nullptr,
+      md5_as_str(&file_md5[iter][0]),
+      local_dir.string(),
+      {});
+  TEST_CHECK_TRUE(dm2->open());
+  TEST_CHECK_TRUE(dm2->active());
 
-    bool init_res;
+  // 3 - search NOT exist files by his unknown name
+  auto dm3 = tftp::DataMgrFileRead::create(
+      nullptr,
+      nullptr,
+      "no_"+get_file_name(iter),
+      local_dir.string(),
+      {});
+  TEST_CHECK_FALSE(dm3->open());
+  TEST_CHECK_FALSE(dm3->active());
 
-    Options::Options_test opt;
-    opt.request_type_ = tftp::SrvReq::read;
-    opt.filename_ = curr_file_name;
-
-    TEST_CHECK_TRUE(init_res = dm.init(dm, nullptr, opt));
-
-    if(init_res)
-    {
-      size_t block=512;
-      std::vector<char> buff_ethalon(block, 0);
-      std::vector<char> buff_checked(block, 0);
-
-      for(size_t stage = 0; stage * block < file_sizes[iter]; ++stage)
-      {
-        size_t left_size = file_sizes[iter] - stage * block;
-        if(left_size > block) left_size = block;
-
-        fill_buffer(buff_ethalon.data(), left_size, stage * block, iter);
-
-        success_tx = success_tx && (
-            dm.read(buff_checked.begin(),
-                  buff_checked.begin()+left_size,
-                  stage * block) == (ssize_t)left_size);
-
-        for(size_t chk_pos = 0; chk_pos < left_size; ++chk_pos)
-        {
-          success_tx = success_tx &&
-              (buff_ethalon[chk_pos] == buff_checked[chk_pos]);
-        }
-      }
-
-      TEST_CHECK_TRUE(dm.active());
-      dm.close();
-      TEST_CHECK_FALSE(dm.active());
-      TEST_CHECK_TRUE(success_tx);
-    }
-  }
 }
 
 // delete temporary files
 unit_tests::files_delete();
-*/
+
 UNIT_TEST_CASE_END
 
 //------------------------------------------------------------------------------

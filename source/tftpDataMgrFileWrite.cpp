@@ -77,6 +77,7 @@ bool DataMgrFileWrite::open()
     {
       fs_.open(filename_, std::ios_base::out | std::ios::binary);
       fs_.write(nullptr, 0U);
+      fs_.flush();
     }
     catch (const std::system_error & e)
     {

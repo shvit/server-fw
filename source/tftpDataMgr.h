@@ -60,7 +60,11 @@ protected:
 
 public:
 
-  DataMgr();
+  /** \brief Constructor
+   *
+   *  \param [in] err_setter Callback for error parse
+   */
+  DataMgr(fSetError err_setter);
 
   /** \brief Destructor
    */

@@ -27,7 +27,8 @@ class DataMgr_test: public tftp::DataMgr
 {
 public:
 
-  DataMgr_test(): tftp::DataMgr() {};
+  DataMgr_test(): tftp::DataMgr(nullptr) {};
+  DataMgr_test(tftp::fSetError err_setter): tftp::DataMgr(err_setter) {};
 
   virtual ~DataMgr_test() {};
 
@@ -79,9 +80,6 @@ START_ITER("check match_md5()")
 
 START_ITER("check set_error_if_first()")
 {
-  DataMgr_test dm{};
-
-  TEST_CHECK_TRUE(dm.set_error_ == nullptr);
 
   size_t ret=0U;
   auto cb = [&](const uint16_t a, std::string_view b)
@@ -89,12 +87,12 @@ START_ITER("check set_error_if_first()")
       ++ret;
     };
 
-  //tftp::SrvBase b;
-  tftp::Options o{};
+  DataMgr_test dm(cb);
 
-  dm.set_error_ = cb;
   dm.set_error_if_first(1,"error 1");
-  dm.set_error_if_first(5,"error 5");
+  TEST_CHECK_TRUE(ret == 1U);
+
+  dm.set_error_if_first(5,"error 5 BLA-BLA");
   TEST_CHECK_TRUE(ret == 2U);
 }
 

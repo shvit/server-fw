@@ -67,6 +67,11 @@ protected:
 
 public:
 
+  /** \brief Constructor
+   *
+   *  \param [in] logger Callback for forward logging message
+   *  \param [in] err_setter Callback for error parse
+   */
   DataMgrFile(
       fLogMsg logger,
       fSetError err_setter);
@@ -100,6 +105,7 @@ public:
   //    std::string_view name,
   //    bool only_root=false);
 
+   auto get_filename() const -> const Path &;
 
 };
 

@@ -33,11 +33,11 @@ namespace tftp
 DataMgrFile::DataMgrFile(
     fLogMsg logger,
     fSetError err_setter):
-        DataMgr(),
+        DataMgr(err_setter),
         Logger(logger),
         filename_{}
 {
-  set_error_ = err_setter;
+  //set_error_ = err_setter;
 }
 
 // -----------------------------------------------------------------------------
@@ -165,10 +165,10 @@ bool DataMgrFile::search_root_by_name(
 */
 // -----------------------------------------------------------------------------
 
-
-
-
-
+auto DataMgrFile::get_filename() const -> const Path &
+{
+  return filename_;
+}
 
 // -----------------------------------------------------------------------------
 
