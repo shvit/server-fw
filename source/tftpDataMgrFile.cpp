@@ -126,6 +126,8 @@ bool DataMgrFile::full_search(
 
   if(search_rec_by_name(root_dir, name)) return true;
 
+  if(search_rec_by_md5(root_dir, name)) return true;
+
   for(const auto & path : search_dirs)
   {
     Path curr_dir{path};

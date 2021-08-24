@@ -58,13 +58,53 @@ public:
   using tftp::DataMgrFile::active;
 };
 
+/** \brief Helper class for check logging
+ *
+ *  Use levels 1..N
+ */
+template<size_t N>
+class FakeLog
+{
+protected:
+  std::array<size_t, N> stor_;
+public:
+
+  FakeLog(): stor_{0U} {}
+
+  FakeLog(const std::array<size_t, N> & src): stor_(src) {}
+
+  void syslog(const tftp::LogLvl l, std::string_view m)
+  {
+    //std::cout << "[SYSLOG] " << tftp::to_string(l) << " - " << m << std::endl;
+    if(int tmp_lvl=(int)l; (tmp_lvl>0) && (tmp_lvl<=(int)N)) ++stor_[(size_t)(tmp_lvl-1)];
+  };
+
+  void show() const
+  {
+    std::cout << "* ";
+    for(const auto & c : stor_) std::cout << c << " ";
+    std::cout << std::endl;
+  }
+
+  void clear() { for(size_t it=0U; it < N; ++it) stor_[it] = 0U; }
+
+  auto operator[](const size_t & idx) -> const size_t & { return stor_[idx-1U]; }
+
+  bool chk(std::array<size_t,N> v) const
+  {
+    for(size_t it=0U; it < N; ++it) if(stor_[it] != v[it]) return false;
+    return true;
+  }
+};
+
+
+
 //------------------------------------------------------------------------------
 
 UNIT_TEST_CASE_BEGIN(file_write_read, "Check classes DataMgrFile*")
 
 // Prepare
 TEST_CHECK_TRUE(check_local_directory());
-//std::cout << " * dir=" << local_dir.string() << std::endl;
 
 auto get_dir_name = [&](const size_t & it) -> std::string { return "dir_"+std::to_string(it+1); };
 
@@ -76,6 +116,13 @@ constexpr size_t block=512U;
 std::vector<char> buff(block);
 std::vector<char> buff2(block);
 
+FakeLog<7> fl;
+
+auto cb_syslog = std::bind(
+    & FakeLog<7>::syslog,
+    & fl,
+    std::placeholders::_1,
+    std::placeholders::_2);
 
 // STAGE 1 - Create all files
 for(size_t iter=0; iter < file_sizes.size(); ++iter)
@@ -95,7 +142,7 @@ for(size_t iter=0; iter < file_sizes.size(); ++iter)
   curr_dir /= get_dir_name(iter);
 
   auto dm = tftp::DataMgrFileWrite::create(
-      nullptr,
+      cb_syslog,
       nullptr,
       get_file_name(iter),
       curr_dir.string());
@@ -131,6 +178,7 @@ for(size_t iter=0; iter < file_sizes.size(); ++iter)
   }
 
   // 2 - create file with data and normal close
+  success_file_rx=true;
   TEST_CHECK_TRUE(dm->open());
   TEST_CHECK_TRUE(dm->active());
   if(dm->active())
@@ -197,10 +245,11 @@ for(size_t iter=0; iter < file_sizes.size(); ++iter)
 }
 
 // STAGE 2 - Read all files
+fl.clear();
 for(size_t iter=0; iter < file_sizes.size(); ++iter)
 {
   auto dm = tftp::DataMgrFileRead::create(
-      nullptr,
+      cb_syslog,
       nullptr,
       get_file_name(iter),
       local_dir.string(),
@@ -208,7 +257,7 @@ for(size_t iter=0; iter < file_sizes.size(); ++iter)
 
   TEST_CHECK_FALSE(dm->active());
 
-  // 1 - search and read exist files by his name
+  // 2.1 - search and read exist files by his name
   TEST_CHECK_TRUE(dm->open());
   TEST_CHECK_TRUE(dm->active());
   if(dm->active())
@@ -233,29 +282,35 @@ for(size_t iter=0; iter < file_sizes.size(); ++iter)
     dm->close();
     TEST_CHECK_FALSE(dm->active());
   }
+  //fl.show();
+  TEST_CHECK_TRUE(fl.chk({0U,0U,0U,0U,0U,1U,1U+file_sizes[iter]/block +(file_sizes[iter]%block >0U ? 1U : 0U)}));
 
-  // search and read exist files by his MD5
-
-  std::cout << " * MD5=" << md5_as_str(&file_md5[iter][0]) << std::endl;
-
+  // 2.2 search and read exist files by his MD5
+  std::string filename_md5 = md5_as_str(&file_md5[iter][0]);
+  fl.clear();
   auto dm2 = tftp::DataMgrFileRead::create(
+      cb_syslog,
       nullptr,
-      nullptr,
-      md5_as_str(&file_md5[iter][0]),
+      filename_md5,
       local_dir.string(),
       {});
   TEST_CHECK_TRUE(dm2->open());
   TEST_CHECK_TRUE(dm2->active());
+  //fl.show();
+  TEST_CHECK_TRUE(fl.chk({0U,0U,0U,0U,0U,1U,1U}));
 
-  // 3 - search NOT exist files by his unknown name
+  // 2.3 - search NOT exist files by his unknown name
   auto dm3 = tftp::DataMgrFileRead::create(
-      nullptr,
+      cb_syslog,
       nullptr,
       "no_"+get_file_name(iter),
       local_dir.string(),
       {});
   TEST_CHECK_FALSE(dm3->open());
   TEST_CHECK_FALSE(dm3->active());
+  //fl.show();
+  TEST_CHECK_TRUE(fl.chk({0U,0U,1U,0U,0U,2U,1U}));
+  fl.clear();
 
 }
 
