@@ -25,7 +25,7 @@ SrvSettings::SrvSettings(const pSrvSettingsStor & sett):
 // -----------------------------------------------------------------------------
 
 SrvSettings::SrvSettings():
-    SrvSettings(nullptr)
+    SrvSettings(SrvSettingsStor::create())
 {
 }
 

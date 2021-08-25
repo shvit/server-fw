@@ -37,6 +37,13 @@ ArgParser::ArgParser(const ArgItems & new_sett):
 
 // -----------------------------------------------------------------------------
 
+auto ArgParser::result() const -> const ArgRes &
+{
+  return data_result_;
+}
+
+// -----------------------------------------------------------------------------
+
 auto ArgParser::run(
     int argc,
     char * argv[]) -> const ArgRes &

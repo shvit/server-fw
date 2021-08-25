@@ -22,7 +22,6 @@
 #include "tftpAddr.h"
 #include "tftpFileNewAttr.h"
 
-
 namespace tftp
 {
 
@@ -40,7 +39,7 @@ namespace constants
    */
   const ArgItems srv_arg_settings =
   {
-    {0, {}, ArgExistVaue::no, "", "Simple tftp firmware server 'server-fw' v"+std::string{constants::app_version}+" licensed GPL-3.0" , ""},
+    {0, {}, ArgExistVaue::no, "", "Simple tftp firmware server '"+std::string{constants::app_srv_name}+"' v"+std::string{constants::app_version}+" licensed GPL-3.0" , ""},
     {0, {}, ArgExistVaue::no, "", "Github project page https://github.com/shvit/server-fw", ""},
 //    {0, {}, ArgExistVaue::no, "", "(c) 2019-2021 Vitaliy.V.Shirinkin, e-mail: vitaliy.shirinkin@gmail.com", ""},
     {0, {}, ArgExistVaue::no, "", "--", ""},
@@ -48,7 +47,7 @@ namespace constants
     {0, {}, ArgExistVaue::no, "", "  - Recursive search requested files by md5 sum in search directory", ""},
     {0, {}, ArgExistVaue::no, "", "  - Use Firebird SQL server as file storage (optional requirement)", ""},
     {0, {}, ArgExistVaue::no, "", "Usage:", ""},
-    {0, {}, ArgExistVaue::no, "", "./server-fw [<options ...>] {<IPv4>|[<IPv6>]}[:<UPD port>]", ""},
+    {0, {}, ArgExistVaue::no, "", "./"+std::string{constants::app_srv_name}+" [<options ...>] {<IPv4>|[<IPv6>]}[:<UPD port>]", ""},
     {0, {}, ArgExistVaue::no, "", "Default listening is 0.0.0.0:"+std::to_string(constants::default_tftp_port), ""},
     {0, {}, ArgExistVaue::no, "", "(sample IPv4 \"192.168.0.1:69\", sample IPv6 \"[::1]:69\")", ""},
     {0, {}, ArgExistVaue::no, "", "Possible options:", ""},
@@ -150,6 +149,18 @@ public:
       fLogMsg cb_logger,
       int argc,
       char * argv[]);
+
+  /** \brief Load settings from ArgParser
+   *
+   *  \param [in] cb_logger Callback logger
+   *  \param [in] ap Instance of parser
+   *  \return 'nop' - normal exit,
+   *          'ok' - normal contimue,
+   *          'fail' - fail state
+   */
+  auto load_options(
+      fLogMsg cb_logger,
+      ArgParser ap) -> TripleResult;
 
   void out_id(std::ostream & stream) const;
 

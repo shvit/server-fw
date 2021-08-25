@@ -197,6 +197,9 @@ public:
       int argc,
       char * argv[]) -> const ArgRes &;
 
+
+  auto result() const -> const ArgRes &;
+
   /** \brief Construct caption (option description) by ID
    *
    *   \param [in] id Identifier of action

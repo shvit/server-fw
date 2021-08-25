@@ -26,11 +26,66 @@
 
 int main(int argc, char* argv[])
 {
+  using LogLine = std::pair<tftp::LogLvl, std::string>;
+  using LogLines = std::vector<LogLine>;
+
+  LogLines temp_log;
+
+  auto log_pre=[&](const tftp::LogLvl l, std::string_view m)
+  {
+    temp_log.emplace_back(l, m);
+  };
+
+  auto log_pre_out=[&](std::ostream & stream, tftp::LogLvl lvl = tftp::LogLvl::debug)
+  {
+    for(const auto & item : temp_log)
+      stream << "[" << tftp::to_string(item.first) << "] " << item.second << std::endl;
+  };
+
+  tftp::ArgParser ap{tftp::constants::srv_arg_settings};
+
+  ap.run(argc, argv);
+
+  auto ss = tftp::SrvSettingsStor::create();
+
+  switch(ss->load_options(log_pre, ap))
+  {
+    case tftp::TripleResult::fail:
+    {
+      ss->out_id(std::cout);
+      log_pre(tftp::LogLvl::err, "Fail load server arguments");
+      log_pre_out(std::cerr);
+      return EXIT_FAILURE;
+    }
+    case tftp::TripleResult::nop:
+      ss->out_help(std::cout, tftp::constants::app_srv_name);
+      return EXIT_SUCCESS;
+    default: // go next
+      break;
+  }
+
+  if(!ss->is_daemon)
+  {
+    ss->out_id(std::cout);
+    log_pre_out(std::cout, ((ss->verb >=0 && (ss->verb <=7)) ? (tftp::LogLvl)ss->verb : tftp::LogLvl::debug));
+  }
+
+
+  std::cout << "EXIT" << std::endl;
+  return EXIT_SUCCESS;
+
+
+
+
+
+
+
+
   constexpr const int fake_exit_code=1000;  // fake value
 
   int exit_code = fake_exit_code;
 
-  openlog("server-fw", LOG_NDELAY, LOG_DAEMON); // LOG_PID
+  openlog(tftp::constants::app_srv_name.data(), LOG_NDELAY, LOG_DAEMON); // LOG_PID
 
   tftp::Srv server;
 
