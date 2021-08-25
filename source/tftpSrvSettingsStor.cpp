@@ -12,7 +12,7 @@
  *  \version 0.2
  */
 
-#include <getopt.h>
+//#include <getopt.h>
 #include <syslog.h>
 #include <iostream>
 #include <regex>
@@ -47,9 +47,6 @@ SrvSettingsStor::SrvSettingsStor():
   verb{constants::default_tftp_syslog_lvl},
   retransmit_count_{constants::default_retransmit_count},
   file_new_attr{},
-  //file_chown_user{},
-  //file_chown_grp{},
-  //file_chmod{constants::default_file_chmod},
   lib_dir{},
   lib_name{constants::default_fb_lib_name},
   db{},
@@ -237,38 +234,6 @@ bool SrvSettingsStor::load_options(fLogMsg cb_log, int argc, char * argv[])
 void SrvSettingsStor::out_help(std::ostream & stream, std::string_view app) const
 {
   ap_.out_help(stream, app);
-
-  /*
-  out_id(stream);
-
-  stream << "Some features:" << std::endl
-  << "  - Recursive search requested files by md5 sum in search directory" << std::endl
-  << "  - Use Firebird SQL server as file storage (optional requirement)" << std::endl
-  << "Usage: " << app << " [<option1> [<option1 argument>]] [<option2> [<option2 argument>]] ... " << std::endl
-  << "Possible options:" << std::endl
-  << "  {-h|-H|-?|--help} Show help message" << std::endl
-  << "  {-l|-L|--ip|--listen} {<IPv4>|[<IPv6>]}[:port] Listening address and port" << std::endl
-  << "    (default 0.0.0.0:" << constants::default_tftp_port << ")" << std::endl
-  << "    Sample IPv4: 192.168.0.1:69" << std::endl
-  << "    Sample IPv6: [::1]:69" << std::endl
-  << "  {-s|-S|--syslog} <0...7> SYSLOG level flooding (default " << constants::default_tftp_syslog_lvl << ")" << std::endl
-  << "  --lib-dir <directory> System library directory" << std::endl
-  << "  --lib-name <name> Firebird library filename (default " << constants::default_fb_lib_name << ")" << std::endl
-  << "  --root-dir <directory> Server root directory" << std::endl
-  << "  --search <directory> Directory for recursive search by md5 sum (may be much)" << std::endl
-  << "  --fb-db <database> Firebird access database name" << std::endl
-  << "  --fb-user <username> Firebird access user name" << std::endl
-  << "  --fb-pass <password> Firebird access password" << std::endl
-  << "  --fb-role <role> Firebird access role" << std::endl
-  << "  --fb-dialect <1...3> Firebird server dialect (default " << constants::default_fb_dialect << ")" << std::endl
-  << "  --daemon Run as daemon" << std::endl
-  << "  --retransmit <N> Maximum retransmit count if fail" << std::endl
-  << "  --file-chuser <user name> Set user owner for created files (default root)" << std::endl
-  << "  --file-chgrp <group name> Set group owner for created files (default root)" << std::endl
-  << "    Warning: if user/group not exist then use root" << std::endl
-  << "  --file-chmod <permissions> Set permissions for created files (default 0664)" << std::endl
-  << "    Warning: can set only r/w bits - maximum 0666; can't set x-bits and superbits" << std::endl;
-  */
 }
 
 // -----------------------------------------------------------------------------
@@ -276,8 +241,6 @@ void SrvSettingsStor::out_help(std::ostream & stream, std::string_view app) cons
 void SrvSettingsStor::out_id(std::ostream & stream) const
 {
   ap_.out_header(stream);
-  //stream << "Simple tftp firmware server 'server-fw' v" << constants::app_version << " licensed GPL-3.0" << std::endl
-  //<< "(c) 2019-2021 Vitaliy.V.Shirinkin, e-mail: vitaliy.shirinkin@gmail.com" << std::endl;
 }
 
 // -----------------------------------------------------------------------------
