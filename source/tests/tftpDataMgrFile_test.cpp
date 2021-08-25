@@ -22,42 +22,6 @@ using namespace unit_tests;
 
 //------------------------------------------------------------------------------
 
-/** \brief Helper class for access to DataMgr protected fields
- */
-class DataMgr_test: public tftp::DataMgrFile
-{
-public:
-  DataMgr_test(
-      tftp::fLogMsg logger,
-      tftp::fSetError err_setter,
-      std::string_view filename,
-      std::string root_dir):
-          tftp::DataMgrFile(
-              logger,
-              err_setter) {};
-
-  virtual bool active() const override { return true; };
-
-  virtual bool open() override { return true; };
-
-  virtual auto write(
-      tftp::SmBufEx::const_iterator buf_begin,
-      tftp::SmBufEx::const_iterator buf_end,
-      const size_t & position) -> ssize_t override { return 0; };
-
-  virtual auto read(
-      tftp::SmBufEx::iterator buf_begin,
-      tftp::SmBufEx::iterator buf_end,
-      const size_t & position) -> ssize_t override { return 0; };
-
-  virtual void close() override {};
-
-  virtual void cancel() override {};
-
-  using tftp::DataMgrFile::match_md5;
-  using tftp::DataMgrFile::active;
-};
-
 /** \brief Helper class for check logging
  *
  *  Use levels 1..N
@@ -81,7 +45,7 @@ public:
 
   void show() const
   {
-    std::cout << "* ";
+    std::cout << "*log* ";
     for(const auto & c : stor_) std::cout << c << " ";
     std::cout << std::endl;
   }
@@ -97,7 +61,37 @@ public:
   }
 };
 
+//------------------------------------------------------------------------------
 
+/** \brief Helper class for check set errors
+ */
+class FakeError
+{
+protected:
+  uint16_t    code_;
+  std::string msg_;
+  size_t      count_;
+public:
+  FakeError(): code_{0U}, msg_{}, count_{0U} {}
+
+  auto was_error() const -> const size_t & { return count_; }
+
+  auto code() const -> const uint16_t & { return code_; }
+
+  auto err_msg() const -> const std::string & { return msg_; }
+
+  void set_error(const uint16_t new_code, std::string_view new_msg)
+  {
+    if(!count_++) { code_ = new_code; msg_.assign(new_msg); }
+  }
+
+  void clear() { code_ = 0U; msg_.clear(); count_ = 0U; }
+
+  void show() const
+  {
+    std::cout << "*err* #" << code_ << " '" << msg_ << "' total count=" << count_ << std::endl;
+  }
+};
 
 //------------------------------------------------------------------------------
 
@@ -117,10 +111,16 @@ std::vector<char> buff(block);
 std::vector<char> buff2(block);
 
 FakeLog<7> fl;
-
 auto cb_syslog = std::bind(
     & FakeLog<7>::syslog,
     & fl,
+    std::placeholders::_1,
+    std::placeholders::_2);
+
+FakeError fe;
+auto cb_seterr = std::bind(
+    & FakeError::set_error,
+    & fe,
     std::placeholders::_1,
     std::placeholders::_2);
 
@@ -143,7 +143,7 @@ for(size_t iter=0; iter < file_sizes.size(); ++iter)
 
   auto dm = tftp::DataMgrFileWrite::create(
       cb_syslog,
-      nullptr,
+      cb_seterr,
       get_file_name(iter),
       curr_dir.string());
 
@@ -175,6 +175,10 @@ for(size_t iter=0; iter < file_sizes.size(); ++iter)
     dm->cancel();
     TEST_CHECK_FALSE(dm->active());
     TEST_CHECK_FALSE(filesystem::exists(dm->get_filename()));
+    //fl.show();
+    TEST_CHECK_TRUE(fl.chk({0U,0U,iter,0U,0U,1U+4U*iter,2U*iter}));
+    //fe.show();
+    TEST_CHECK_TRUE((fe.code()==(iter==0U?0U:6U)) && (fe.was_error()==iter));
   }
 
   // 2 - create file with data and normal close
@@ -206,6 +210,11 @@ for(size_t iter=0; iter < file_sizes.size(); ++iter)
     TEST_CHECK_TRUE(filesystem::exists(dm->get_filename()));
 
     TEST_CHECK_TRUE(filesystem::file_size(dm->get_filename()) == file_sizes[iter]);
+
+    //fl.show();
+    TEST_CHECK_TRUE(fl.chk({0U,0U,iter,0U,0U,2U+4U*iter,1U+2U*iter}));
+    //fe.show();
+    TEST_CHECK_TRUE((fe.code()==(iter==0U?0U:6U)) && (fe.was_error()==iter));
   }
 
   // 3 - try create file when hie exist (error return)
@@ -214,8 +223,8 @@ for(size_t iter=0; iter < file_sizes.size(); ++iter)
 
   // 4 - create file .md5
   auto dm2 = tftp::DataMgrFileWrite::create(
-      nullptr,
-      nullptr,
+      cb_syslog, //
+      cb_seterr,
       get_md5_name(iter),
       curr_dir.string());
 
@@ -241,16 +250,22 @@ for(size_t iter=0; iter < file_sizes.size(); ++iter)
     TEST_CHECK_TRUE(dm2->active());
     dm2->close();
     TEST_CHECK_FALSE(dm2->active());
+
+    //fl.show();
+    TEST_CHECK_TRUE(fl.chk({0U,0U,1U+iter,0U,0U,4U*(iter+1U),2U*(iter+1U)}));
+    //fe.show();
+    TEST_CHECK_TRUE((fe.code()==6U) && (fe.was_error()==(iter+1U)));
   }
 }
 
 // STAGE 2 - Read all files
 fl.clear();
+fe.clear();
 for(size_t iter=0; iter < file_sizes.size(); ++iter)
 {
   auto dm = tftp::DataMgrFileRead::create(
       cb_syslog,
-      nullptr,
+      cb_seterr,
       get_file_name(iter),
       local_dir.string(),
       {});
@@ -284,13 +299,15 @@ for(size_t iter=0; iter < file_sizes.size(); ++iter)
   }
   //fl.show();
   TEST_CHECK_TRUE(fl.chk({0U,0U,0U,0U,0U,1U,1U+file_sizes[iter]/block +(file_sizes[iter]%block >0U ? 1U : 0U)}));
+  //fe.show();
+  TEST_CHECK_TRUE((fe.code()==0U) && (fe.was_error()==0U));
 
   // 2.2 search and read exist files by his MD5
   std::string filename_md5 = md5_as_str(&file_md5[iter][0]);
   fl.clear();
   auto dm2 = tftp::DataMgrFileRead::create(
       cb_syslog,
-      nullptr,
+      cb_seterr,
       filename_md5,
       local_dir.string(),
       {});
@@ -298,11 +315,13 @@ for(size_t iter=0; iter < file_sizes.size(); ++iter)
   TEST_CHECK_TRUE(dm2->active());
   //fl.show();
   TEST_CHECK_TRUE(fl.chk({0U,0U,0U,0U,0U,1U,1U}));
+  //fe.show();
+  TEST_CHECK_TRUE((fe.code()==0U) && (fe.was_error()==0U));
 
   // 2.3 - search NOT exist files by his unknown name
   auto dm3 = tftp::DataMgrFileRead::create(
       cb_syslog,
-      nullptr,
+      cb_seterr,
       "no_"+get_file_name(iter),
       local_dir.string(),
       {});
@@ -310,8 +329,10 @@ for(size_t iter=0; iter < file_sizes.size(); ++iter)
   TEST_CHECK_FALSE(dm3->active());
   //fl.show();
   TEST_CHECK_TRUE(fl.chk({0U,0U,1U,0U,0U,2U,1U}));
+  //fe.show();
+  TEST_CHECK_TRUE((fe.code()==1U) && (fe.was_error()==1U));
   fl.clear();
-
+  fe.clear();
 }
 
 // delete temporary files
