@@ -166,6 +166,7 @@ void SrvSession::socket_close()
 // -----------------------------------------------------------------------------
 
 bool SrvSession::prepare(
+    const Addr & self_addr,
     const Addr & remote_addr,
     const SmBuf  & pkt_data,
     const size_t & pkt_data_size)
@@ -174,7 +175,7 @@ bool SrvSession::prepare(
 
   bool ret=true;
 
-  my_addr_ = server_addr();
+  my_addr_ = self_addr;
   my_addr_.set_port(0);
 
   // Init client remote addr

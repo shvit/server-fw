@@ -99,7 +99,7 @@ protected:
 public:
 
   bool        is_daemon;         ///< Flag showing run as daemon
-  Addr        local_addr;        ///< Listening server family/address/port
+  //Addr        local_addr;        ///< Listening server family/address/port
   std::string root_dir;          ///< Root directory of TFTP server
   VecStr      search_dirs;       ///< Secondary search directories (0..N)
   int         verb;              ///< Syslog pass level logging message

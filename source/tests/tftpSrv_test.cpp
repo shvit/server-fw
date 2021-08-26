@@ -70,7 +70,7 @@ UNIT_TEST_CASE_BEGIN(Srv, "Server main check")
       sizeof(tst_arg)/sizeof(tst_arg[0]),
       const_cast<char **>(tst_arg)));
 
-  TEST_CHECK_TRUE(srv1.init());
+  TEST_CHECK_TRUE(srv1.init(addr_str));
   std::thread th_srv1 = std::thread(& tftp::Srv::main_loop, & srv1);
   usleep(500000);
 

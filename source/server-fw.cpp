@@ -17,6 +17,8 @@
 #include <syslog.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <sys/syscall.h>
+#include <thread>
 
 #include <iostream>
 #include <unistd.h>
@@ -29,21 +31,47 @@ int main(int argc, char* argv[])
   using LogLine = std::pair<tftp::LogLvl, std::string>;
   using LogLines = std::vector<LogLine>;
 
+  using RuntimeSrv = std::pair<tftp::pSrv, std::thread>;
+  using RuntimeSrvs = std::list<RuntimeSrv>;
+
+
+
   LogLines temp_log;
 
-  auto log_pre=[&](const tftp::LogLvl l, std::string_view m)
-  {
-    temp_log.emplace_back(l, m);
-  };
+  bool arg_finish=false;
+  tftp::LogLvl curr_verb = tftp::LogLvl::debug;
+  bool         curr_daemon = false;
 
-  auto log_pre_out=[&](std::ostream & stream, tftp::LogLvl lvl = tftp::LogLvl::debug)
-  {
-    for(const auto & item : temp_log)
+  auto log_main=[&](const tftp::LogLvl lvl, std::string_view msg)
     {
-      if(item.first <= lvl)
-        stream << "[" << tftp::to_string(item.first) << "] " << item.second << std::endl;
-    }
-  };
+      if(arg_finish)
+      {
+        if(lvl <= curr_verb)
+        {
+          if(curr_daemon)
+          {
+            syslog((int)lvl,
+                      "[%d] %s %s",
+                      (int)syscall(SYS_gettid),
+                      to_string(lvl).data(),
+                      msg.data());
+          }
+          else
+          {
+            std::cout << "[" << std::to_string((int)syscall(SYS_gettid)) << "] "
+                      << tftp::to_string(lvl) << " " << msg << std::endl;
+          }
+        }
+      }
+      else
+      {
+        temp_log.emplace_back(lvl, msg);
+      }
+    };
+
+#define CURR_LOG(L,M) log_main(tftp::LogLvl::L,"tftp::"+std::string{tftp::constants::app_srv_name}+"::main() "+M)
+
+  CURR_LOG(debug, "Begin");
 
   tftp::ArgParser ap{tftp::constants::srv_arg_settings};
 
@@ -51,13 +79,32 @@ int main(int argc, char* argv[])
 
   auto ss = tftp::SrvSettingsStor::create();
 
-  switch(ss->load_options(log_pre, ap))
+  auto log_pre_out=[&]()
+  {
+    if(arg_finish) return;
+    if(!curr_daemon) ss->out_id(std::cout);
+
+    if(curr_daemon)
+      openlog(tftp::constants::app_srv_name.data(), LOG_NDELAY, LOG_DAEMON); // LOG_PID
+
+    arg_finish=true;
+    for(const auto & item : temp_log) log_main(item.first, item.second);
+    temp_log.clear();
+  };
+
+
+  auto res_apply = ss->load_options(log_main, ap);
+
+  if((ss->verb >=0) && (ss->verb <=7)) curr_verb = (tftp::LogLvl) ss->verb;
+  curr_daemon = ss->is_daemon;
+
+  // Check need exit if no continue
+  switch(res_apply)
   {
     case tftp::TripleResult::fail:
     {
-      ss->out_id(std::cout);
-      //log_pre(tftp::LogLvl::err, "Fail load server arguments");
-      log_pre_out(std::cerr, ((ss->verb >=0 && (ss->verb <=7)) ? (tftp::LogLvl)ss->verb : tftp::LogLvl::debug));
+      CURR_LOG(err, "Fail load server arguments");
+      log_pre_out();
       return EXIT_FAILURE;
     }
     case tftp::TripleResult::nop:
@@ -67,23 +114,106 @@ int main(int argc, char* argv[])
       break;
   }
 
-  if(!ss->is_daemon)
+  // Out header and backuped logging messages (and clear temp storage)
+  log_pre_out();
+
+  // Fork
+  if(curr_daemon)
   {
-    ss->out_id(std::cout);
-    log_pre_out(std::cout, ((ss->verb >=0 && (ss->verb <=7)) ? (tftp::LogLvl)ss->verb : tftp::LogLvl::debug));
+    pid_t pid = fork();
+
+    if(pid<0)
+    {
+      CURR_LOG(err, "Daemon start failed (fork error)");
+      return EXIT_FAILURE;
+    }
+    else
+    {
+      if(!pid)
+      { // daemon code
+        umask(0);
+        setsid();
+        if(auto ret=chdir("/"); ret != 0)
+        {
+          CURR_LOG(err, "Failed use chdir(\"/\")");
+        }
+        close(STDIN_FILENO);
+        close(STDOUT_FILENO);
+        close(STDERR_FILENO);
+        CURR_LOG(info, "Run as daemon");
+      }
+      else
+      { // app finalize code
+          std::cout << "Daemon (" << pid << ") start ... ";
+        pid_t    wp;
+        uint32_t wc=0;
+        while ( (wp = waitpid(pid, NULL, WNOHANG)) == 0 )
+        { // wait some sec (daemon can closed)
+          usleep(50000);
+          wc++;
+          if(wc>25) break;
+        }
+
+        if(wp) std::cout << "Failed" << std::endl <<"Daemon not started; see syslog for detail" << std::endl;
+          else std::cout << "Successfull" << std::endl;
+
+        return EXIT_SUCCESS;
+      }
+    }
+  }
+
+  // Iter over all listening address and run threads
+  RuntimeSrvs srvs;
+  for(const auto & la : ap.result().second)
+  {
+    CURR_LOG(debug, "Try listening '"+la+"'");
+
+    auto news_srv = tftp::Srv::create(log_main, ss);
+
+    if(news_srv->init(la))
+    {
+      auto bakup_ptr = news_srv.get();
+
+      srvs.emplace_back(
+          RuntimeSrv{
+              std::move(news_srv),
+              std::thread{& tftp::Srv::main_loop, bakup_ptr}});
+    }
+    else
+    {
+      CURR_LOG(debug, "Skip listening '"+la+"'");
+    }
+  }
+
+  // Main loop - do while live threads
+  while(srvs.begin() != srvs.end())
+  {
+    for(auto it = srvs.begin(); it != srvs.end(); ++it)
+    {
+      if(it->first->is_stopped())
+      {
+        CURR_LOG(debug, "Kill resource thread 1/"+std::to_string(srvs.size()));
+        it->second.join();
+        srvs.erase(it);
+        break;
+      }
+    }
+    usleep(100000);
+
+    // DEBUG! Stop all threads after 5 sec
+    //usleep(5000000); for(auto it = srvs.begin(); it != srvs.end(); ++it) it->first->stop();
+
   }
 
 
-  std::cout << "EXIT" << std::endl;
+
+  CURR_LOG(debug, "End normal");
+  if(curr_daemon) closelog();
+
+  if(!curr_daemon) std::cout << "EXIT" << std::endl;
   return EXIT_SUCCESS;
 
-
-
-
-
-
-
-
+/*
   constexpr const int fake_exit_code=1000;  // fake value
 
   int exit_code = fake_exit_code;
@@ -144,7 +274,7 @@ int main(int argc, char* argv[])
 
     if(exit_code == fake_exit_code)
     {
-      if(server.init())
+      if(server.init(""))
       {
         server.main_loop();
       }
@@ -167,4 +297,5 @@ int main(int argc, char* argv[])
   if(exit_code == fake_exit_code) exit_code = EXIT_SUCCESS;
 
   return exit_code;
+  */
 }

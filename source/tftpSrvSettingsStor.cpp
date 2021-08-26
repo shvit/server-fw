@@ -40,7 +40,7 @@ SrvSettingsStor::SrvSettingsStor():
   mutex_{},
   ap_{constants::srv_arg_settings},
   is_daemon{false},
-  local_addr{},
+  //local_addr{},
   root_dir{},
   search_dirs{},
   verb{constants::default_tftp_syslog_lvl},
@@ -54,8 +54,8 @@ SrvSettingsStor::SrvSettingsStor():
   role{},
   dialect{constants::default_fb_dialect}
 {
-  local_addr.set_family(AF_INET);
-  local_addr.set_port(constants::default_tftp_port);
+  //local_addr.set_family(AF_INET);
+  //local_addr.set_port(constants::default_tftp_port);
 }
 
 //------------------------------------------------------------------------------
@@ -120,7 +120,7 @@ auto SrvSettingsStor::load_options(
     switch(item.first)
     {
       case 1: // listen
-        local_addr.set_string(ap.get_parsed_item(item.first));
+        //local_addr.set_string(ap.get_parsed_item(item.first));
         break;
       case 2: // help
         ret = TripleResult::nop;
@@ -208,13 +208,13 @@ auto SrvSettingsStor::load_options(
   // ... 2.1 Check listening addresses
   if(auto cnt=res.second.size(); cnt == 0U)
   {
-    L_WRN("No server address found; used "+local_addr.str());
+    L_WRN("No any listening server address found");
   }
   else
   {
-    local_addr.set_string(res.second[0U]); // TODO: Remove after fix multi listening
+    //local_addr.set_string(res.second[0U]); // TODO: Remove after fix multi listening
 
-    if(cnt > 1U) L_DBG("Too many address found ("+std::to_string(cnt)+")");
+    if(cnt > 1U) L_DBG("Many listening addresses found ("+std::to_string(cnt)+")");
   }
 
   // ... 2.2 Check root dir

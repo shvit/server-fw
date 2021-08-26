@@ -62,6 +62,7 @@ class Addr;
 class SrvBase;
 
 class Srv;
+using pSrv = std::unique_ptr<Srv>;
 
 class SrvSession;
 

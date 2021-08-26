@@ -197,6 +197,7 @@ public:
    *  \return True if initialize success, else - false
    */
   bool prepare(
+      const Addr & self_addr,
       const Addr & remote_addr,
       const SmBuf  & pkt_data,
       const size_t & pkt_data_size);

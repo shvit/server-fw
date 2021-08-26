@@ -110,12 +110,12 @@ auto SrvSettings::begin_unique() const -> std::unique_lock<std::shared_mutex>
 
 // -----------------------------------------------------------------------------
 
-auto SrvSettings::server_addr() const -> Addr
-{
-  auto lk = begin_shared(); // read lock
-
-  return Addr{settings_->local_addr};
-}
+//auto SrvSettings::server_addr() const -> Addr
+//{
+//  auto lk = begin_shared(); // read lock
+//
+//  return Addr{settings_->local_addr};
+//}
 
 // -----------------------------------------------------------------------------
 
@@ -195,12 +195,12 @@ auto SrvSettings::get_serach_dir() const -> VecStr
 
 // -----------------------------------------------------------------------------
 
-auto SrvSettings::get_local_addr_str() const -> std::string
-{
-  auto lk = begin_shared(); // read lock
-
-  return settings_->local_addr.str();
-}
+//auto SrvSettings::get_local_addr_str() const -> std::string
+//{
+//  auto lk = begin_shared(); // read lock
+//
+//  return settings_->local_addr.str();
+//}
 
 // -----------------------------------------------------------------------------
 

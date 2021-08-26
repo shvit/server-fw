@@ -104,7 +104,7 @@ public:
    *  Safe use
    *  /return Clone of address
    */
-  auto server_addr() const -> Addr;
+  //auto server_addr() const -> Addr;
 
   /** \brief Get: root server directory
    *
@@ -153,7 +153,7 @@ public:
    *  Safe use
    *  \return Address and port
    */
-  auto get_local_addr_str() const -> std::string;
+  //auto get_local_addr_str() const -> std::string;
 
   /** \brief get chmod value
    *

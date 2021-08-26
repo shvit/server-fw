@@ -66,11 +66,11 @@ UNIT_TEST_CASE_BEGIN(sess_init, "check prepare()")
 
   SrvSession_test s1;
 
-  TEST_CHECK_FALSE(s1.prepare(b_addr, b_pkt, b_pkt.size()));
+  TEST_CHECK_FALSE(s1.prepare(tftp::Addr(), b_addr, b_pkt, b_pkt.size()));
   TEST_CHECK_TRUE(s1.opt_.request_type() == tftp::SrvReq::unknown);
 
   b_pkt.set_be(0U, (int16_t)tftp::SrvReq::write);
-  TEST_CHECK_TRUE (s1.prepare(b_addr, b_pkt, b_pkt.size()));
+  TEST_CHECK_TRUE (s1.prepare(tftp::Addr(), b_addr, b_pkt, b_pkt.size()));
 
   TEST_CHECK_TRUE(std::equal(s1.cl_addr_.data(),
                              s1.cl_addr_.data() + b_addr.size(),
@@ -127,7 +127,7 @@ START_ITER("windowsize==5")
     'o','c','t','e','t',0,
     'w','i','n','d','o','w','s','i','z','e',0,'5',0
   };
-  s1.prepare(b_addr, b_pkt, b_pkt.size());
+  s1.prepare(tftp::Addr(), b_addr, b_pkt, b_pkt.size());
   size_t stage = 0U;
   TEST_CHECK_TRUE (s1.is_window_close(  stage));
   TEST_CHECK_FALSE(s1.is_window_close(++stage));
@@ -150,7 +150,7 @@ START_ITER("step_back_window()")
     'o','c','t','e','t',0,
     'w','i','n','d','o','w','s','i','z','e',0,'5',0
   };
-  s1.prepare(b_addr, b_pkt, b_pkt.size());
+  s1.prepare(tftp::Addr(), b_addr, b_pkt, b_pkt.size());
   size_t stage;
 
   s1.step_back_window(stage =     0U); TEST_CHECK_TRUE(stage ==     0U);

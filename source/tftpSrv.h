@@ -45,12 +45,15 @@ using RuntimeSrvSessions = std::list<RuntimeSrvSession>;
 class Srv: public SrvSettings, public Logger
 {
 protected:
+  Addr        local_addr_;
 
   RuntimeSrvSessions sessions_; ///< List of running sessions
 
   int socket_;  ///< Socket for tftp  port listener
 
   std::atomic_bool stop_; ///< Flag "need stop"
+
+  std::atomic_bool stopped_; ///< Flag "was stopped"
 
   /** \brief Open socket and listening
    *
@@ -71,6 +74,11 @@ public:
    */
   Srv();
 
+  Srv(fLogMsg logger, pSrvSettingsStor sett);
+
+
+  static auto create(fLogMsg logger, pSrvSettingsStor sett) -> pSrv;
+
   /** \brief Destructor
    */
   virtual ~Srv();
@@ -80,7 +88,7 @@ public:
    *  Can do reinitialize too
    *  Not close running session (to do or not to do)
    */
-  bool init();
+  bool init(std::string_view list_addr);
 
   /** \brief Main server loop
    *
@@ -93,6 +101,8 @@ public:
    */
   void stop();
 
+
+  bool is_stopped() const;
 };
 
 // -----------------------------------------------------------------------------
