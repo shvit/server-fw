@@ -34,8 +34,6 @@ int main(int argc, char* argv[])
   using RuntimeSrv = std::pair<tftp::pSrv, std::thread>;
   using RuntimeSrvs = std::list<RuntimeSrv>;
 
-
-
   LogLines temp_log;
 
   bool arg_finish=false;
@@ -75,14 +73,10 @@ int main(int argc, char* argv[])
 
   tftp::ArgParser ap{tftp::constants::srv_arg_settings};
 
-  ap.run(argc, argv);
-
-  auto ss = tftp::SrvSettingsStor::create();
-
   auto log_pre_out=[&]()
   {
     if(arg_finish) return;
-    if(!curr_daemon) ss->out_id(std::cout);
+    if(!curr_daemon) ap.out_header(std::cout);
 
     if(curr_daemon)
       openlog(tftp::constants::app_srv_name.data(), LOG_NDELAY, LOG_DAEMON); // LOG_PID
@@ -92,10 +86,13 @@ int main(int argc, char* argv[])
     temp_log.clear();
   };
 
+  ap.run(argc, argv);
+
+  auto ss = tftp::SrvSettingsStor::create();
 
   auto res_apply = ss->load_options(log_main, ap);
 
-  if((ss->verb >=0) && (ss->verb <=7)) curr_verb = (tftp::LogLvl) ss->verb;
+  if((ss->verb >= 0) && (ss->verb <= 7)) curr_verb = (tftp::LogLvl) ss->verb;
   curr_daemon = ss->is_daemon;
 
   // Check need exit if no continue
@@ -108,7 +105,7 @@ int main(int argc, char* argv[])
       return EXIT_FAILURE;
     }
     case tftp::TripleResult::nop:
-      ss->out_help(std::cout, tftp::constants::app_srv_name);
+      ap.out_help(std::cout, tftp::constants::app_srv_name);
       return EXIT_SUCCESS;
     default: // go next
       break;
@@ -117,10 +114,10 @@ int main(int argc, char* argv[])
   // Out header and backuped logging messages (and clear temp storage)
   log_pre_out();
 
-  // Fork
+  // Fork if run as daemon
   if(curr_daemon)
   {
-    pid_t pid = fork();
+    auto pid = fork();
 
     if(pid<0)
     {
@@ -205,97 +202,10 @@ int main(int argc, char* argv[])
 
   }
 
-
-
   CURR_LOG(debug, "End normal");
   if(curr_daemon) closelog();
 
   if(!curr_daemon) std::cout << "EXIT" << std::endl;
   return EXIT_SUCCESS;
 
-/*
-  constexpr const int fake_exit_code=1000;  // fake value
-
-  int exit_code = fake_exit_code;
-
-  openlog(tftp::constants::app_srv_name.data(), LOG_NDELAY, LOG_DAEMON); // LOG_PID
-
-  tftp::Srv server;
-
-  if(server.load_options(nullptr, argc, argv))
-  {
-    if(server.get_is_daemon())
-    {
-      pid_t pid = fork();
-
-      if(pid<0)
-      {
-        server.log(tftp::LogLvl::err, "Daemon start failed (fork error)");
-        return EXIT_FAILURE;
-      }
-      else
-      {
-        if(!pid)
-        { // daemon code
-          umask(0);
-          setsid();
-          if(auto ret=chdir("/"); ret != 0)
-          {
-            server.log(tftp::LogLvl::err, "Failed use chdir(\"/\")");
-          }
-          close(STDIN_FILENO);
-          close(STDOUT_FILENO);
-          close(STDERR_FILENO);
-          server.log(tftp::LogLvl::info, "Run as daemon");
-        }
-        else
-        { // app finalize code
-            std::cout << "Daemon (" << pid << ") start ... ";
-          pid_t    wp;
-          uint32_t wc=0;
-          while ( (wp = waitpid(pid, NULL, WNOHANG)) == 0 )
-          { // wait some sec (daemon can closed)
-            usleep(50000);
-            wc++;
-            if(wc>25) break;
-          }
-
-          if(wp) std::cout << "Failed" << std::endl <<"Daemon not started; see syslog for detail" << std::endl;
-            else std::cout << "Successfull" << std::endl;
-
-          exit_code = EXIT_SUCCESS;
-        }
-      }
-    }
-    else
-    {
-      server.out_id(std::cout);
-    }
-
-    if(exit_code == fake_exit_code)
-    {
-      if(server.init(""))
-      {
-        server.main_loop();
-      }
-      else
-      {
-        std::cout << "Fail server init" << std::endl;
-        exit_code = EXIT_FAILURE;
-      }
-    }
-  }
-  else
-  {
-    // Fail load options
-    server.out_help(std::cout, argv[0]);
-    exit_code = EXIT_FAILURE;
-  }
-
-  closelog();
-
-  if(exit_code == fake_exit_code) exit_code = EXIT_SUCCESS;
-
-  return exit_code;
-  */
 }

@@ -64,15 +64,18 @@ UNIT_TEST_CASE_BEGIN(Srv, "Server main check")
                            "--ip", addr_str.c_str(),
                            "--root-dir", local_dir.c_str() };
 
-  tftp::Srv srv1;
-  TEST_CHECK_TRUE(srv1.load_options(
+  auto ss = tftp::SrvSettingsStor::create();
+
+  ss->load_options(
       nullptr,
       sizeof(tst_arg)/sizeof(tst_arg[0]),
-      const_cast<char **>(tst_arg)));
+      const_cast<char **>(tst_arg));
+
+  tftp::Srv srv1(nullptr, ss);
 
   TEST_CHECK_TRUE(srv1.init(addr_str));
   std::thread th_srv1 = std::thread(& tftp::Srv::main_loop, & srv1);
-  usleep(500000);
+  usleep(100000);
 
   // 2 Work
   for(auto & item_blksize :

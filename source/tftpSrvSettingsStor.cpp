@@ -38,9 +38,7 @@ auto SrvSettingsStor::create() -> pSrvSettingsStor
 
 SrvSettingsStor::SrvSettingsStor():
   mutex_{},
-  ap_{constants::srv_arg_settings},
   is_daemon{false},
-  //local_addr{},
   root_dir{},
   search_dirs{},
   verb{constants::default_tftp_syslog_lvl},
@@ -54,8 +52,6 @@ SrvSettingsStor::SrvSettingsStor():
   role{},
   dialect{constants::default_fb_dialect}
 {
-  //local_addr.set_family(AF_INET);
-  //local_addr.set_port(constants::default_tftp_port);
 }
 
 //------------------------------------------------------------------------------
@@ -119,9 +115,6 @@ auto SrvSettingsStor::load_options(
 
     switch(item.first)
     {
-      case 1: // listen
-        //local_addr.set_string(ap.get_parsed_item(item.first));
-        break;
       case 2: // help
         ret = TripleResult::nop;
         break;
@@ -212,8 +205,6 @@ auto SrvSettingsStor::load_options(
   }
   else
   {
-    //local_addr.set_string(res.second[0U]); // TODO: Remove after fix multi listening
-
     if(cnt > 1U) L_DBG("Many listening addresses found ("+std::to_string(cnt)+")");
   }
 
@@ -241,19 +232,5 @@ bool SrvSettingsStor::load_options(fLogMsg cb_log, int argc, char * argv[])
 }
 
 //------------------------------------------------------------------------------
-
-void SrvSettingsStor::out_help(std::ostream & stream, std::string_view app) const
-{
-  ap_.out_help(stream, app);
-}
-
-// -----------------------------------------------------------------------------
-
-void SrvSettingsStor::out_id(std::ostream & stream) const
-{
-  ap_.out_header(stream);
-}
-
-// -----------------------------------------------------------------------------
 
 } // namespace tftp

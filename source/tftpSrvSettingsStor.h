@@ -51,7 +51,7 @@ namespace constants
     {0, {}, ArgExistVaue::no, "", "Default listening is 0.0.0.0:"+std::to_string(constants::default_tftp_port), ""},
     {0, {}, ArgExistVaue::no, "", "(sample IPv4 \"192.168.0.1:69\", sample IPv6 \"[::1]:69\")", ""},
     {0, {}, ArgExistVaue::no, "", "Possible options:", ""},
-    { 1, {"l", "L", "ip", "listen"}, ArgExistVaue::required, "IP[:port]", "Listening address and port", "deprecated"},
+//    { 1, {"l", "L", "ip", "listen"}, ArgExistVaue::required, "IP[:port]", "Listening address and port", "deprecated"},
     { 2, {"h", "H", "help", "?"},    ArgExistVaue::no,       "",          "Show help information", ""},
     { 3, {"v", "V", "verb"},         ArgExistVaue::optional, "0..7",      "Set verbosity mode with logging level", "default 7 - debug"},
     { 3, {"s", "S", "syslog"},       ArgExistVaue::optional, "0..7",      "Set verbosity mode with logging level", "deprecated"},
@@ -88,7 +88,6 @@ class SrvSettingsStor: public std::enable_shared_from_this<SrvSettingsStor>
 protected:
 
   mutable std::shared_mutex mutex_; ///< RW mutex for threading access
-  ArgParser ap_; ///< Argument parser
 
   /** \brief Default constructor
    *
@@ -161,10 +160,6 @@ public:
   auto load_options(
       fLogMsg cb_logger,
       ArgParser ap) -> TripleResult;
-
-  void out_id(std::ostream & stream) const;
-
-  void out_help(std::ostream & stream, std::string_view app) const;
 
 };
 

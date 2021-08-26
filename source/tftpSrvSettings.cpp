@@ -55,7 +55,7 @@ auto SrvSettings::operator=(const SrvSettings & src) -> SrvSettings &
 }
 
 // -----------------------------------------------------------------------------
-
+/*
 bool SrvSettings::load_options(
     fLogMsg cb_logger,
     int argc,
@@ -71,7 +71,7 @@ bool SrvSettings::load_options(
       argc,
       argv);
 }
-
+*/
 // -----------------------------------------------------------------------------
 
 auto SrvSettings::get_ptr() const -> const pSrvSettingsStor &
@@ -230,7 +230,7 @@ auto SrvSettings::get_file_chown_grp() const -> std::string
 }
 
 // -----------------------------------------------------------------------------
-
+/*
 void SrvSettings::out_help(std::ostream & stream, std::string_view app) const
 {
   auto lk = begin_shared(); // read lock
@@ -247,7 +247,7 @@ void SrvSettings::out_id(std::ostream & stream) const
   settings_->out_id(stream);
 }
 
-
+*/
 
 
 
