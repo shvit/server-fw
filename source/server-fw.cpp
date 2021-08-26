@@ -39,7 +39,10 @@ int main(int argc, char* argv[])
   auto log_pre_out=[&](std::ostream & stream, tftp::LogLvl lvl = tftp::LogLvl::debug)
   {
     for(const auto & item : temp_log)
-      stream << "[" << tftp::to_string(item.first) << "] " << item.second << std::endl;
+    {
+      if(item.first <= lvl)
+        stream << "[" << tftp::to_string(item.first) << "] " << item.second << std::endl;
+    }
   };
 
   tftp::ArgParser ap{tftp::constants::srv_arg_settings};
@@ -53,8 +56,8 @@ int main(int argc, char* argv[])
     case tftp::TripleResult::fail:
     {
       ss->out_id(std::cout);
-      log_pre(tftp::LogLvl::err, "Fail load server arguments");
-      log_pre_out(std::cerr);
+      //log_pre(tftp::LogLvl::err, "Fail load server arguments");
+      log_pre_out(std::cerr, ((ss->verb >=0 && (ss->verb <=7)) ? (tftp::LogLvl)ss->verb : tftp::LogLvl::debug));
       return EXIT_FAILURE;
     }
     case tftp::TripleResult::nop:

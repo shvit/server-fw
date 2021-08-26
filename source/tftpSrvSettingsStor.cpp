@@ -124,7 +124,6 @@ auto SrvSettingsStor::load_options(
         break;
       case 2: // help
         ret = TripleResult::nop;
-        //out_help();
         break;
       case 3: // verb, syslog
         {
@@ -187,17 +186,14 @@ auto SrvSettingsStor::load_options(
         }
         break;
       case 15: // file-chuser
-        //file_chown_user = ap.get_parsed_item(item.first);
         file_new_attr.set_own_user(ap.get_parsed_item(item.first));
         break;
       case 16: // file-chgrp
-        //file_chown_grp = ap.get_parsed_item(item.first);
         file_new_attr.set_own_grp(ap.get_parsed_item(item.first));
         break;
       case 17: // file-chmod
         {
           std::size_t * pos=nullptr;
-          //file_chmod = std::stoi(ap.get_parsed_item(item.first), pos, 8) & 0777;
           file_new_attr.set_mode(std::stoi(ap.get_parsed_item(item.first), pos, 8));
         }
         break;
@@ -207,20 +203,25 @@ auto SrvSettingsStor::load_options(
     }
   }
 
-  // 2 Parse main arguments
+  // 2 Check main arguments
+
+  // ... 2.1 Check listening addresses
   if(auto cnt=res.second.size(); cnt == 0U)
   {
     L_WRN("No server address found; used "+local_addr.str());
   }
   else
-  if(cnt > 1U)
   {
-    L_ERR("Too many address found ("+std::to_string(cnt)+")");
-    // TODO: parse for multi listening
+    local_addr.set_string(res.second[0U]); // TODO: Remove after fix multi listening
+
+    if(cnt > 1U) L_DBG("Too many address found ("+std::to_string(cnt)+")");
   }
-  else
+
+  // ... 2.2 Check root dir
+  if((ret == TripleResult::ok) && (root_dir.size() == 0U))
   {
-    local_addr.set_string(res.second[0U]);
+    L_ERR("Not set root server directory");
+    ret =  TripleResult::fail;
   }
 
   L_DBG("Finish server argument parse is "+(ret != TripleResult::fail ? "SUCCESS" : "FAIL"));
