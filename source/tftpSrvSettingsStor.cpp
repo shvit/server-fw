@@ -87,7 +87,7 @@ auto SrvSettingsStor::load_options(
       if(cb_log) cb_log(lvl, msg);
     };
 
-  L_DBG("Start server arguments parse");
+  L_DBG("Load server arguments started");
 
   TripleResult ret = TripleResult::ok;
 
@@ -192,6 +192,7 @@ auto SrvSettingsStor::load_options(
         break;
 
       default:
+        L_DBG("Found unused id #"+std::to_string(item.first)+" (see ArgItems value)");
         break;
     }
   }
@@ -215,7 +216,7 @@ auto SrvSettingsStor::load_options(
     ret =  TripleResult::fail;
   }
 
-  L_DBG("Finish server argument parse is "+(ret != TripleResult::fail ? "SUCCESS" : "FAIL"));
+  L_DBG("Load server arguments finished is "+(ret != TripleResult::fail ? "SUCCESS" : "FAIL"));
 
   return ret;
 }
@@ -226,7 +227,7 @@ bool SrvSettingsStor::load_options(fLogMsg cb_log, int argc, char * argv[])
 {
   ArgParser ap{constants::srv_arg_settings};
 
-  ap.run(argc, argv);
+  ap.run(cb_log, argc, argv);
 
   return load_options(cb_log, ap) == TripleResult::ok;
 }

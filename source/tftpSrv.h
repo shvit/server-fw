@@ -45,7 +45,8 @@ using RuntimeSrvSessions = std::list<RuntimeSrvSession>;
 class Srv: public SrvSettings, public Logger
 {
 protected:
-  Addr        local_addr_;
+
+  Addr local_addr_; ///< Local listening address
 
   RuntimeSrvSessions sessions_; ///< List of running sessions
 
@@ -65,19 +66,24 @@ protected:
    */
   void socket_close();
 
+  /** \brief Constructor
+   *
+   *  \param [in] logger Callback for logging
+   *  \param [in] sett Settings for server
+   */
+  Srv(fLogMsg logger, SrvSettings & sett);
+
 public:
 
-  /** \brief Default constructor
+  Srv() = delete; // no default
+
+  /** \brief Main server creator
    *
-   *  Pass all arguments to SrvBase constructor
-   *  \param [in] args Variadic arguments
+   *  \param [in] logger Callback for logging
+   *  \param [in] sett Settings for server
+   *  \return Pointer (uniq) to server instance
    */
-  Srv();
-
-  Srv(fLogMsg logger, pSrvSettingsStor sett);
-
-
-  static auto create(fLogMsg logger, pSrvSettingsStor sett) -> pSrv;
+  static auto create(fLogMsg logger, SrvSettings & sett) -> pSrv;
 
   /** \brief Destructor
    */
@@ -101,7 +107,10 @@ public:
    */
   void stop();
 
-
+  /** \brief Checker for server was stoppped
+   *
+   *  \return True if stopped, else - false
+   */
   bool is_stopped() const;
 };
 

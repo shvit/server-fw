@@ -102,9 +102,9 @@ START_ITER("load options normal");
   //b.out_header();
 
   TEST_CHECK_TRUE(b.log_err == 0U);
-  TEST_CHECK_TRUE(b.log_wrn == 0U);
+  TEST_CHECK_TRUE(b.log_wrn == 2U);
   TEST_CHECK_TRUE(b.log_inf == 2U);
-  TEST_CHECK_TRUE(b.log_dbg == 2U);
+  TEST_CHECK_TRUE(b.log_dbg == 12U);
 
   TEST_CHECK_TRUE(b.verb == 7);
   TEST_CHECK_TRUE(b.file_local == "test_local.txt");
@@ -146,7 +146,7 @@ START_ITER("Try to load fail options");
   TEST_CHECK_TRUE (b.log_err == 0U);
   TEST_CHECK_TRUE (b.log_wrn == 6U);
   TEST_CHECK_TRUE (b.log_inf == 0U);
-  TEST_CHECK_TRUE (b.log_dbg == 2U);
+  TEST_CHECK_TRUE (b.log_dbg == 10U);
   TEST_CHECK_TRUE (b.opt.transfer_mode() == tftp::TransfMode::octet);
   TEST_CHECK_FALSE(b.opt.was_set_blksize());
   TEST_CHECK_FALSE(b.opt.was_set_timeout());

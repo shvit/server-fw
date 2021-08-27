@@ -306,6 +306,7 @@ const char * tst_args[]=
   "10.0.0.202:6900",
   "-h", "-H", "--help", "-?",
   "ending",
+  "-Z",
   "--",                               // end parsing
   "--local", "test_local4.txt", "-H", // pass as simple values
 };
@@ -314,6 +315,7 @@ const char * tst_args[]=
 //p.out_header(std::cout); // develop checks
 
 const auto & res = p.run(
+    nullptr,
     sizeof(tst_args)/sizeof(tst_args[0]),
     const_cast<char **>(tst_args));
 
@@ -641,6 +643,7 @@ START_ITER("Stage 2 - Multi short options with 'required'");
   };
 
   const auto & res2 = p.run(
+      nullptr,
       sizeof(tst_args2)/sizeof(tst_args2[0]),
       const_cast<char **>(tst_args2));
 
@@ -713,6 +716,7 @@ START_ITER("Stage 3 - Multi short options with 'optional' and 'no'");
   };
 
   const auto & res2 = p.run(
+      nullptr,
       sizeof(tst_args2)/sizeof(tst_args2[0]),
       const_cast<char **>(tst_args2));
 

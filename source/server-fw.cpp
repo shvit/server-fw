@@ -86,14 +86,13 @@ int main(int argc, char* argv[])
     temp_log.clear();
   };
 
-  ap.run(argc, argv);
+  ap.run(log_main, argc, argv);
 
-  auto ss = tftp::SrvSettingsStor::create();
+  tftp::SrvSettings srv_st;
+  auto res_apply = srv_st.load_options(log_main, ap);
 
-  auto res_apply = ss->load_options(log_main, ap);
-
-  if((ss->verb >= 0) && (ss->verb <= 7)) curr_verb = (tftp::LogLvl) ss->verb;
-  curr_daemon = ss->is_daemon;
+  curr_verb = srv_st.get_verb();
+  curr_daemon = srv_st.get_is_daemon();
 
   // Check need exit if no continue
   switch(res_apply)
@@ -165,7 +164,7 @@ int main(int argc, char* argv[])
   {
     CURR_LOG(debug, "Try listening '"+la+"'");
 
-    auto news_srv = tftp::Srv::create(log_main, ss);
+    auto news_srv = tftp::Srv::create(log_main, srv_st);
 
     if(news_srv->init(la))
     {

@@ -45,9 +45,17 @@ auto ArgParser::result() const -> const ArgRes &
 // -----------------------------------------------------------------------------
 
 auto ArgParser::run(
+    fLogMsg cb_logger,
     int argc,
     char * argv[]) -> const ArgRes &
 {
+  auto log=[&](const LogLvl lvl, std::string_view msg)
+  {
+    if(cb_logger) cb_logger(lvl, msg);
+  };
+
+  L_DBG("Parsing arguments started");
+
   data_result_.first.clear();
   data_result_.second.clear();
 
@@ -55,6 +63,8 @@ auto ArgParser::run(
 
   for(int iter=1; iter < argc; ++iter)
   {
+    bool is_correct=false;
+
     if(is_end_parse)
     {
       data_result_.second.emplace_back(argv[iter]);
@@ -65,10 +75,16 @@ auto ArgParser::run(
 
     if(a_type == ArgType::end_parse) { is_end_parse=true; continue; }
 
-    if(a_type == ArgType::not_found) break; // error input data (argv)
+    if(a_type == ArgType::not_found)
+    {
+      L_WRN("Unknown argument found '"+a_value+"'");
+      break; // error input data (argv)
+    }
 
     if((a_type == ArgType::normal_value))
     {
+      L_DBG("Normal value found '"+a_value+"'");
+
       data_result_.second.push_back(a_value);
       continue;
     }
@@ -111,6 +127,9 @@ auto ArgParser::run(
                ((itm_type_val == ArgExistVaue::required) ||
                 (itm_type_val == ArgExistVaue::optional)))
             {
+              is_correct=true;
+              L_DBG("Passed argument # "+std::to_string(std::get<int>(itm))+" '"+constr_arg(passed_name)+"'");
+
               res_list.emplace_back(constr_arg(passed_name), next_value);
               need_skip_next = true;
             }
@@ -126,8 +145,10 @@ auto ArgParser::run(
     }
 
     if(need_skip_next) ++iter;
+    if(!is_correct) L_WRN("Fail passed argument '"+argv[iter]+"'");
   }
 
+  L_DBG("Parsing arguments finished");
   return data_result_;
 }
 

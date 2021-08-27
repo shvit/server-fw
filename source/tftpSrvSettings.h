@@ -45,30 +45,23 @@ protected:
    */
   auto begin_unique() const -> std::unique_lock<std::shared_mutex>;
 
-public:
-
-  /** \brief Default constructor
-   */
-  SrvSettings();
-
   /** \brief Constructor from storage
    *
    *  \param [in] sett Pointer to settings
    */
   SrvSettings(const pSrvSettingsStor & sett);
 
+public:
+
+  /** \brief Default constructor
+   */
+  SrvSettings();
+
   /** \brief Copy constructor
    *
    *  \param [in] src Self type source
    */
   SrvSettings(const SrvSettings & src);
-
-  /** \brief Setter for storage
-   *
-   *  \param [in] sett Pointer to settings
-   *  \return Self reference
-   */
-  auto operator=(const pSrvSettingsStor & sett) -> SrvSettings &;
 
   /** \brief Copy operator
    *
@@ -77,22 +70,20 @@ public:
    */
   auto operator=(const SrvSettings & src) -> SrvSettings &;
 
+  /** \brief Load options from parseg arguments
+   *
+   *  Safe use - unique lock
+   *  \param [in] cb_logger Callback logger
+   *  \param [in] ap Instance of parser
+   *  \return 'nop' - normal exit,
+   *          'ok' - normal contimue,
+   *          'fail' - fail exit
+   */
+  auto load_options(
+      fLogMsg cb_logger,
+      ArgParser ap) -> TripleResult;
+
   // Getters -------------------------------------------------------------------
-
-  /** \brief Get pointer to SrvSettingsStor instance
-   *
-   *  \return Shared pointer
-   */
-  auto get_ptr() const -> const pSrvSettingsStor &;
-
-  auto get_ptr() -> pSrvSettingsStor &;
-
-  /** \brief Get local base (main server listen address)
-   *
-   *  Safe use
-   *  /return Clone of address
-   */
-  //auto server_addr() const -> Addr;
 
   /** \brief Get: root server directory
    *
@@ -136,50 +127,33 @@ public:
    */
   auto get_serach_dir() const -> VecStr;
 
-  /** \brief Get: Local base address and port as string
-   *
-   *  Safe use
-   *  \return Address and port
-   */
-  //auto get_local_addr_str() const -> std::string;
-
-  /** \brief get chmod value
+  /** \brief Get chmod value
    *
    *  Safe use
    *  \return Value
    */
   int get_file_chmod() const;
 
-  /** \brief get chown user value
+  /** \brief Get chown user value
    *
    *  Safe use
    *  \return User name
    */
   auto get_file_chown_user() const -> std::string;
 
-  /** \brief get chown group value
+  /** \brief Get chown group value
    *
    *  Safe use
    *  \return Group name
    */
   auto get_file_chown_grp() const -> std::string;
 
-  // Out stream info -----------------------------------------------------------
-
-  /** \brief Output to stream options help information
+  /** \brief Get verbosity mode
    *
    *  Safe use
-   *  \param [in] stream Output stream
-   *  \param [in] app Application name
+   *  \return Verbosity level
    */
-  //void out_help(std::ostream & stream, std::string_view app) const;
-
-  /** \brief Output to stream base id info
-   *
-   *  Safe use
-   *  \param [out] stream Output stream
-   */
-  //void out_id(std::ostream & stream) const;
+  auto get_verb() const -> LogLvl;
 
 };
 

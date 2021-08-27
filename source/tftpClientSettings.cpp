@@ -47,6 +47,7 @@ bool ClientSettings::load_options(fLogMsg log, int argc, char * argv[])
   bool ret = true;
 
   const auto & res = ap_.run(
+      log,
       argc,
       argv);
 

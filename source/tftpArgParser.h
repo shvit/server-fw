@@ -21,6 +21,8 @@
 #include <tuple>
 #include <vector>
 
+#include "tftpCommon.h"
+
 namespace tftp
 {
 
@@ -194,6 +196,7 @@ public:
    *  \return Parsed data as type ArgRes
    */
   auto run(
+      fLogMsg cb_logger,
       int argc,
       char * argv[]) -> const ArgRes &;
 

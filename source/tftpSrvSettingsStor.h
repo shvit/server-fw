@@ -51,7 +51,6 @@ namespace constants
     {0, {}, ArgExistVaue::no, "", "Default listening is 0.0.0.0:"+std::to_string(constants::default_tftp_port), ""},
     {0, {}, ArgExistVaue::no, "", "(sample IPv4 \"192.168.0.1:69\", sample IPv6 \"[::1]:69\")", ""},
     {0, {}, ArgExistVaue::no, "", "Possible options:", ""},
-//    { 1, {"l", "L", "ip", "listen"}, ArgExistVaue::required, "IP[:port]", "Listening address and port", "deprecated"},
     { 2, {"h", "H", "help", "?"},    ArgExistVaue::no,       "",          "Show help information", ""},
     { 3, {"v", "V", "verb"},         ArgExistVaue::optional, "0..7",      "Set verbosity mode with logging level", "default 7 - debug"},
     { 3, {"s", "S", "syslog"},       ArgExistVaue::optional, "0..7",      "Set verbosity mode with logging level", "deprecated"},
@@ -98,7 +97,6 @@ protected:
 public:
 
   bool        is_daemon;         ///< Flag showing run as daemon
-  //Addr        local_addr;        ///< Listening server family/address/port
   std::string root_dir;          ///< Root directory of TFTP server
   VecStr      search_dirs;       ///< Secondary search directories (0..N)
   int         verb;              ///< Syslog pass level logging message

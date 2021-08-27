@@ -29,8 +29,7 @@ class SrvSession_test: public tftp::SrvSession
 {
 public:
   SrvSession_test():
-    tftp::SrvSession(tftp::SrvSettings(tftp::SrvSettingsStor::create()),
-                  tftp::Logger()) {};
+    tftp::SrvSession(tftp::SrvSettings(), tftp::Logger()) {};
 
   using tftp::SrvSession::opt_;
   using tftp::SrvSession::stage_;

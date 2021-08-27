@@ -27,14 +27,14 @@ namespace tftp
 
 // -----------------------------------------------------------------------------
 
-Srv::Srv(fLogMsg logger, pSrvSettingsStor sett):
-        SrvSettings(sett),
-        Logger(logger),
-        local_addr_{},
-        sessions_{},
-        socket_{-1},
-        stop_{false},
-        stopped_{false}
+Srv::Srv(fLogMsg logger, SrvSettings & sett):
+            SrvSettings(sett),
+            Logger(logger),
+            local_addr_{},
+            sessions_{},
+            socket_{-1},
+            stop_{false},
+            stopped_{false}
 {
   local_addr_.set_family(AF_INET);
   local_addr_.set_port(constants::default_tftp_port);
@@ -42,16 +42,15 @@ Srv::Srv(fLogMsg logger, pSrvSettingsStor sett):
 
 // -----------------------------------------------------------------------------
 
-Srv::Srv():
-    Srv(nullptr, SrvSettingsStor::create())
+auto Srv::create(fLogMsg logger, SrvSettings & sett) -> pSrv
 {
-}
+  class Enabler: public Srv
+  {
+  public:
+    Enabler(fLogMsg l, SrvSettings & s): Srv(l,s) {}
+  };
 
-// -----------------------------------------------------------------------------
-
-auto Srv::create(fLogMsg logger, pSrvSettingsStor sett) -> pSrv
-{
-  return std::make_unique<Srv>(logger, sett);
+  return std::make_unique<Enabler>(logger, sett);
 }
 
 // -----------------------------------------------------------------------------

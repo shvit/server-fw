@@ -38,50 +38,11 @@ SrvSettings::SrvSettings(const SrvSettings & src):
 
 // -----------------------------------------------------------------------------
 
-auto SrvSettings::operator=(const pSrvSettingsStor & sett) -> SrvSettings &
-{
-  settings_ = sett;
-
-  return *this;
-}
-
-// -----------------------------------------------------------------------------
-
 auto SrvSettings::operator=(const SrvSettings & src) -> SrvSettings &
 {
   settings_ = src.settings_;
 
   return *this;
-}
-
-// -----------------------------------------------------------------------------
-/*
-bool SrvSettings::load_options(
-    fLogMsg cb_logger,
-    int argc,
-    char * argv[])
-{
-  if(!settings_)
-  {
-    throw std::runtime_error("Empty storage (server settings)");
-  }
-
-  return settings_->load_options(
-      cb_logger,
-      argc,
-      argv);
-}
-*/
-// -----------------------------------------------------------------------------
-
-auto SrvSettings::get_ptr() const -> const pSrvSettingsStor &
-{
-  return settings_;
-}
-
-auto SrvSettings::get_ptr() -> pSrvSettingsStor &
-{
-  return settings_;
 }
 
 // -----------------------------------------------------------------------------
@@ -107,15 +68,6 @@ auto SrvSettings::begin_unique() const -> std::unique_lock<std::shared_mutex>
 
   return settings_->begin_unique();
 }
-
-// -----------------------------------------------------------------------------
-
-//auto SrvSettings::server_addr() const -> Addr
-//{
-//  auto lk = begin_shared(); // read lock
-//
-//  return Addr{settings_->local_addr};
-//}
 
 // -----------------------------------------------------------------------------
 
@@ -195,15 +147,6 @@ auto SrvSettings::get_serach_dir() const -> VecStr
 
 // -----------------------------------------------------------------------------
 
-//auto SrvSettings::get_local_addr_str() const -> std::string
-//{
-//  auto lk = begin_shared(); // read lock
-//
-//  return settings_->local_addr.str();
-//}
-
-// -----------------------------------------------------------------------------
-
 int SrvSettings::get_file_chmod() const
 {
   auto lk = begin_shared(); // read lock
@@ -230,26 +173,25 @@ auto SrvSettings::get_file_chown_grp() const -> std::string
 }
 
 // -----------------------------------------------------------------------------
-/*
-void SrvSettings::out_help(std::ostream & stream, std::string_view app) const
+
+auto SrvSettings::get_verb() const -> LogLvl
 {
   auto lk = begin_shared(); // read lock
 
-  settings_->out_help(stream, app);
+  return ((settings_->verb >= 0) &&
+          (settings_->verb <= 7)) ? (LogLvl) settings_->verb : LogLvl::debug;
 }
 
 // -----------------------------------------------------------------------------
 
-void SrvSettings::out_id(std::ostream & stream) const
+auto SrvSettings::load_options(
+    fLogMsg cb_logger,
+    ArgParser ap) -> TripleResult
 {
-  auto lk = begin_shared(); // read lock
+  auto lk = begin_unique(); // write lock
 
-  settings_->out_id(stream);
+  return settings_->load_options(cb_logger, ap);
 }
-
-*/
-
-
 
 // -----------------------------------------------------------------------------
 
