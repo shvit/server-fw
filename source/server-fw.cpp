@@ -194,6 +194,7 @@ int main(int argc, char* argv[])
         break;
       }
     }
+
     usleep(100000);
 
     // DEBUG! Stop all threads after 5 sec

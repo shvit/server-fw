@@ -49,7 +49,7 @@ SrvSession::SrvSession(const SrvSettings & curr_sett_srv, const Logger & curr_lo
     SrvSettings(curr_sett_srv),
     Logger(curr_logger),
     stat_{State::need_init},
-    finished_{false},
+    stopped_{false},
     my_addr_{},
     cl_addr_{},
     socket_{0},
@@ -140,6 +140,13 @@ bool SrvSession::switch_to(const State & new_state)
 bool SrvSession::is_finished() const
 {
   return (stat_ == State::finish);
+}
+
+// -----------------------------------------------------------------------------
+
+bool SrvSession::is_stopped() const
+{
+  return stopped_;
 }
 
 // -----------------------------------------------------------------------------
@@ -613,6 +620,8 @@ void SrvSession::run()
   file_man_->close();
 
   L_INF("Finish session");
+  usleep(1000000);
+  stopped_.store(true);
 }
 
 // -----------------------------------------------------------------------------

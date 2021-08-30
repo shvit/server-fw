@@ -45,7 +45,7 @@ protected:
 
   // Properties
   std::atomic<State> stat_;          ///< State machine
-  std::atomic_bool   finished_;      ///< Flag: true when session finished
+  std::atomic_bool   stopped_;      ///< Flag: true when session finished
   Addr               my_addr_;       ///< Self server address
   Addr               cl_addr_;       ///< Client address
   int                socket_;        ///< Socket
@@ -222,6 +222,7 @@ public:
    */
   bool is_finished() const;
 
+  bool is_stopped() const;
 };
 
 // -----------------------------------------------------------------------------

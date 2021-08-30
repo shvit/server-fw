@@ -181,17 +181,18 @@ void Srv::main_loop()
     }
 
     // check finished other sessions
-    usleep(10000);
+    usleep(100000);
     for(auto it = sessions_.begin(); it != sessions_.end(); ++it)
     {
-      if(it->first->is_finished())
+      if(it->first->is_stopped())
       {
         it->second.join();
         sessions_.erase(it);
         break;
       }
     }
-  }
+
+  } // man loop
 
   stopped_.store(true);
   L_DBG("Stopped");
