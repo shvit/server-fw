@@ -129,6 +129,7 @@ bool Srv::init(std::string_view list_addr)
 
 void Srv::stop()
 {
+  L_DBG("Stop called");
   stop_.store(true);
 }
 
@@ -180,8 +181,8 @@ void Srv::main_loop()
             " bytes) from " + client_addr.str());
     }
 
-    // check finished other sessions
-    usleep(100000);
+    // check finished sessions
+    usleep(1000);
     for(auto it = sessions_.begin(); it != sessions_.end(); ++it)
     {
       if(it->first->is_stopped())
@@ -193,6 +194,30 @@ void Srv::main_loop()
     }
 
   } // man loop
+
+  // Finish main loop! and ...
+
+  // ... send stop to all sessions
+  for(auto it = sessions_.begin(); it != sessions_.end(); ++it)
+  {
+    it->first->stop();
+  }
+  usleep(500U);
+
+  // ... delete all sessions/threads
+  while(sessions_.begin() != sessions_.end())
+  {
+    for(auto it = sessions_.begin(); it != sessions_.end(); ++it)
+    {
+      if(it->first->is_stopped())
+      {
+        it->second.join();
+        sessions_.erase(it);
+        break;
+      }
+    }
+    usleep(100U);
+  }
 
   stopped_.store(true);
   L_DBG("Stopped");

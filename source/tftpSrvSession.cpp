@@ -49,6 +49,7 @@ SrvSession::SrvSession(const SrvSettings & curr_sett_srv, const Logger & curr_lo
     SrvSettings(curr_sett_srv),
     Logger(curr_logger),
     stat_{State::need_init},
+    stop_{false},
     stopped_{false},
     my_addr_{},
     cl_addr_{},
@@ -133,6 +134,14 @@ bool SrvSession::switch_to(const State & new_state)
   }
 
   return ret;
+}
+
+// -----------------------------------------------------------------------------
+
+void SrvSession::stop()
+{
+  L_DBG("Stop called");
+  stop_.store(true);
 }
 
 // -----------------------------------------------------------------------------
@@ -421,7 +430,7 @@ void SrvSession::run()
 
   // Main loop
   stage_ = 0U;
-  while(!is_finished())
+  while(!is_finished() && !stop_)
   {
     switch(stat_)
     {
@@ -614,13 +623,16 @@ void SrvSession::run()
       case State::request: // --------------------------------------------------
         break; // never do this, not for server!
     }
+
   } // end main loop
 
   socket_close();
-  file_man_->close();
+  if(file_man_.get())
+  {
+    if(stop_) file_man_->cancel(); else file_man_->close();
+  }
 
   L_INF("Finish session");
-  usleep(1000000);
   stopped_.store(true);
 }
 

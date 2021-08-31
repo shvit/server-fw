@@ -45,7 +45,8 @@ protected:
 
   // Properties
   std::atomic<State> stat_;          ///< State machine
-  std::atomic_bool   stopped_;      ///< Flag: true when session finished
+  std::atomic_bool   stop_;         ///< Flag: NEED session stop
+  std::atomic_bool   stopped_;      ///< Flag: WAS session stopped
   Addr               my_addr_;       ///< Self server address
   Addr               cl_addr_;       ///< Client address
   int                socket_;        ///< Socket
@@ -215,13 +216,21 @@ public:
    */
   void run();
 
-  /** \brief Checker finished session
+  /** \brief Set stop_ flag for break main session loop
+   */
+  void stop();
+
+  /** \brief Checker for session is finished
    *
-   *  For external use (outside)
-   *  \return Value from protected atomic value 'finished_'
+   *  \return True if atomic stat_ == State::finish, else - false
    */
   bool is_finished() const;
 
+  /** \brief Checker for session is stopped (can free memory)
+   *
+   *  For external use (outside)
+   *  \return Value from protected atomic value stopped_
+   */
   bool is_stopped() const;
 };
 
