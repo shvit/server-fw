@@ -1,4 +1,4 @@
 if ( $programname startswith "server-fw" ) then {
-    action(type="omfile" file="/var/log/server-fw.log" flushOnTXEnd="off")
+    action(type="omfile" file="/var/log/server-fw.log" flushOnTXEnd="on")
     stop
 }

@@ -4,10 +4,10 @@
  *
  *  License GPL-3.0
  *
- *  \date 29-may-2021
+ *  \date 13-sep-2021
  *  \author Vitaliy Shirinkin, e-mail: vitaliy.shirinkin@gmail.com
  *
- *  \version 0.2
+ *  \version 0.2.1
  */
 
 #include "../tftpCommon.h"

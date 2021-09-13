@@ -70,8 +70,8 @@ d_start() {
     ARG="$ARG --syslog $SYSLOG"
   fi
 
-  # SERACH
-  for dir in $SERACH; do
+  # SEARCH
+  for dir in $SEARCH; do
     if [ -d "$dir" ]; then
       ARG="$ARG --search $dir"
     fi

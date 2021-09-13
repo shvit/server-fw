@@ -6,10 +6,10 @@
  *
  *  License GPL-3.0
  *
- *  \date 29-may-2021
+ *  \date 13-sep-2021
  *  \author Vitaliy Shirinkin, e-mail: vitaliy.shirinkin@gmail.com
  *
- *  \version 0.2
+ *  \version 0.2.1
  */
 
 #ifndef SOURCE_TFTP_COMMON_H_
@@ -24,6 +24,20 @@
 
 namespace tftp
 {
+
+// -----------------------------------------------------------------------------
+
+/** \brief Any common constants
+ */
+namespace constants
+{
+  /// Full version of this
+  constexpr std::string_view app_version = "0.2.1";
+
+  /// Template for match MD5 by regex
+  const std::string regex_template_md5{"([a-fA-F0-9]{32})"};
+
+}
 
 // -----------------------------------------------------------------------------
 
@@ -137,18 +151,6 @@ using fLogMsg = std::function<void(const LogLvl, std::string_view)>;
  *  \param [in] Error message text
  */
 using fSetError = std::function<void(const uint16_t, std::string_view)>;
-
-// -----------------------------------------------------------------------------
-
-/** \brief Any common constants
- */
-namespace constants
-{
-
-  /// Template for match MD5 by regex
-  const std::string regex_template_md5{"([a-fA-F0-9]{32})"};
-
-}
 
 // -----------------------------------------------------------------------------
 

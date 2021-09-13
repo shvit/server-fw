@@ -6,10 +6,10 @@
  *
  *  License GPL-3.0
  *
- *  \date 29-may-2021
+ *  \date 13-sep-2021
  *  \author Vitaliy Shirinkin, e-mail: vitaliy.shirinkin@gmail.com
  *
- *  \version 0.2
+ *  \version 0.2.1
  */
 
 #include <getopt.h>
@@ -235,7 +235,7 @@ void Settings::out_help(std::ostream & stream, std::string_view app) const
 
 void Settings::out_id(std::ostream & stream) const
 {
-  stream << "Simple tftp firmware server 'server-fw' v0.2 licensed GPL-3.0" << std::endl
+  stream << "Simple tftp firmware server 'server-fw' v" << constants::app_version << " licensed GPL-3.0" << std::endl
   << "(c) 2019-2021 Vitaliy.V.Shirinkin, e-mail: vitaliy.shirinkin@gmail.com" << std::endl;
 }
 

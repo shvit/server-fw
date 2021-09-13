@@ -7,10 +7,10 @@
  *
  *  License GPL-3.0
  *
- *  \date 29-may-2021
+ *  \date 13-sep-2021
  *  \author Vitaliy Shirinkin, e-mail: vitaliy.shirinkin@gmail.com
  *
- *  \version 0.2
+ *  \version 0.2.1
  */
 
 #include <regex>
@@ -259,22 +259,28 @@ bool Session::init()
   {
     // Try 1 - DB
     // TODO:: init() for DataMgrDB
-    ret = false; // remove it!
+    bool init_stream = false; // remove it!
 
     // Try 2 - File
-    if(!ret)
+    if(!init_stream)
     {
       file_man_.release();
       file_man_ = std::make_unique<DataMgrFile>();
 
-      ret = file_man_->init(
+      init_stream = file_man_->init(
           settings_,
           std::bind(
-                  & Session::set_error_if_first,
-                  this,
-                  std::placeholders::_1,
-                  std::placeholders::_2),
+              & Session::set_error_if_first,
+              this,
+              std::placeholders::_1,
+              std::placeholders::_2),
           opt_);
+    }
+
+    if(!init_stream)
+    {
+      // Ignore if error was set from DataMgr
+      set_error_if_first(0, "Unknown stream initialize error; break session");
     }
   }
 
@@ -447,8 +453,16 @@ void Session::run()
             switch_to(State::error_and_stop);
             break;
           case SrvReq::read:
-            switch_to(State::data_tx);
-            stage_ = 1U;
+            if(opt_.was_set_any())
+            {
+              switch_to(State::ack_rx);
+              stage_ = 0U;
+            }
+            else
+            {
+              switch_to(State::data_tx);
+              stage_ = 1U;
+            }
             break;
           case SrvReq::write:
             if(opt_.was_set_any())
@@ -599,8 +613,12 @@ void Session::set_error_if_first(
     const uint16_t e_cod,
     std::string_view e_msg)
 {
+  L_DBG("Try register error #"+std::to_string(e_cod)+
+        " '"+std::string(e_msg)+"'");
+
   if(!was_error())
   {
+    L_DBG("Rememver it");
     error_code_ = e_cod;
     error_message_.assign(e_msg);
   }
@@ -610,7 +628,7 @@ void Session::set_error_if_first(
 
 bool Session::was_error()
 {
-  return error_code_ || error_message_.size();
+  return (error_code_ > 0U) || (error_message_.size() > 0U);
 }
 
 // -----------------------------------------------------------------------------
