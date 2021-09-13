@@ -3,11 +3,13 @@
 
 ### v0.2.1 - develop (current unstable version, next stable version in future)
 
+bugfix: wrong reply on RRQ with options ack
+
 bugfix: reply tftp error packet on stream initialize error
 
 bugfix: enable flush for logging
 
-bugfix: rename config argument SERACH -> SEARCH
+bugfix: Cosmetic; rename config argument SERACH -> SEARCH 
 
 ### v0.2 (current stable release version)
 
