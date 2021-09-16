@@ -9,26 +9,77 @@
 #include <iostream>
 #include <string>
 
+//#include <stdio.h>
+#include <unistd.h>
+#include <sys/syscall.h>
+
+
 #include "tftpClientSettings.h"
 #include "tftpClientSession.h"
 
 int main(int argc, char* argv[])
 {
-  tftp::ClientSession s(&std::cout);
-/*
-  auto f_run = std::async(
-      std::bind(
-          & tftp::ClientSession::run,
-          & s,
-          argc,
-          argv));
+  tftp::LogLines temp_log;
+  bool arg_finish=false;
+  tftp::LogLvl curr_verb = tftp::LogLvl::warning;
 
-  auto ret = f_run.get();
-*/
+  auto log_main=[&](const tftp::LogLvl lvl, std::string_view msg)
+    {
+      if(arg_finish)
+      {
+        if(lvl <= curr_verb)
+        {
+          std::cout << "[" << std::to_string((int)syscall(SYS_gettid)) << "] "
+                    << tftp::to_string(lvl) << " " << msg << std::endl;
+        }
+      }
+      else
+      {
+        temp_log.emplace_back(lvl, msg);
+      }
+    };
 
-  auto ret = s.run(argc, argv);
+  tftp::ArgParser ap{tftp::constants::client_arg_settings};
 
-  if(ret != tftp::ClientSessionResult::ok) return EXIT_FAILURE;
+  auto log_pre_out=[&]()
+  {
+    if(arg_finish) return;
+    ap.out_header(std::cout);
+
+    arg_finish=true;
+    for(const auto & item : temp_log) log_main(item.first, item.second);
+    temp_log.clear();
+  };
+
+  ap.run(log_main, argc, argv);
+
+  auto cl_sett = tftp::ClientSettings::create();
+
+  auto res_apply = cl_sett->load_options(log_main, ap);
+
+  curr_verb = (tftp::LogLvl)cl_sett->verb;
+
+  switch(res_apply)
+  {
+    case tftp::TripleResult::fail:
+    {
+      log_main(tftp::LogLvl::err, "Fail load server arguments");
+      log_pre_out();
+      return EXIT_FAILURE;
+    }
+    case tftp::TripleResult::nop:
+      ap.out_help(std::cout, "tftp-cl");
+      return EXIT_SUCCESS;
+    default: // go next
+      break;
+  }
+
+  log_pre_out();
+
+  tftp::ClientSession s(std::move(cl_sett), log_main);
+
+  if(auto ret = s.run();
+     ret != tftp::ClientSessionResult::ok) return EXIT_FAILURE;
 
   return EXIT_SUCCESS;
 }

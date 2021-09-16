@@ -22,7 +22,7 @@ namespace tftp
 // -----------------------------------------------------------------------------
 
 ClientSettings::ClientSettings():
-  ap_{constants::arg_option_settings},
+  //ap_{constants::arg_option_settings},
   srv_addr{},
   verb{4},
   file_local{},
@@ -34,27 +34,40 @@ ClientSettings::ClientSettings():
 
 // -----------------------------------------------------------------------------
 
+auto ClientSettings::create() -> pClientSettings
+{
+  class Enabler: public ClientSettings {};
+
+  return std::make_unique<Enabler>();
+}
+
+// -----------------------------------------------------------------------------
+
 ClientSettings::~ClientSettings()
 {
 }
 
 //------------------------------------------------------------------------------
 
-bool ClientSettings::load_options(fLogMsg log, int argc, char * argv[])
+auto ClientSettings::load_options(
+    fLogMsg cb_log,
+    ArgParser & ap) -> TripleResult
 {
-  L_DBG("Start argument parse (arg count "+std::to_string(argc)+")");
+  auto log = [&](const LogLvl lvl, std::string_view msg)
+    {
+      if(cb_log) cb_log(lvl, msg);
+    };
 
-  bool ret = true;
+  L_DBG("Load client arguments started");
 
-  const auto & res = ap_.run(
-      log,
-      argc,
-      argv);
+  TripleResult ret = TripleResult::ok;
+
+  const auto & res = ap.result();
 
   // 1 Parse options
   for(const auto & item : res.first)
   {
-    auto [res_chk, res_str] = ap_.chk_parsed_item(item.first);
+    auto [res_chk, res_str] = ap.chk_parsed_item(item.first);
 
     switch(res_chk)
     {
@@ -62,7 +75,7 @@ bool ClientSettings::load_options(fLogMsg log, int argc, char * argv[])
       case ResCheck::not_found:       // wrong do, check code!
       case ResCheck::err_no_req_value:
         L_ERR(res_str);
-        ret = false;
+        ret = TripleResult::fail;
         continue;
       case ResCheck::wrn_many_arg:
         L_WRN(res_str);
@@ -74,10 +87,10 @@ bool ClientSettings::load_options(fLogMsg log, int argc, char * argv[])
     switch(item.first)
     {
       case 1: // local file
-        file_local = ap_.get_parsed_item(item.first);
+        file_local = ap.get_parsed_item(item.first);
         break;
       case 2: // remote file
-        opt.set_filename(ap_.get_parsed_item(item.first), log);
+        opt.set_filename(ap.get_parsed_item(item.first), log);
         break;
       case 3: // Request GET
         opt.set_request_type(SrvReq::read);
@@ -86,30 +99,29 @@ bool ClientSettings::load_options(fLogMsg log, int argc, char * argv[])
         opt.set_request_type(SrvReq::write);
         break;
       case 5: // Help
-        ret = false;
-        //out_help();
+        ret = TripleResult::nop;
         break;
       case 6: // Verbosity
         {
           verb = 7;  // default
-          auto tmp_val= ap_.get_parsed_int(item.first);
+          auto tmp_val= ap.get_parsed_int(item.first);
           if(tmp_val.has_value()) verb = tmp_val.value();
         }
         break;
       case 7: // Mode transfer
-        opt.set_transfer_mode(ap_.get_parsed_item(item.first), log);
+        opt.set_transfer_mode(ap.get_parsed_item(item.first), log);
         break;
       case 8: // Block size
-        opt.set_blksize(ap_.get_parsed_item(item.first), log);
+        opt.set_blksize(ap.get_parsed_item(item.first), log);
         break;
       case 9: // Timeout
-        opt.set_timeout(ap_.get_parsed_item(item.first), log);
+        opt.set_timeout(ap.get_parsed_item(item.first), log);
         break;
       case 10: // Windowsize
-        opt.set_windowsize(ap_.get_parsed_item(item.first), log);
+        opt.set_windowsize(ap.get_parsed_item(item.first), log);
         break;
       case 11: // Tsize
-        opt.set_tsize(ap_.get_parsed_item(item.first), log);
+        opt.set_tsize(ap.get_parsed_item(item.first), log);
         break;
       default:
         break;
@@ -131,24 +143,24 @@ bool ClientSettings::load_options(fLogMsg log, int argc, char * argv[])
     srv_addr.set_string(res.second[0U]);
   }
 
-  L_DBG("Finish argument parse is "+(ret ? "SUCCESS" : "FAIL"));
+  L_DBG("Load client arguments finished is "+(ret != TripleResult::fail ? "SUCCESS" : "FAIL"));
 
   return ret;
 }
 
 // -----------------------------------------------------------------------------
 
-void ClientSettings::out_header(std::ostream & stream) const
-{
-  ap_.out_header(stream);
-}
+//void ClientSettings::out_header(std::ostream & stream) const
+//{
+//  ap_.out_header(stream);
+//}
 
 // -----------------------------------------------------------------------------
 
-void ClientSettings::out_help(std::ostream & stream) const
-{
-  ap_.out_help(stream);
-}
+//void ClientSettings::out_help(std::ostream & stream) const
+//{
+//  ap_.out_help(stream);
+//}
 
 // -----------------------------------------------------------------------------
 

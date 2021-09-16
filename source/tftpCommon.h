@@ -148,6 +148,9 @@ enum class LogLvl: int
   debug   = 7, // LOG_DEBUG   // debug-level messages
 };
 
+using LogLine = std::pair<tftp::LogLvl, std::string>;
+using LogLines = std::vector<LogLine>;
+
 // -----------------------------------------------------------------------------
 
 /** \brief SessionState

@@ -39,12 +39,12 @@ enum class ClientSessionResult: int
  *  Simple use (without logging):
  *  auto result = ClientSession().run(argc, argv);
  */
-class ClientSession
+class ClientSession: public Logger
 {
 protected:
   aState           stat_;       ///< State machine
-  std::ostream *   pstream_;    ///< Output stream pointer (nullptr if no need)
-  ClientSettings   settings_;   ///< Settings for TFTP client
+  //std::ostream *   pstream_;    ///< Output stream pointer (nullptr if no need)
+  pClientSettings   settings_;   ///< Settings for TFTP client
   Addr             local_addr_; ///< Local address
   int              socket_;     ///< Socket
   size_t           stage_;      ///< Full (!) number of processed block
@@ -87,7 +87,7 @@ protected:
    *  \param [in] lvl Level of message
    *  \param [in] msg Text message
    */
-  void log(LogLvl lvl, std::string_view msg) const;
+  //void log(LogLvl lvl, std::string_view msg) const;
 
   /** \brief Get current tftp block number
    *
@@ -102,17 +102,6 @@ protected:
    *  \return Block size value
    */
   auto block_size() const -> uint16_t;
-
-  /** \brief Init session
-   *
-   *  Doing:
-   *  - check file
-   *  - open file
-   *  - open socket
-   *  - check some arguments
-   *  \return True is initialize success, else - false
-   */
-  bool init_session();
 
   /** \brief Run client TFTP session
    *
@@ -165,14 +154,16 @@ protected:
 public:
 
   /** \brief Default constructor
+   *
+   *  Create empty settings (need init)
    */
   ClientSession();
 
-  /** \brief Constructor with output info stream
+  /** \brief Constructor fwith exist ClientSettings
    *
-   *  \param [out] stream Pointer to output stream
+   *  \param [out] sett Client settings unique pointer
    */
-  ClientSession(std::ostream * stream);
+  ClientSession(pClientSettings && sett, fLogMsg new_cb);
 
   /** \brief Main constructor with parse cmd arguments
    *
@@ -181,10 +172,10 @@ public:
    *  \param [in] argc Count of arguments (array items)
    *  \param [in] argv Array with arguments
    */
-  ClientSession(
-      std::ostream * stream,
-      int argc,
-      char * argv[]);
+//  ClientSession(
+//      std::ostream * stream,
+//      int argc,
+//      char * argv[]);
 
   /** \brief Initialize session
    *
@@ -193,7 +184,18 @@ public:
    *  \param [in] argv Array with arguments
    *  \return True is initialize success, else - false
    */
-  bool init(int argc, char * argv[]);
+  //bool init(int argc, char * argv[]);
+
+  /** \brief Init session
+   *
+   *  Doing:
+   *  - check file
+   *  - open file
+   *  - open socket
+   *  - check some arguments
+   *  \return True is initialize success, else - false
+   */
+  bool init();
 
   /** \brief Run client TFTP session with init
    *
@@ -202,7 +204,7 @@ public:
    *  \param [in] argv Array with arguments
    *  \return Value of enum type ClientSessionResult
    */
-  auto run(int argc, char * argv[]) -> ClientSessionResult;
+  auto run() -> ClientSessionResult;
 
   /** \brief Check opened any file
    *

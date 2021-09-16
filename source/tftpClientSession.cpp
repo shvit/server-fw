@@ -14,7 +14,7 @@ namespace tftp
 {
 
 //------------------------------------------------------------------------------
-
+/*
 ClientSession::ClientSession(
     std::ostream * stream,
     int argc,
@@ -41,13 +41,30 @@ ClientSession::ClientSession(std::ostream * stream):
     need_break_{false},
     stopped_{false}
 {
-  if(pstream_) settings_.out_header(*pstream_);
+  //if(pstream_) settings_->out_header(*pstream_);
 }
-
+*/
 //------------------------------------------------------------------------------
 
+ClientSession::ClientSession(pClientSettings && sett, fLogMsg new_cb):
+    Logger(new_cb),
+        stat_{State::need_init},
+        settings_{std::move(sett)},
+        local_addr_{},
+        socket_{0},
+        stage_{0U},
+        file_in_{},
+        file_out_{},
+        file_size_{0U},
+        error_code_{0U},
+        error_message_{},
+        need_break_{false},
+        stopped_{false}
+{
+}
+
 ClientSession::ClientSession():
-    ClientSession(nullptr)
+    ClientSession(ClientSettings::create(), nullptr)
 {
 }
 
@@ -146,22 +163,23 @@ bool ClientSession::was_error() const
 }
 
 // -----------------------------------------------------------------------------
-
+/*
 void ClientSession::log(LogLvl lvl, std::string_view msg) const
 {
-  if((int)lvl <=settings_.verb)
+  if((int)lvl <=settings_->verb)
   {
-    if(pstream_) *pstream_ << "[" << to_string(lvl) << "] " <<  msg << std::endl;
+    //if(pstream_) *pstream_ << "[" << to_string(lvl) << "] " <<  msg << std::endl;
   }
 }
-
+*/
 //------------------------------------------------------------------------------
-
+/*
 bool ClientSession::init(
     int argc,
     char * argv[])
 {
-  bool ret = settings_.load_options(
+
+  bool ret = settings_->load_options(
       std::bind(
           & ClientSession::log,
           this,
@@ -171,40 +189,42 @@ bool ClientSession::init(
       argv);
 
   return ret && init_session();
-}
 
+  return true;
+}
+*/
 
 //------------------------------------------------------------------------------
 
-bool ClientSession::init_session()
+bool ClientSession::init()
 {
   L_INF("Session initialize started");
 
-  bool ret = (settings_.opt.request_type() == SrvReq::write) ||
-             (settings_.opt.request_type() == SrvReq::read);
+  bool ret = (settings_->opt.request_type() == SrvReq::write) ||
+             (settings_->opt.request_type() == SrvReq::read);
   if(!ret)
   {
-    L_ERR("Wrong request type '"+settings_.opt.request_type()+"'");
+    L_ERR("Wrong request type '"+settings_->opt.request_type()+"'");
   }
 
   // Check local file exist
   if(ret)
   {
-    if(settings_.opt.request_type() == SrvReq::write)
+    if(settings_->opt.request_type() == SrvReq::write)
     {
-      ret=filesystem::exists(settings_.file_local);
+      ret=filesystem::exists(settings_->file_local);
       if(!ret)
       {
-        L_ERR("Local file not exist '"+settings_.file_local+"'");
+        L_ERR("Local file not exist '"+settings_->file_local+"'");
       }
     }
     else
-    if(settings_.opt.request_type() == SrvReq::read)
+    if(settings_->opt.request_type() == SrvReq::read)
     {
-      ret=!filesystem::exists(settings_.file_local);
+      ret=!filesystem::exists(settings_->file_local);
       if(!ret)
       {
-        L_ERR("Local file already exist '"+settings_.file_local+"'");
+        L_ERR("Local file already exist '"+settings_->file_local+"'");
       }
     }
   }
@@ -213,25 +233,25 @@ bool ClientSession::init_session()
   if(ret)
   {
     file_size_=0U;
-    if(settings_.opt.was_set_tsize())
+    if(settings_->opt.was_set_tsize())
     {
-      auto tmp_val = settings_.opt.tsize();
+      auto tmp_val = settings_->opt.tsize();
       if(tmp_val > 0) file_size_ = tmp_val;
     }
     else
     {
-      if(settings_.opt.request_type() == SrvReq::write)
+      if(settings_->opt.request_type() == SrvReq::write)
       {
-        ret = filesystem::exists(settings_.file_local);
+        ret = filesystem::exists(settings_->file_local);
         if(ret)
         {
-          file_size_=filesystem::file_size(settings_.file_local);
-          L_DBG("Found local file '"+settings_.file_local+
+          file_size_=filesystem::file_size(settings_->file_local);
+          L_DBG("Found local file '"+settings_->file_local+
                 "' size "+std::to_string(file_size_));
         }
         else
         {
-          L_ERR("Not found local file '"+settings_.file_local+"'");
+          L_ERR("Not found local file '"+settings_->file_local+"'");
         }
       }
     }
@@ -240,13 +260,13 @@ bool ClientSession::init_session()
   // File open
   if(ret)
   {
-    if(settings_.opt.request_type() == SrvReq::read)
+    if(settings_->opt.request_type() == SrvReq::read)
     {
       file_out_.exceptions(file_out_.exceptions() | std::ios::failbit);
       try
       {
         file_out_.open(
-            settings_.file_local,
+            settings_->file_local,
             std::ios_base::out | std::ios::binary);
         file_out_.write(nullptr, 0U);
       }
@@ -258,14 +278,14 @@ bool ClientSession::init_session()
       }
     }
     else
-    if(settings_.opt.request_type() == SrvReq::write)
+    if(settings_->opt.request_type() == SrvReq::write)
     {
       auto backup_val = file_in_.exceptions();
       file_in_.exceptions(std::ios::failbit);
       try
       {
         file_in_.open(
-            settings_.file_local,
+            settings_->file_local,
             std::ios_base::in | std::ios::binary);
       }
       catch (const std::system_error & e)
@@ -277,14 +297,14 @@ bool ClientSession::init_session()
       file_in_.close();
       file_in_.exceptions(backup_val);
       file_in_.open(
-          settings_.file_local,
+          settings_->file_local,
           std::ios_base::in | std::ios::binary);
 
     }
     else
     {
       ret = false;
-      L_ERR("Wrong request type '"+settings_.opt.request_type()+ "'");
+      L_ERR("Wrong request type '"+settings_->opt.request_type()+ "'");
     }
   }
 
@@ -292,7 +312,7 @@ bool ClientSession::init_session()
   {
     // Local address
     local_addr_.clear();
-    local_addr_.set_family(settings_.srv_addr.family());
+    local_addr_.set_family(settings_->srv_addr.family());
 
     // Socket
     socket_ = socket(local_addr_.family(), SOCK_DGRAM, 0);
@@ -343,7 +363,7 @@ auto ClientSession::write(
     SmBufEx::const_iterator buf_end,
     const size_t & position) -> ssize_t
 {
-  if(settings_.opt.request_type() != SrvReq::read)
+  if(settings_->opt.request_type() != SrvReq::read)
   {
     throw std::runtime_error(
         "Wrong use method (can't use when request type != read");
@@ -398,7 +418,7 @@ auto ClientSession::read(
     SmBufEx::iterator buf_end,
     const size_t & position) -> ssize_t
 {
-  if(settings_.opt.request_type() != SrvReq::write)
+  if(settings_->opt.request_type() != SrvReq::write)
   {
     throw std::runtime_error(
         "Wrong use method (can't use when request type != write");
@@ -420,7 +440,7 @@ auto ClientSession::read(
       file_in_.seekg(position, std::ios_base::beg);
     }
 
-    ssize_t file_size_ = settings_.opt.was_set_tsize() ? settings_.opt.tsize() : 0;
+    ssize_t file_size_ = settings_->opt.was_set_tsize() ? settings_->opt.tsize() : 0;
 
     auto ret_size = static_cast<ssize_t>(file_size_) - (ssize_t)position;
     if(ret_size > 0)
@@ -454,8 +474,8 @@ auto ClientSession::read(
 
 bool ClientSession::active() const
 {
-  return ((settings_.opt.request_type() == SrvReq::read)  && file_out_ .is_open()) ||
-         ((settings_.opt.request_type() == SrvReq::write) && file_in_.is_open());
+  return ((settings_->opt.request_type() == SrvReq::read)  && file_out_ .is_open()) ||
+         ((settings_->opt.request_type() == SrvReq::write) && file_in_.is_open());
 }
 
 // -----------------------------------------------------------------------------
@@ -476,10 +496,10 @@ void ClientSession::cancel()
   {
     file_out_.close();
 
-    if(filesystem::exists(settings_.file_local))
+    if(filesystem::exists(settings_->file_local))
     {
-      L_INF("Remove file '"+settings_.file_local+"'");
-      filesystem::remove(settings_.file_local);
+      L_INF("Remove file '"+settings_->file_local+"'");
+      filesystem::remove(settings_->file_local);
     }
   }
 
@@ -514,7 +534,7 @@ auto ClientSession::run_session() -> ClientSessionResult
   time_t oper_time_{0};
 
   auto timeout_pass = [&]()
-      { return (time(nullptr) - oper_time_) < (settings_.opt.timeout() + 1); };
+      { return (time(nullptr) - oper_time_) < (settings_->opt.timeout() + 1); };
 
   auto timeout_reset = [&]()
       { oper_time_ = time(nullptr); };
@@ -526,7 +546,7 @@ auto ClientSession::run_session() -> ClientSessionResult
     switch(stat_)
     {
       case State::need_init: // ------------------------------------------------
-        if(init_session())
+        if(init())
         {
           if(was_error())
           {
@@ -617,9 +637,9 @@ auto ClientSession::run_session() -> ClientSessionResult
 
 // -----------------------------------------------------------------------------
 
-auto ClientSession::run(int argc, char * argv[]) -> ClientSessionResult
+auto ClientSession::run() -> ClientSessionResult
 {
-  if(init(argc, argv))
+  if(init())
   {
     switch_to(State::request);
   }
@@ -651,7 +671,7 @@ auto ClientSession::blk_num_local() const -> uint16_t
 
 auto ClientSession::block_size() const -> uint16_t
 {
-  return settings_.opt.blksize();
+  return settings_->opt.blksize();
 }
 
 // -----------------------------------------------------------------------------
@@ -660,42 +680,42 @@ void ClientSession::construct_request(SmBufEx & buf) const
 {
   buf.clear();
 
-  buf.push_data((uint16_t) settings_.opt.request_type());
+  buf.push_data((uint16_t) settings_->opt.request_type());
 
-  buf.push_data(settings_.opt.filename());
+  buf.push_data(settings_->opt.filename());
 
-  buf.push_data(to_string(settings_.opt.transfer_mode()));
+  buf.push_data(to_string(settings_->opt.transfer_mode()));
 
-  if(settings_.opt.was_set_blksize())
+  if(settings_->opt.was_set_blksize())
   {
     std::string name{constants::name_blksize};
-    std::string value{std::to_string(settings_.opt.blksize())};
+    std::string value{std::to_string(settings_->opt.blksize())};
     buf.push_data(name, value);
     L_DBG("Add option "+name+"="+value);
   }
-  if(settings_.opt.was_set_timeout())
+  if(settings_->opt.was_set_timeout())
   {
     std::string name{constants::name_timeout};
-    std::string value{std::to_string(settings_.opt.timeout())};
+    std::string value{std::to_string(settings_->opt.timeout())};
     buf.push_data(name, value);
     L_DBG("Add option "+name+"="+value);
   }
-  if(settings_.opt.was_set_windowsize())
+  if(settings_->opt.was_set_windowsize())
   {
     std::string name{constants::name_windowsize};
-    std::string value{std::to_string(settings_.opt.windowsize())};
+    std::string value{std::to_string(settings_->opt.windowsize())};
     buf.push_data(name, value);
     L_DBG("Add option "+name+"="+value);
   }
-  if(settings_.opt.was_set_tsize())
+  if(settings_->opt.was_set_tsize())
   {
     std::string name{constants::name_tsize};
-    std::string value{std::to_string(settings_.opt.tsize())};
+    std::string value{std::to_string(settings_->opt.tsize())};
     buf.push_data(name, value);
     L_DBG("Add option "+name+"="+value);
   }
 
-  L_DBG("Construct request '"+settings_.opt.request_type()+
+  L_DBG("Construct request '"+settings_->opt.request_type()+
         "' pkt with "+std::to_string(buf.data_size())+" octets");
 }
 
@@ -770,8 +790,8 @@ bool ClientSession::transmit_no_wait(const SmBufEx & buf)
         buf.data(),
         buf.data_size(),
         0,
-        settings_.srv_addr.as_sockaddr_ptr(),
-        settings_.srv_addr.data_size());
+        settings_->srv_addr.as_sockaddr_ptr(),
+        settings_->srv_addr.data_size());
 
     ret = (tx_result_size == (ssize_t)buf.data_size());
 
@@ -861,7 +881,7 @@ auto ClientSession::receive_no_wait(SmBufEx & buf) -> TripleResult
   }
 
   // Check client address is right
-  if(rx_client.eqv_addr_only(settings_.srv_addr))
+  if(rx_client.eqv_addr_only(settings_->srv_addr))
   {
     L_DBG(rx_msg+" from client");
   }
@@ -965,12 +985,12 @@ auto ClientSession::receive_no_wait(SmBufEx & buf) -> TripleResult
 
         { // blksize
           std::string oname = "'" + std::string{constants::name_blksize} + "'";
-          if(settings_.opt.was_set_blksize() == confirm_opt.was_set_blksize())
+          if(settings_->opt.was_set_blksize() == confirm_opt.was_set_blksize())
           {
-            if(settings_.opt.was_set_blksize())
+            if(settings_->opt.was_set_blksize())
             {
               L_DBG("Ack option "+oname+"="+std::to_string(confirm_opt.blksize()));
-              if(settings_.opt.blksize() != confirm_opt.blksize())
+              if(settings_->opt.blksize() != confirm_opt.blksize())
               {
                 L_WRN("Try change ack value for option "+oname+"; Ignore new value!");
                 // TODO: do change value (?)
@@ -979,7 +999,7 @@ auto ClientSession::receive_no_wait(SmBufEx & buf) -> TripleResult
           }
           else // desync
           {
-            if(settings_.opt.was_set_blksize())
+            if(settings_->opt.was_set_blksize())
             {
               L_WRN("Option "+oname+" not confirmed! Ignore self value");
               // TODO: reset option
@@ -996,7 +1016,7 @@ auto ClientSession::receive_no_wait(SmBufEx & buf) -> TripleResult
         {
           L_DBG("Ack option "+std::string{constants::name_timeout}+
                 "="+std::to_string(confirm_opt.timeout()));
-          if(settings_.opt.timeout() != confirm_opt.timeout())
+          if(settings_->opt.timeout() != confirm_opt.timeout())
           {
             L_WRN("Try change ack value for option "+
                   std::string{constants::name_timeout}+"; Ignore!");
@@ -1007,7 +1027,7 @@ auto ClientSession::receive_no_wait(SmBufEx & buf) -> TripleResult
         {
           L_DBG("Ack option "+std::string{constants::name_windowsize}+
                 "="+std::to_string(confirm_opt.windowsize()));
-          if(settings_.opt.windowsize() != confirm_opt.windowsize())
+          if(settings_->opt.windowsize() != confirm_opt.windowsize())
           {
             L_WRN("Try change ack value for option "+
                   std::string{constants::name_windowsize}+"; Ignore!");
@@ -1018,7 +1038,7 @@ auto ClientSession::receive_no_wait(SmBufEx & buf) -> TripleResult
         {
           L_DBG("Ack option "+std::string{constants::name_tsize}+
                 "="+std::to_string(confirm_opt.tsize()));
-          if(settings_.opt.tsize() != confirm_opt.tsize())
+          if(settings_->opt.tsize() != confirm_opt.tsize())
           {
             L_WRN("Try change ack value for option "+
                   std::string{constants::name_tsize}+"; Ignore!");

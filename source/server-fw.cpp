@@ -28,13 +28,10 @@
 
 int main(int argc, char* argv[])
 {
-  using LogLine = std::pair<tftp::LogLvl, std::string>;
-  using LogLines = std::vector<LogLine>;
-
   using RuntimeSrv = std::pair<tftp::pSrv, std::thread>;
   using RuntimeSrvs = std::list<RuntimeSrv>;
 
-  LogLines temp_log;
+  tftp::LogLines temp_log;
 
   bool arg_finish=false;
   tftp::LogLvl curr_verb = tftp::LogLvl::debug;

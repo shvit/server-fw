@@ -19,6 +19,7 @@
 #include "tftpAddr.h"
 #include "tftpOptions.h"
 #include "tftpArgParser.h"
+#include "tftpLogger.h"
 
 namespace tftp
 {
@@ -32,7 +33,7 @@ namespace constants
    *
    *  Used for parse with class ArgParser
    */
-  const ArgItems arg_option_settings =
+  const ArgItems client_arg_settings =
   {
     {0, {}, ArgExistVaue::no, "", "Simple TFTP client from 'server-fw' project licensed GPL-3.0", ""},
     {0, {}, ArgExistVaue::no, "", "Github project page https://github.com/shvit/server-fw", ""},
@@ -66,7 +67,11 @@ class ClientSettings
 {
 protected:
 
-  ArgParser ap_; ///< Argument parser
+  //ArgParser ap_; ///< Argument parser
+
+  /** \brief Default constructor
+   */
+  ClientSettings();
 
 public:
 
@@ -88,9 +93,7 @@ public:
    */
   //void log(LogLvl lvl, std::string_view msg) const;
 
-  /** \brief Default constructor
-   */
-  ClientSettings();
+  static auto create() -> pClientSettings;
 
   /** \brief Destructor
    */
@@ -99,14 +102,14 @@ public:
   /** \brief Load settings from CMD arguments
    *
    *  \param [in] cb_logger Callback logger
-   *  \param [in] argc Count of elements in argv
-   *  \param [in] argv Array of arguments
-   *  \return True if success, else - false
+   *  \param [in] ap Instance of parser
+   *  \return 'nop' - normal exit,
+   *          'ok' - normal contimue,
+   *          'fail' - fail exit
    */
-  bool load_options(
+  auto load_options(
       fLogMsg cb_logger,
-      int argc,
-      char * argv[]);
+      ArgParser & ap) -> TripleResult;
 
   /** \brief Out to cout header output for application
    *
@@ -114,7 +117,7 @@ public:
    *  Get information from ArgItems value
    *  \param [out] stream Output stream
    */
-  void out_header(std::ostream & stream) const;
+  //void out_header(std::ostream & stream) const;
 
   /** \brief Out to cout help information of arguments options
    *
@@ -122,7 +125,7 @@ public:
    *  Get information from ArgItems value
    *  \param [out] stream Output stream
    */
-  void out_help(std::ostream & stream) const;
+  //void out_help(std::ostream & stream) const;
 
 };
 
