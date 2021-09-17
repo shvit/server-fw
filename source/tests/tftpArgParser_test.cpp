@@ -253,6 +253,32 @@ UNIT_TEST_CASE_END
 
 UNIT_TEST_CASE_BEGIN(full_test, "Check method go_full()")
 
+size_t log_err{0U};
+size_t log_wrn{0U};
+size_t log_inf{0U};
+size_t log_dbg{0U};
+
+auto log_reset=[&]()
+    {
+      log_err=0U;
+      log_wrn=0U;
+      log_inf=0U;
+      log_dbg=0U;
+    };
+
+auto log_local=[&](tftp::LogLvl lvl, std::string_view msg)
+{
+  switch(lvl)
+  {
+    case tftp::LogLvl::err:     ++log_err; break;
+    case tftp::LogLvl::warning: ++log_wrn; break;
+    case tftp::LogLvl::info:    ++log_inf; break;
+    case tftp::LogLvl::debug:   ++log_dbg; break;
+    default:  break;
+  }
+  //std::cout << "[DEBUG] " << tftp::to_string(lvl) << " " <<  msg << std::endl;
+};
+
 tftp::ArgItems arg_items
 {
   {0, {}, tftp::ArgExistVaue::no, "", "Simple TFTP client from 'server-fw' project licensed GPL-3.0", ""},
@@ -296,6 +322,7 @@ const char * tst_args[]=
   "-gv",
   "-p", "-P", "--put",
   "-v", "-V", "--verb",
+  "-l", // FAIL - need value
   "-l", "test_local1.txt", "-L", "test_local2.txt", "--local", "test_local3.txt",
   "-r", "test_remote100.txt", "-R", "test_remote200.txt", "--remote", "test_remote300.txt",
   "-m", "netascii", "-M", "octet", "--mode", "mail",
@@ -306,7 +333,8 @@ const char * tst_args[]=
   "10.0.0.202:6900",
   "-h", "-H", "--help", "-?",
   "ending",
-  "-Z",
+  "-Z", "--zuuu", // FAIL - unknown arguments
+  "-l", // FAIL - need value
   "--",                               // end parsing
   "--local", "test_local4.txt", "-H", // pass as simple values
 };
@@ -314,10 +342,17 @@ const char * tst_args[]=
 //p.out_help(std::cout); // develop checks
 //p.out_header(std::cout); // develop checks
 
+log_reset();
+
 const auto & res = p.run(
-    nullptr,
+    log_local,
     sizeof(tst_args)/sizeof(tst_args[0]),
     const_cast<char **>(tst_args));
+
+TEST_CHECK_TRUE (log_err == 0U);
+TEST_CHECK_TRUE (log_wrn == 4U);
+TEST_CHECK_TRUE (log_inf == 0U);
+TEST_CHECK_TRUE (log_dbg == 40U);
 
 TEST_CHECK_TRUE(res.second.size() == 6U);
 if(res.second.size() > 0U) TEST_CHECK_TRUE(res.second[0U] == "B-E-G-I-N");

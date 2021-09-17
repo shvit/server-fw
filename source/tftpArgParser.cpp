@@ -63,8 +63,6 @@ auto ArgParser::run(
 
   for(int iter=1; iter < argc; ++iter)
   {
-    bool is_correct=false;
-
     if(is_end_parse)
     {
       data_result_.second.emplace_back(argv[iter]);
@@ -108,8 +106,13 @@ auto ArgParser::run(
     }
 
     // Search!
+    bool is_processed=false;
+
     for(const auto & itm : data_settings_)
     {
+      const int & id = std::get<int>(itm);
+      if(id == 0) continue; // Skip info
+
       const auto & itm_type_val = std::get<ArgExistVaue>(itm);
 
       for(const auto & chk_name : std::get<VecStr>(itm))
@@ -121,21 +124,31 @@ auto ArgParser::run(
         {
           if(chk_name == passed_name) // if find option
           {
-            auto & res_list = data_result_.first[std::get<int>(itm)]; // create if need
+            is_processed=true;
+
+            auto & res_list = data_result_.first[id]; // create if need
 
             if((next_type == ArgType::normal_value) &&
                ((itm_type_val == ArgExistVaue::required) ||
                 (itm_type_val == ArgExistVaue::optional)))
             {
-              is_correct=true;
-              L_DBG("Passed argument # "+std::to_string(std::get<int>(itm))+" '"+constr_arg(passed_name)+"'");
+              L_DBG("Passed arg id="+std::to_string(id)+" '"+
+                    constr_arg(passed_name)+"' value '"+next_value+"'");
 
               res_list.emplace_back(constr_arg(passed_name), next_value);
               need_skip_next = true;
             }
             else
+            if((itm_type_val == ArgExistVaue::no) ||
+               (itm_type_val == ArgExistVaue::optional))
             {
+              L_DBG("Passed arg id="+std::to_string(id)+" '"+
+                    constr_arg(passed_name)+"' w/o value");
               res_list.emplace_back(constr_arg(passed_name), "");
+            }
+            else
+            {
+              L_WRN("Reject argument '"+constr_arg(passed_name)+"' (wrong his value)");
             }
 
             break;
@@ -145,7 +158,7 @@ auto ArgParser::run(
     }
 
     if(need_skip_next) ++iter;
-    if(!is_correct) L_WRN("Fail passed argument '"+argv[iter]+"'");
+    if(!is_processed) L_WRN("Unknown argument '"+argv[iter]+"'; Skip!");
   }
 
   L_DBG("Parsing arguments finished");

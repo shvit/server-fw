@@ -22,10 +22,18 @@ UNIT_TEST_SUITE_BEGIN(ClientSettings)
 
 UNIT_TEST_CASE_BEGIN(parse_arg_cl, "Parse CMD client arguments")
 
-size_t log_err=0U;
-size_t log_wrn=0U;
-size_t log_inf=0U;
-size_t log_dbg=0U;
+size_t log_err{0U};
+size_t log_wrn{0U};
+size_t log_inf{0U};
+size_t log_dbg{0U};
+
+auto log_reset=[&]()
+    {
+      log_err=0U;
+      log_wrn=0U;
+      log_inf=0U;
+      log_dbg=0U;
+    };
 
 auto log_local=[&](tftp::LogLvl lvl, std::string_view msg)
 {
@@ -37,7 +45,7 @@ auto log_local=[&](tftp::LogLvl lvl, std::string_view msg)
     case tftp::LogLvl::debug:   ++log_dbg; break;
     default:  break;
   }
-  std::cout << "[DEBUG] " << tftp::to_string(lvl) << " " <<  msg << std::endl;
+  //std::cout << "[DEBUG] " << tftp::to_string(lvl) << " " <<  msg << std::endl;
 };
 
 // 1
@@ -55,10 +63,7 @@ START_ITER("default options");
 // 2
 START_ITER("load options normal");
 {
-  log_err = 0U;
-  log_wrn = 0U;
-  log_inf = 0U;
-  log_dbg = 0U;
+  log_reset();
 
   const char * tst_args[]=
   {
@@ -87,9 +92,9 @@ START_ITER("load options normal");
   TEST_CHECK_TRUE(b->load_options(log_local, ap) == tftp::TripleResult::ok);
 
   TEST_CHECK_TRUE(log_err == 0U);
-  TEST_CHECK_TRUE(log_wrn == 2U);
+  TEST_CHECK_TRUE(log_wrn == 0U);
   TEST_CHECK_TRUE(log_inf == 2U);
-  TEST_CHECK_TRUE(log_dbg == 12U);
+  TEST_CHECK_TRUE(log_dbg == 14U);
 
   TEST_CHECK_TRUE(b->verb == 7);
   TEST_CHECK_TRUE(b->file_local == "test_local.txt");
@@ -106,10 +111,7 @@ START_ITER("load options normal");
 // 3
 START_ITER("Try to load fail options");
 {
-  log_err = 0U;
-  log_wrn = 0U;
-  log_inf = 0U;
-  log_dbg = 0U;
+  log_reset();
 
   const char * tst_args[]=
   {
@@ -149,15 +151,10 @@ START_ITER("Try to load fail options");
 
 // 4 - real bug case
 {
+  log_reset();
+
   const char * tst_args[]=
-  {
-    "./tftp-cl",
-    "--get",
-    "-l", "z",
-    "-r", "z",
-    "10.0.0.202:69",
-    "-v", "7",
-  };
+    { "./tftp-cl", "--get", "-l", "z", "-r", "z", "10.0.0.202:69", "-v", "7", };
 
   tftp::ArgParser ap{tftp::constants::client_arg_settings};
 
@@ -174,7 +171,6 @@ START_ITER("Try to load fail options");
   TEST_CHECK_TRUE (log_wrn == 0U);
 
   TEST_CHECK_TRUE(b->opt.request_type() == tftp::SrvReq::read);
-
 }
 
 
