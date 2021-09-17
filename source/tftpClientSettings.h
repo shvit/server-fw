@@ -37,7 +37,6 @@ namespace constants
   {
     {0, {}, ArgExistVaue::no, "", "Simple TFTP client from 'server-fw' project licensed GPL-3.0", ""},
     {0, {}, ArgExistVaue::no, "", "Github project page https://github.com/shvit/server-fw", ""},
-    {0, {}, ArgExistVaue::no, "", "(c) 2019-2021 Vitaliy.V.Shirinkin, e-mail: vitaliy.shirinkin@gmail.com", ""},
     {0, {}, ArgExistVaue::no, "", "--", ""},
     {0, {}, ArgExistVaue::no, "", "Usage:", ""},
     {0, {}, ArgExistVaue::no, "", "./tftp-cl [<options ...>]", "<IP addr>[:<UDP Port>]"},

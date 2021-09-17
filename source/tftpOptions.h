@@ -200,13 +200,15 @@ public:
   /** \brief Set request type
    *
    *  \param [in] val New value
+   *  \return True if value valid, else - false
    */
-  void set_request_type(SrvReq new_req);
+  bool set_request_type(SrvReq new_req);
 
   /** \brief Set filename from string value
    *
    *  \param [in] val String value
    *  \param [in] log Callbacl for logging; default is nullptr
+   *  \return True if filename exist, else - false
    */
   bool set_filename(
       const std::string & val,
@@ -216,8 +218,9 @@ public:
    *
    *  \param [in] val String value
    *  \param [in] log Callbacl for logging; default is nullptr
+   *  \return True if value valid, else - false
    */
-  void set_blksize(
+  bool set_blksize(
       const std::string & val,
       fLogMsg log = nullptr);
 
@@ -225,8 +228,9 @@ public:
    *
    *  \param [in] val String value
    *  \param [in] log Callbacl for logging; default is nullptr
+   *  \return True if value valid, else - false
    */
-  void set_timeout(
+  bool set_timeout(
       const std::string & val,
       fLogMsg log = nullptr);
 
@@ -234,8 +238,9 @@ public:
    *
    *  \param [in] val String value
    *  \param [in] log Callbacl for logging; default is nullptr
+   *  \return True if value valid, else - false
    */
-  void set_windowsize(
+  bool set_windowsize(
       const std::string & val,
       fLogMsg log = nullptr);
 
@@ -243,8 +248,9 @@ public:
    *
    *  \param [in] val String value
    *  \param [in] log Callbacl for logging; default is nullptr
+   *  \return True if value valid, else - false
    */
-  void set_tsize(
+  bool set_tsize(
       const std::string & val,
       fLogMsg log = nullptr);
 
@@ -252,7 +258,7 @@ public:
    *
    *  \param [in] val String value
    *  \param [in] log Callbacl for logging; default is nullptr
-   *  \return True if no error, else - false
+   *  \return True if value valid, else - false
    */
   bool set_transfer_mode(
       const std::string & val,

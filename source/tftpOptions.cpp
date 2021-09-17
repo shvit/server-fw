@@ -154,6 +154,10 @@ bool Options::buffer_parse(
   {
     auto tmp_str = buf.get_string(curr_pos, buf_size-curr_pos);
     ret = set_filename(tmp_str, log);
+    if(ret)
+    {
+      OPT_L_INF("Recognize filename '"+filename_+"'");
+    }
     curr_pos += tmp_str.size()+1U;
   }
 
@@ -162,6 +166,10 @@ bool Options::buffer_parse(
   {
     std::string curr_mod = buf.get_string(curr_pos, buf_size-curr_pos);
     ret = set_transfer_mode(curr_mod, log);
+    if(ret)
+    {
+      OPT_L_INF("Recognize tranfser mode '"+curr_mod+"'");
+    }
     curr_pos += curr_mod.size()+1U;
   }
 
@@ -264,9 +272,10 @@ bool Options::buffer_parse_ack(
 
 //------------------------------------------------------------------------------
 
-void Options::set_request_type(SrvReq new_req)
+bool Options::set_request_type(SrvReq new_req)
 {
   request_type_ = new_req;
+  return (request_type_ != SrvReq::unknown);
 }
 
 //------------------------------------------------------------------------------
@@ -274,28 +283,25 @@ void Options::set_request_type(SrvReq new_req)
 bool Options::set_filename(const std::string & val, fLogMsg log)
 {
   filename_ = val;
-  if(filename_.size() > 0U)
-  {
-    OPT_L_INF("Recognize filename '"+filename_+"'");
-    return true;
-  }
-  else
+
+  if(filename_.size() == 0U)
   {
     OPT_L_WRN("Wrong filename (empty!)");
-    return false;
   }
+
+  return filename_.size() > 0U;
 }
 
 //------------------------------------------------------------------------------
 
-void Options::set_blksize(
+bool Options::set_blksize(
     const std::string & val,
     fLogMsg log)
 {
   if(!is_digit_str(val))
   {
     OPT_L_WRN("Wrong value '"+val+"'; Ignore!");
-    return;
+    return false;
   }
 
   int tmp_int;
@@ -306,34 +312,35 @@ void Options::set_blksize(
   catch (...)
   {
     OPT_L_WRN("Converting error value '"+val+"'; Ignore!");
-    return;
+    return false;
   }
 
   if(tmp_int < 1)
   {
     OPT_L_WRN("Wrong value too small ("+val+"); Ignore!");
-    return;
+    return false;
   }
 
   if(tmp_int > 65500)
   {
     OPT_L_WRN("Wrong value too large ("+val+"); Ignore!");
-    return;
+    return false;
   }
 
   blksize_ = {true, tmp_int};
+  return true;
 }
 
 //------------------------------------------------------------------------------
 
-void Options::set_timeout(
+bool Options::set_timeout(
     const std::string & val,
     fLogMsg log)
 {
   if(!is_digit_str(val))
   {
     OPT_L_WRN("Wrong value '"+val+"'; Ignore!");
-    return;
+    return false;
   }
 
   int tmp_int;
@@ -344,34 +351,35 @@ void Options::set_timeout(
   catch (...)
   {
     OPT_L_WRN("Converting error value '"+val+"'; Ignore!");
-    return;
+    return false;
   }
 
   if(tmp_int < 1)
   {
     OPT_L_WRN("Wrong value too small ("+val+"); Ignore!");
-    return;
+    return false;
   }
 
   if(tmp_int > 3600)
   {
     OPT_L_WRN("Wrong value too large ("+val+"); Ignore!");
-    return;
+    return false;
   }
 
   timeout_ = {true, tmp_int};
+  return true;
 }
 
 //------------------------------------------------------------------------------
 
-void Options::set_windowsize(
+bool Options::set_windowsize(
     const std::string & val,
     fLogMsg log)
 {
   if(!is_digit_str(val))
   {
     OPT_L_WRN("Wrong value '"+val+"'; Ignore!");
-    return;
+    return false;
   }
 
   int tmp_int;
@@ -382,28 +390,29 @@ void Options::set_windowsize(
   catch (...)
   {
     OPT_L_WRN("Converting error value '"+val+"'; Ignore!");
-    return;
+    return false;
   }
 
   if(tmp_int < 1)
   {
     OPT_L_WRN("Wrong value too small ("+val+"); Ignore!");
-    return;
+    return false;
   }
 
   windowsize_ = {true, tmp_int};
+  return true;
 }
 
 //------------------------------------------------------------------------------
 
-void Options::set_tsize(
+bool Options::set_tsize(
     const std::string & val,
     fLogMsg log)
 {
   if(!is_digit_str(val))
   {
     OPT_L_WRN("Wrong value '"+val+"'; Ignore!");
-    return;
+    return false;
   }
 
   int tmp_int;
@@ -414,16 +423,17 @@ void Options::set_tsize(
   catch (...)
   {
     OPT_L_WRN("Converting error value '"+val+"'; Ignore!");
-    return;
+    return false;
   }
 
   if(tmp_int < 0)
   {
     OPT_L_WRN("Wrong value too small ("+val+"); Ignore!");
-    return;
+    return false;
   }
 
   tsize_ = {true, tmp_int};
+  return true;
 }
 
 //------------------------------------------------------------------------------
@@ -448,11 +458,7 @@ bool Options::set_transfer_mode(
     else
     if(curr_mod == "mail") { ++fl; transfer_mode_ = TransfMode::mail; }
 
-    if((ret = fl))
-    {
-      OPT_L_INF("Recognize tranfser mode '"+curr_mod+"'");
-    }
-    else
+    if(!(ret = fl))
     {
       OPT_L_WRN("Wrong value '"+curr_mod+"'; Ignore!");
     }

@@ -88,15 +88,21 @@ auto ClientSettings::load_options(
     {
       case 1: // local file
         file_local = ap.get_parsed_item(item.first);
+        L_DBG("Set local filename '"+file_local+"'");
         break;
       case 2: // remote file
-        opt.set_filename(ap.get_parsed_item(item.first), log);
+        if(opt.set_filename(ap.get_parsed_item(item.first), log))
+        {
+          L_DBG("Set remote filename '"+opt.filename()+"'");
+        }
         break;
       case 3: // Request GET
         opt.set_request_type(SrvReq::read);
+        L_DBG("Set request RRQ");
         break;
       case 4: // Request PUT
         opt.set_request_type(SrvReq::write);
+        L_DBG("Set request WRQ");
         break;
       case 5: // Help
         ret = TripleResult::nop;
@@ -109,19 +115,34 @@ auto ClientSettings::load_options(
         }
         break;
       case 7: // Mode transfer
-        opt.set_transfer_mode(ap.get_parsed_item(item.first), log);
+        if(opt.set_transfer_mode(ap.get_parsed_item(item.first), log))
+        {
+          L_DBG("Set mode '"+opt.transfer_mode()+"'");
+        }
         break;
       case 8: // Block size
-        opt.set_blksize(ap.get_parsed_item(item.first), log);
+        if(opt.set_blksize(ap.get_parsed_item(item.first), log))
+        {
+          L_DBG("Set option blksize="+std::to_string(opt.blksize()));
+        }
         break;
       case 9: // Timeout
-        opt.set_timeout(ap.get_parsed_item(item.first), log);
+        if(opt.set_timeout(ap.get_parsed_item(item.first), log))
+        {
+          L_DBG("Set option timeout="+std::to_string(opt.timeout()));
+        }
         break;
       case 10: // Windowsize
-        opt.set_windowsize(ap.get_parsed_item(item.first), log);
+        if(opt.set_windowsize(ap.get_parsed_item(item.first), log))
+        {
+          L_DBG("Set option windowsize="+std::to_string(opt.windowsize()));
+        }
         break;
       case 11: // Tsize
-        opt.set_tsize(ap.get_parsed_item(item.first), log);
+        if(opt.set_tsize(ap.get_parsed_item(item.first), log))
+        {
+          L_DBG("Set option tsize="+std::to_string(opt.tsize()));
+        }
         break;
       default:
         break;
@@ -131,7 +152,7 @@ auto ClientSettings::load_options(
   // 2 Parse main arguments
   if(auto cnt=res.second.size(); cnt == 0U)
   {
-    L_WRN("No server address found; used "+srv_addr.str());
+    L_INF("No server address found; used "+srv_addr.str());
   }
   else
   if(cnt > 1U)
@@ -141,6 +162,7 @@ auto ClientSettings::load_options(
   else
   {
     srv_addr.set_string(res.second[0U]);
+    L_DBG("Set server as '"+srv_addr.str()+"'");
   }
 
   L_DBG("Load client arguments finished is "+(ret != TripleResult::fail ? "SUCCESS" : "FAIL"));
