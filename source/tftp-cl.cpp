@@ -63,7 +63,7 @@ int main(int argc, char* argv[])
   {
     case tftp::TripleResult::fail:
     {
-      log_main(tftp::LogLvl::err, "Fail load server arguments");
+      log_main(tftp::LogLvl::err, "Fail load client settings");
       log_pre_out();
       return EXIT_FAILURE;
     }

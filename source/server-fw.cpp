@@ -96,7 +96,7 @@ int main(int argc, char* argv[])
   {
     case tftp::TripleResult::fail:
     {
-      CURR_LOG(err, "Fail load server arguments");
+      CURR_LOG(err, "Fail load server settings");
       log_pre_out();
       return EXIT_FAILURE;
     }

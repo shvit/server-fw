@@ -14,37 +14,6 @@ namespace tftp
 {
 
 //------------------------------------------------------------------------------
-/*
-ClientSession::ClientSession(
-    std::ostream * stream,
-    int argc,
-    char * argv[]):
-    ClientSession(stream)
-{
-  init(argc, argv);
-}
-
-//------------------------------------------------------------------------------
-
-ClientSession::ClientSession(std::ostream * stream):
-    stat_{State::need_init},
-    pstream_{stream},
-    settings_{},
-    local_addr_{},
-    socket_{0},
-    stage_{0U},
-    file_in_{},
-    file_out_{},
-    file_size_{0U},
-    error_code_{0U},
-    error_message_{},
-    need_break_{false},
-    stopped_{false}
-{
-  //if(pstream_) settings_->out_header(*pstream_);
-}
-*/
-//------------------------------------------------------------------------------
 
 ClientSession::ClientSession(pClientSettings && sett, fLogMsg new_cb):
     Logger(new_cb),
@@ -62,6 +31,8 @@ ClientSession::ClientSession(pClientSettings && sett, fLogMsg new_cb):
         stopped_{false}
 {
 }
+
+//------------------------------------------------------------------------------
 
 ClientSession::ClientSession():
     ClientSession(ClientSettings::create(), nullptr)
@@ -161,38 +132,6 @@ bool ClientSession::was_error() const
 {
   return (error_code_ > 0U) || (error_message_.size() > 0U);
 }
-
-// -----------------------------------------------------------------------------
-/*
-void ClientSession::log(LogLvl lvl, std::string_view msg) const
-{
-  if((int)lvl <=settings_->verb)
-  {
-    //if(pstream_) *pstream_ << "[" << to_string(lvl) << "] " <<  msg << std::endl;
-  }
-}
-*/
-//------------------------------------------------------------------------------
-/*
-bool ClientSession::init(
-    int argc,
-    char * argv[])
-{
-
-  bool ret = settings_->load_options(
-      std::bind(
-          & ClientSession::log,
-          this,
-          std::placeholders::_1,
-          std::placeholders::_2),
-      argc,
-      argv);
-
-  return ret && init_session();
-
-  return true;
-}
-*/
 
 //------------------------------------------------------------------------------
 
@@ -976,12 +915,7 @@ auto ClientSession::receive_no_wait(SmBufEx & buf) -> TripleResult
         Options confirm_opt;
         confirm_opt.buffer_parse_ack(
             buf,
-            rx_pkt_size); // no nested logging
-            //std::bind(
-            //    & ClientSession::log,
-            //    this,
-            //    std::placeholders::_1,
-            //    std::placeholders::_2));
+            rx_pkt_size);
 
         { // blksize
           std::string oname = "'" + std::string{constants::name_blksize} + "'";

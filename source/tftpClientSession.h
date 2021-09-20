@@ -43,8 +43,7 @@ class ClientSession: public Logger
 {
 protected:
   aState           stat_;       ///< State machine
-  //std::ostream *   pstream_;    ///< Output stream pointer (nullptr if no need)
-  pClientSettings   settings_;   ///< Settings for TFTP client
+  pClientSettings  settings_;   ///< Settings for TFTP client
   Addr             local_addr_; ///< Local address
   int              socket_;     ///< Socket
   size_t           stage_;      ///< Full (!) number of processed block
@@ -80,14 +79,6 @@ protected:
    *  \return Teue if error code and message assigned, else - false
    */
   bool was_error() const;
-
-  /** \brief Local used logger method
-   *
-   *  Safe use
-   *  \param [in] lvl Level of message
-   *  \param [in] msg Text message
-   */
-  //void log(LogLvl lvl, std::string_view msg) const;
 
   /** \brief Get current tftp block number
    *
@@ -164,27 +155,6 @@ public:
    *  \param [out] sett Client settings unique pointer
    */
   ClientSession(pClientSettings && sett, fLogMsg new_cb);
-
-  /** \brief Main constructor with parse cmd arguments
-   *
-   *  Internal execute init()
-   *  \param [out] stream Pointer to output stream
-   *  \param [in] argc Count of arguments (array items)
-   *  \param [in] argv Array with arguments
-   */
-//  ClientSession(
-//      std::ostream * stream,
-//      int argc,
-//      char * argv[]);
-
-  /** \brief Initialize session
-   *
-   *  Internal execute init_session()
-   *  \param [in] argc Count of arguments (array items)
-   *  \param [in] argv Array with arguments
-   *  \return True is initialize success, else - false
-   */
-  //bool init(int argc, char * argv[]);
 
   /** \brief Init session
    *

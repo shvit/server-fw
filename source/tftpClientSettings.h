@@ -66,8 +66,6 @@ class ClientSettings
 {
 protected:
 
-  //ArgParser ap_; ///< Argument parser
-
   /** \brief Default constructor
    */
   ClientSettings();
@@ -80,9 +78,7 @@ public:
 
   std::string file_local; ///< Local filename
 
-  //std::string file_remote; ///< Remote filename
-
-  Options opt;
+  Options opt; ///< Options with remote filename
 
   /** \brief Local used logger method
    *
@@ -109,22 +105,6 @@ public:
   auto load_options(
       fLogMsg cb_logger,
       ArgParser & ap) -> TripleResult;
-
-  /** \brief Out to cout header output for application
-   *
-   *  Used for output: Application name, License, etc. See at ArgItems
-   *  Get information from ArgItems value
-   *  \param [out] stream Output stream
-   */
-  //void out_header(std::ostream & stream) const;
-
-  /** \brief Out to cout help information of arguments options
-   *
-   *  Used for help output
-   *  Get information from ArgItems value
-   *  \param [out] stream Output stream
-   */
-  //void out_help(std::ostream & stream) const;
 
 };
 

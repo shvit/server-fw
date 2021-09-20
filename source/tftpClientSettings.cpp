@@ -22,7 +22,6 @@ namespace tftp
 // -----------------------------------------------------------------------------
 
 ClientSettings::ClientSettings():
-  //ap_{constants::arg_option_settings},
   srv_addr{},
   verb{4},
   file_local{},
@@ -169,20 +168,6 @@ auto ClientSettings::load_options(
 
   return ret;
 }
-
-// -----------------------------------------------------------------------------
-
-//void ClientSettings::out_header(std::ostream & stream) const
-//{
-//  ap_.out_header(stream);
-//}
-
-// -----------------------------------------------------------------------------
-
-//void ClientSettings::out_help(std::ostream & stream) const
-//{
-//  ap_.out_help(stream);
-//}
 
 // -----------------------------------------------------------------------------
 
