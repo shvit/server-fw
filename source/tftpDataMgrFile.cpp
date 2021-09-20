@@ -46,7 +46,7 @@ bool DataMgrFile::search_rec_by_md5(
     const Path & path,
     std::string_view md5sum)
 {
-  for(auto & curr_iter : filesystem::recursive_directory_iterator(path))
+  for(auto & curr_iter : filesystem::recursive_directory_iterator(path, filesystem::directory_options::skip_permission_denied))
   {
     Path curr=curr_iter.path();
     std::string ext{curr.extension()};
@@ -100,7 +100,7 @@ bool DataMgrFile::search_rec_by_name(
     const Path & path,
     std::string_view name)
 {
-  for(auto & curr_iter : filesystem::recursive_directory_iterator(path))
+  for(auto & curr_iter : filesystem::recursive_directory_iterator(path, filesystem::directory_options::skip_permission_denied))
   {
     Path curr=curr_iter.path();
 

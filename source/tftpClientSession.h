@@ -15,6 +15,7 @@
 #include "tftpCommon.h"
 #include "tftpClientSettings.h"
 #include "tftpSmBufEx.h"
+#include "tftpDataMgr.h"
 
 using namespace std::experimental;
 
@@ -55,6 +56,8 @@ protected:
 
   std::atomic_bool need_break_; ///< Flag for stop session
   std::atomic_bool stopped_;    ///< Flag for stop session
+
+  pDataMgr         file_man_;   ///< Data manager
 
   /** \brief Switch state machine no new state
    *

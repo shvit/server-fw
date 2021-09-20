@@ -9,6 +9,10 @@
 #include <unistd.h>
 
 #include "tftpClientSession.h"
+#include "tftpDataMgrFileRead.h"
+#include "tftpDataMgrFileWrite.h"
+
+#include <iostream>
 
 namespace tftp
 {
@@ -17,18 +21,19 @@ namespace tftp
 
 ClientSession::ClientSession(pClientSettings && sett, fLogMsg new_cb):
     Logger(new_cb),
-        stat_{State::need_init},
-        settings_{std::move(sett)},
-        local_addr_{},
-        socket_{0},
-        stage_{0U},
-        file_in_{},
-        file_out_{},
-        file_size_{0U},
-        error_code_{0U},
-        error_message_{},
-        need_break_{false},
-        stopped_{false}
+    stat_{State::need_init},
+    settings_{std::move(sett)},
+    local_addr_{},
+    socket_{0},
+    stage_{0U},
+    file_in_{},
+    file_out_{},
+    file_size_{0U},
+    error_code_{0U},
+    error_message_{},
+    need_break_{false},
+    stopped_{false},
+    file_man_{nullptr}
 {
 }
 
@@ -139,66 +144,109 @@ bool ClientSession::init()
 {
   L_INF("Session initialize started");
 
-  bool ret = (settings_->opt.request_type() == SrvReq::write) ||
-             (settings_->opt.request_type() == SrvReq::read);
-  if(!ret)
+  bool ret = false;
+
+  Path loc_file_name{Path{settings_->file_local}.filename()};
+  Path loc_file_path{Path{settings_->file_local}.replace_filename("")};
+
+  if(!filesystem::is_directory(loc_file_path))
+  {
+    loc_file_path = filesystem::current_path();
+    L_INF("Use current work directory "+loc_file_path.string());
+  }
+
+  switch(settings_->opt.request_type())
+  {
+    case SrvReq::read:
+      file_man_ = DataMgrFileWrite::create(
+          get_logger(),
+          std::bind(
+              & ClientSession::set_error_if_first,
+              this,
+              std::placeholders::_1,
+              std::placeholders::_2),
+              loc_file_name.string(),
+              loc_file_path.string());
+      break;
+    case SrvReq::write:
+      file_man_ = DataMgrFileRead::create(
+          get_logger(),
+          std::bind(
+              & ClientSession::set_error_if_first,
+              this,
+              std::placeholders::_1,
+              std::placeholders::_2),
+              loc_file_name.string(),
+              loc_file_path.string(),
+              {});
+      break;
+    default: // fake
+      L_ERR("Wrong request type '"+settings_->opt.request_type()+"'");
+      break;
+  }
+
+  if(file_man_.get())
+  {
+    if(!(ret = file_man_->open()))
+    {
+      file_man_.release();
+
+      // Ignore if error was set from DataMgr
+      set_error_if_first(0, "Unknown stream initialize error; break session");
+    }
+  }
+
+
+
+/*
+  // Check local file exist or not
+  if(settings_->opt.request_type() == SrvReq::write)
+  {
+    if(!(ret = filesystem::exists(settings_->file_local)))
+    {
+      L_ERR("Local file not exist '"+settings_->file_local+"'");
+    }
+  }
+  else
+  if(settings_->opt.request_type() == SrvReq::read)
+  {
+    if(!(ret=!filesystem::exists(settings_->file_local)))
+    {
+      L_ERR("Local file already exist '"+settings_->file_local+"'");
+    }
+  }
+  else
   {
     L_ERR("Wrong request type '"+settings_->opt.request_type()+"'");
   }
-
-  // Check local file exist
-  if(ret)
-  {
-    if(settings_->opt.request_type() == SrvReq::write)
-    {
-      ret=filesystem::exists(settings_->file_local);
-      if(!ret)
-      {
-        L_ERR("Local file not exist '"+settings_->file_local+"'");
-      }
-    }
-    else
-    if(settings_->opt.request_type() == SrvReq::read)
-    {
-      ret=!filesystem::exists(settings_->file_local);
-      if(!ret)
-      {
-        L_ERR("Local file already exist '"+settings_->file_local+"'");
-      }
-    }
-  }
+  if(!ret) goto RET_INIT;
 
   // Calc file size
-  if(ret)
+  file_size_ = 0U;
+  if(settings_->opt.was_set_tsize())
   {
-    file_size_=0U;
-    if(settings_->opt.was_set_tsize())
+    auto tmp_val = settings_->opt.tsize();
+    if(tmp_val >= 0) file_size_ = (size_t) tmp_val;
+  }
+
+  //size_t real_size=0U;
+  if(settings_->opt.request_type() == SrvReq::write)
+  {
+    ret = filesystem::exists(settings_->file_local);
+    if(ret)
     {
-      auto tmp_val = settings_->opt.tsize();
-      if(tmp_val > 0) file_size_ = tmp_val;
+      file_size_=filesystem::file_size(settings_->file_local);
+      L_DBG("Found local file '"+settings_->file_local+
+            "' size "+std::to_string(file_size_));
     }
     else
     {
-      if(settings_->opt.request_type() == SrvReq::write)
-      {
-        ret = filesystem::exists(settings_->file_local);
-        if(ret)
-        {
-          file_size_=filesystem::file_size(settings_->file_local);
-          L_DBG("Found local file '"+settings_->file_local+
-                "' size "+std::to_string(file_size_));
-        }
-        else
-        {
-          L_ERR("Not found local file '"+settings_->file_local+"'");
-        }
-      }
+      L_ERR("Not found local file '"+settings_->file_local+"'");
     }
   }
+  if(!ret) goto RET_INIT;
 
   // File open
-  if(ret)
-  {
     if(settings_->opt.request_type() == SrvReq::read)
     {
       file_out_.exceptions(file_out_.exceptions() | std::ios::failbit);
@@ -245,8 +293,7 @@ bool ClientSession::init()
       ret = false;
       L_ERR("Wrong request type '"+settings_->opt.request_type()+ "'");
     }
-  }
-
+*/
   if(ret)
   {
     // Local address
@@ -290,6 +337,9 @@ bool ClientSession::init()
       ::close(socket_);
     }
   }
+
+
+//RET_INIT:
 
   L_INF("Session initialise is "+(ret ? "SUCCESSFUL" : "FAIL"));
   return ret;
