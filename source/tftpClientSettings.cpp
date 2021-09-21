@@ -25,7 +25,8 @@ ClientSettings::ClientSettings():
   srv_addr{},
   verb{4},
   file_local{},
-  opt{}
+  opt{},
+  retransmit_count{constants::default_retransmit_count}
 {
   srv_addr.set_string("127.0.0.1:"+std::to_string(constants::default_tftp_port));
   opt.set_transfer_mode(std::string{to_string(TransfMode::octet)});

@@ -211,7 +211,149 @@ bool Options::buffer_parse(
 
 //------------------------------------------------------------------------------
 
-bool Options::buffer_parse_ack(
+void Options::apply_oack(
+    const Options & new_opt,
+    fLogMsg log)
+{
+
+#define CHECK_OPT(NAME) \
+    {\
+      std::string oname = "'" + std::string{constants::name_##NAME} + "'";\
+      if(was_set_##NAME() == new_opt.was_set_##NAME())\
+      {\
+        if(was_set_##NAME())\
+        {\
+          if(NAME() == new_opt.NAME())\
+          {\
+            OPT_L_DBG("Ack option "+oname);\
+          }\
+          else\
+          {\
+            OPT_L_WRN("Try change ack value for option "+oname+"; Ignore self value!");\
+            set_##NAME(new_opt.NAME(), log);\
+          }\
+        }\
+      }\
+      else\
+      {\
+        if(was_set_##NAME())\
+        {\
+          OPT_L_WRN("Option "+oname+" not confirmed! Ignore self value");\
+          reset_##NAME();\
+        }\
+        else\
+        {\
+          OPT_L_WRN("Option "+oname+" not required but present! Ignore new value");\
+        }\
+      }\
+    }
+
+  CHECK_OPT(blksize);
+  CHECK_OPT(timeout);
+  CHECK_OPT(windowsize);
+  CHECK_OPT(tsize);
+
+
+  /*
+  { // blksize
+    std::string oname = "'" + std::string{constants::name_blksize} + "'";
+    if(was_set_blksize() == new_opt.was_set_blksize())
+    {
+      if(was_set_blksize())
+      {
+        if(blksize() == new_opt.blksize())
+        {
+          OPT_L_DBG("Ack option "+oname);
+        }
+        else
+        {
+          OPT_L_WRN("Try change ack value for option "+oname+"; Ignore self value!");
+          set_blksize(new_opt.blksize(), log);
+        }
+      }
+    }
+    else // desync blksize
+    {
+      if(was_set_blksize())
+      {
+        OPT_L_WRN("Option "+oname+" not confirmed! Ignore self value");
+        reset_blksize();
+      }
+      else
+      {
+        OPT_L_WRN("Option "+oname+" not required but present! Ignore new value");
+      }
+    }
+  }
+
+  { // timeout
+    std::string oname = "'" + std::string{constants::name_timeout} + "'";
+    if(was_set_timeout() == new_opt.was_set_timeout())
+    {
+      if(was_set_timeout())
+      {
+        if(timeout() == new_opt.timeout())
+        {
+          OPT_L_DBG("Ack option "+oname);
+        }
+        else
+        {
+          OPT_L_WRN("Try change ack value for option "+oname+"; Ignore self value!");
+          set_timeout(new_opt.timeout(), log);
+        }
+      }
+    }
+    else // desync timeout
+    {
+      if(was_set_timeout())
+      {
+        OPT_L_WRN("Option "+oname+" not confirmed! Ignore self value");
+        reset_timeout();
+      }
+      else
+      {
+        OPT_L_WRN("Option "+oname+" not required but present! Ignore new value");
+      }
+    }
+  }
+
+  { // windowsize
+    std::string oname = "'" + std::string{constants::name_windowsize} + "'";
+    if(was_set_windowsize() == new_opt.was_set_windowsize())
+    {
+      if(was_set_windowsize())
+      {
+        if(windowsize() == new_opt.windowsize())
+        {
+          OPT_L_DBG("Ack option "+oname);
+        }
+        else
+        {
+          OPT_L_WRN("Try change ack value for option "+oname+"; Ignore self value!");
+          set_windowsize(new_opt.windowsize(), log);
+        }
+      }
+    }
+    else // desync windowsize
+    {
+      if(was_set_windowsize())
+      {
+        OPT_L_WRN("Option "+oname+" not confirmed! Ignore self value");
+        reset_windowsize();
+      }
+      else
+      {
+        OPT_L_WRN("Option "+oname+" not required but present! Ignore new value");
+      }
+    }
+  }
+*/
+
+}
+
+//------------------------------------------------------------------------------
+
+bool Options::buffer_parse_oack(
     const SmBuf & buf,
     const size_t & buf_size,
     fLogMsg log)
@@ -295,6 +437,28 @@ bool Options::set_filename(const std::string & val, fLogMsg log)
 //------------------------------------------------------------------------------
 
 bool Options::set_blksize(
+    const int & val,
+    fLogMsg log)
+{
+  if(val < 1)
+  {
+    OPT_L_WRN("Wrong value too small ("+std::to_string(val)+"); Ignore!");
+    return false;
+  }
+
+  if(val > 65500)
+  {
+    OPT_L_WRN("Wrong value too large ("+std::to_string(val)+"); Ignore!");
+    return false;
+  }
+
+  blksize_ = {true, val};
+  return true;
+}
+
+//------------------------------------------------------------------------------
+
+bool Options::set_blksize(
     const std::string & val,
     fLogMsg log)
 {
@@ -315,23 +479,31 @@ bool Options::set_blksize(
     return false;
   }
 
-  if(tmp_int < 1)
-  {
-    OPT_L_WRN("Wrong value too small ("+val+"); Ignore!");
-    return false;
-  }
-
-  if(tmp_int > 65500)
-  {
-    OPT_L_WRN("Wrong value too large ("+val+"); Ignore!");
-    return false;
-  }
-
-  blksize_ = {true, tmp_int};
-  return true;
+  return set_blksize(tmp_int, log);
 }
 
 //------------------------------------------------------------------------------
+
+bool Options::set_timeout(
+    const int & val,
+    fLogMsg log)
+{
+
+  if(val < 1)
+  {
+    OPT_L_WRN("Wrong value too small ("+std::to_string(val)+"); Ignore!");
+    return false;
+  }
+
+  if(val > 3600)
+  {
+    OPT_L_WRN("Wrong value too large ("+std::to_string(val)+"); Ignore!");
+    return false;
+  }
+
+  timeout_ = {true, val};
+  return true;
+}
 
 bool Options::set_timeout(
     const std::string & val,
@@ -354,23 +526,24 @@ bool Options::set_timeout(
     return false;
   }
 
-  if(tmp_int < 1)
-  {
-    OPT_L_WRN("Wrong value too small ("+val+"); Ignore!");
-    return false;
-  }
-
-  if(tmp_int > 3600)
-  {
-    OPT_L_WRN("Wrong value too large ("+val+"); Ignore!");
-    return false;
-  }
-
-  timeout_ = {true, tmp_int};
-  return true;
+  return set_timeout(tmp_int, log);
 }
 
 //------------------------------------------------------------------------------
+
+bool Options::set_windowsize(
+    const int & val,
+    fLogMsg log)
+{
+  if(val < 1)
+  {
+    OPT_L_WRN("Wrong value too small ("+std::to_string(val)+"); Ignore!");
+    return false;
+  }
+
+  windowsize_ = {true, val};
+  return true;
+}
 
 bool Options::set_windowsize(
     const std::string & val,
@@ -393,17 +566,24 @@ bool Options::set_windowsize(
     return false;
   }
 
-  if(tmp_int < 1)
-  {
-    OPT_L_WRN("Wrong value too small ("+val+"); Ignore!");
-    return false;
-  }
-
-  windowsize_ = {true, tmp_int};
-  return true;
+  return set_windowsize(tmp_int, log);
 }
 
 //------------------------------------------------------------------------------
+
+bool Options::set_tsize(
+    const int & val,
+    fLogMsg log)
+{
+  if(val < 0)
+  {
+    OPT_L_WRN("Wrong value too small ("+std::to_string(val)+"); Ignore!");
+    return false;
+  }
+
+  tsize_ = {true, val};
+  return true;
+}
 
 bool Options::set_tsize(
     const std::string & val,
@@ -426,14 +606,7 @@ bool Options::set_tsize(
     return false;
   }
 
-  if(tmp_int < 0)
-  {
-    OPT_L_WRN("Wrong value too small ("+val+"); Ignore!");
-    return false;
-  }
-
-  tsize_ = {true, tmp_int};
-  return true;
+  return set_tsize(tmp_int, log);
 }
 
 //------------------------------------------------------------------------------
@@ -470,6 +643,37 @@ bool Options::set_transfer_mode(
 
   return ret;
 }
+
+//------------------------------------------------------------------------------
+
+void Options::reset_blksize()
+{
+  blksize_ = {false, constants::dflt_blksize};
+}
+
+void Options::reset_timeout()
+{
+  blksize_ = {false, constants::dflt_timeout};
+}
+
+void Options::reset_windowsize()
+{
+  blksize_ = {false, constants::dflt_windowsize};
+}
+
+void Options::reset_tsize()
+{
+  blksize_ = {false, constants::dflt_tsize};
+}
+
+void Options::reset_all()
+{
+  reset_blksize();
+  reset_timeout();
+  reset_windowsize();
+  reset_tsize();
+}
+
 
 //------------------------------------------------------------------------------
 

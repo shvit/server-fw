@@ -192,9 +192,13 @@ public:
    *  \param [in] cb_logging Callback for logging
    *  \return True if no fatal errors, else - false
    */
-  bool buffer_parse_ack(
+  bool buffer_parse_oack(
       const SmBuf & buf,
       const size_t & buf_size,
+      fLogMsg cb_logging=nullptr);
+
+  void apply_oack(
+      const Options & new_opt,
       fLogMsg cb_logging=nullptr);
 
   /** \brief Set request type
@@ -224,6 +228,10 @@ public:
       const std::string & val,
       fLogMsg log = nullptr);
 
+  bool set_blksize(
+      const int & val,
+      fLogMsg log = nullptr);
+
   /** \brief Set 'timeout' from string value
    *
    *  \param [in] val String value
@@ -232,6 +240,10 @@ public:
    */
   bool set_timeout(
       const std::string & val,
+      fLogMsg log = nullptr);
+
+  bool set_timeout(
+      const int & val,
       fLogMsg log = nullptr);
 
   /** \brief Set 'windowsize' from string value
@@ -244,6 +256,10 @@ public:
       const std::string & val,
       fLogMsg log = nullptr);
 
+  bool set_windowsize(
+      const int & val,
+      fLogMsg log = nullptr);
+
   /** \brief Set 'tsize' from string value
    *
    *  \param [in] val String value
@@ -252,6 +268,10 @@ public:
    */
   bool set_tsize(
       const std::string & val,
+      fLogMsg log = nullptr);
+
+  bool set_tsize(
+      const int & val,
       fLogMsg log = nullptr);
 
   /** \brief Set transfer mode from string value
@@ -263,6 +283,13 @@ public:
   bool set_transfer_mode(
       const std::string & val,
       fLogMsg log = nullptr);
+
+  void reset_blksize();
+  void reset_timeout();
+  void reset_windowsize();
+  void reset_tsize();
+  void reset_all();
+
 
 };
 

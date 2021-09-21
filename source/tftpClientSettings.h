@@ -80,6 +80,8 @@ public:
 
   Options opt; ///< Options with remote filename
 
+  uint16_t  retransmit_count;
+
   /** \brief Local used logger method
    *
    *  Safe use

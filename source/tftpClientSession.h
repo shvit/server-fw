@@ -9,7 +9,6 @@
 #define SOURCE_TFTPCLIENTSESSION_H_
 
 #include <atomic>
-#include <fstream>
 #include <experimental/filesystem>
 
 #include "tftpCommon.h"
@@ -48,8 +47,6 @@ protected:
   Addr             local_addr_; ///< Local address
   int              socket_;     ///< Socket
   size_t           stage_;      ///< Full (!) number of processed block
-  std::ifstream    file_in_;    ///< Input file stream
-  std::ofstream    file_out_;   ///< Output file stream
   size_t           file_size_;  ///< Size for processed data
   uint16_t         error_code_;    ///< First error info - code
   std::string      error_message_; ///< First error info - message
@@ -145,6 +142,8 @@ protected:
    */
   auto receive_no_wait(SmBufEx & buf) -> TripleResult;
 
+  bool is_window_close(const size_t & curr_stage) const;
+
 public:
 
   /** \brief Default constructor
@@ -183,7 +182,7 @@ public:
    *
    *  \return True if in/out file stream opened
    */
-  bool active() const;
+  //bool active() const;
 
   /** \brief Pull data from network (receive)
    *
@@ -193,10 +192,10 @@ public:
    *  \param [in] position Position received block
    *  \return 0 on success, -1 on error
    */
-  auto write(
-      SmBufEx::const_iterator buf_begin,
-      SmBufEx::const_iterator buf_end,
-      const size_t & position) -> ssize_t;
+  //auto write(
+  //    SmBufEx::const_iterator buf_begin,
+  //    SmBufEx::const_iterator buf_end,
+  //    const size_t & position) -> ssize_t;
 
   /** \brief Push data to network (transmit)
    *
@@ -206,10 +205,10 @@ public:
    *  \param [in] position Position transmitted block
    *  \return Processed size, -1 on error
    */
-  auto read(
-      SmBufEx::iterator buf_begin,
-      SmBufEx::iterator buf_end,
-      const size_t & position) -> ssize_t;
+  //auto read(
+  //    SmBufEx::iterator buf_begin,
+  //    SmBufEx::iterator buf_end,
+  //    const size_t & position) -> ssize_t;
 
   /** \brief Close all opened files and close opened socket
    */
@@ -224,6 +223,8 @@ public:
   void need_break();
 
   bool is_finished() const;
+
+  void set_srv_port(uint16_t new_port);
 
 };
 
