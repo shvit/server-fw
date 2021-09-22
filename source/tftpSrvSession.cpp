@@ -514,6 +514,12 @@ void SrvSession::run()
               timeout_reset();
               switch_to(State::ack_rx);
             }
+            else
+            {
+              ++stage_;
+            }
+
+            //if(!is_window_close(stage_)) ++stage_;
           }
           else
           {

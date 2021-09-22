@@ -394,7 +394,7 @@ auto ClientSession::run_session() -> ClientSessionResult
             break;
           case TripleResult::ok:
             last_blk_processed_ = local_buf.data_size() != (block_size()+4U);
-            if(is_window_close(stage_))
+            if(is_window_close(stage_) || last_blk_processed_)
             {
               switch_to(State::ack_tx);
             }
@@ -469,10 +469,10 @@ auto ClientSession::run_session() -> ClientSessionResult
                   switch_to(State::error_and_stop);
                   break;
                 case SrvReq::read:
-                  switch_to(State::data_tx);
+                  switch_to(State::ack_tx);
                   break;
                 case SrvReq::write:
-                  switch_to(State::ack_tx);
+                  switch_to(State::data_tx);
                   break;
               }
               timeout_reset();
