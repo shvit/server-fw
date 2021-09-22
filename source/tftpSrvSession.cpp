@@ -539,7 +539,7 @@ void SrvSession::run()
             break;
           case TripleResult::ok:
             last_blk_processed_ = local_buf.data_size() != (block_size()+4U);
-            if(is_window_close(stage_))
+            if(is_window_close(stage_) || last_blk_processed_)
             {
               switch_to(State::ack_tx);
             }

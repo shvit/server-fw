@@ -66,7 +66,8 @@ bool ClientSession::switch_to(const State & new_state)
         break;
       case State::ack_options:
         ret = (new_state == State::data_tx) ||
-              (new_state == State::ack_tx );
+              (new_state == State::ack_tx ) ||
+              (new_state == State::error_and_stop);
         break;
       case State::data_tx:
         ret = (new_state == State::ack_rx) ||
@@ -353,7 +354,21 @@ auto ClientSession::run_session() -> ClientSessionResult
             }
             break;
           case TripleResult::ok:
-            switch_to(State::ack_tx);
+            switch(settings_->opt.request_type())
+            {
+              case SrvReq::read:
+                switch_to(State::ack_tx);
+                stage_ = 0U;
+                break;
+              case SrvReq::write:
+                switch_to(State::data_tx);
+                stage_ = 1U;
+                break;
+              default: // never do it
+                switch_to(State::error_and_stop);
+                break;
+            }
+
             break;
           case TripleResult::fail:
             switch_to(State::error_and_stop);
@@ -374,6 +389,10 @@ auto ClientSession::run_session() -> ClientSessionResult
             {
               timeout_reset();
               switch_to(State::ack_rx);
+            }
+            else
+            {
+              ++stage_;
             }
           }
           else
@@ -625,7 +644,7 @@ void ClientSession::construct_data(SmBufEx & buf)
 
   if(stage_ != 0U)
   {
-    file_man_->read(
+    ret = file_man_->read(
         buf.begin() + buf.data_size(),
         buf.begin() + buf.data_size() + block_size(),
         (stage_-1U) *  block_size());
@@ -767,23 +786,19 @@ auto ClientSession::receive_no_wait(SmBufEx & buf) -> TripleResult
       break;
   }
 
+  // Set server port from first server pkt
+  if(stage_ == 0U) set_srv_port(rx_client.port());
+
   // Check client address is right
-  if(stage_ == 0U)
+  if(rx_client.eqv_addr_only(settings_->srv_addr))
   {
-    set_srv_port(rx_client.port());
+    L_DBG(rx_msg+" from client");
   }
   else
   {
-    if(rx_client.eqv_addr_only(settings_->srv_addr))
-    {
-      L_DBG(rx_msg+" from client");
-    }
-    else
-    {
-      L_WRN("Alarm! Intrusion detect from addr "+rx_client.str()+
-            " with data: "+rx_msg+". Ignore pkt!");
-      return TripleResult::nop;
-    }
+    L_WRN("Alarm! Intrusion detect from addr "+rx_client.str()+
+          " with data: "+rx_msg+". Ignore pkt!");
+    return TripleResult::nop;
   }
 
   ssize_t rx_stage = (ssize_t)stage_ +
@@ -869,8 +884,12 @@ auto ClientSession::receive_no_wait(SmBufEx & buf) -> TripleResult
         return  TripleResult::ok;
       }
       break;
+
     case 5U: // ERROR
-      break;
+      L_ERR("Server reply error #" + std::to_string(rx_blk)+
+                          " '"+buf.get_string(4U)+"'");
+      return TripleResult::fail;
+
     case 6U: // OPTION ACK
       if(stat_ == State::ack_options)
       {
