@@ -29,6 +29,10 @@ namespace unit_tests
 
   VecMD5 file_md5(file_sizes.size());
 
+  bool rand_is_init{false};
+
+
+
 // -----------------------------------------------------------------------------
 
 bool check_local_directory()
@@ -96,9 +100,25 @@ auto md5_as_str(const char * addr) -> std::string
   return ss.str();
 }
 
-} // namespace unit_tests
-
 // -----------------------------------------------------------------------------
+
+uint16_t gen_test_port()
+{
+  if(!rand_is_init)
+  {
+    srand(time(0));
+    rand_is_init = true;
+  }
+
+  return port_min + rand() % (port_max-port_min+1U);
+}
+
+auto gen_file_name(const size_t & it) -> std::string
+{
+  return "file_"+std::to_string(it+1);
+}
+
+} // namespace unit_tests ------------------------------------------------------
 
 UNIT_TEST_SUITE_BEGIN(MainTest)
 

@@ -16,6 +16,8 @@
 #include <openssl/md5.h>
 #include <experimental/filesystem>
 
+#include "../tftpCommon.h"
+
 using namespace std::experimental;
 
 using Path = filesystem::path;
@@ -26,7 +28,14 @@ using VecMD5 = std::vector<char[MD5_DIGEST_LENGTH]>;
 
 namespace unit_tests
 {
-  /// Base temp directory preamble
+  /// Testing port - minimum value
+  constexpr uint16_t port_min = 2000U;
+
+  /// Testing port - maximum value
+  constexpr uint16_t port_max = 65535U;
+
+
+/// Base temp directory preamble
   constexpr std::string_view local_test_dir ="server-fw_test_data";
 
   /// Sizes of test files generated in unit-tests
@@ -93,7 +102,104 @@ namespace unit_tests
    */
   void files_delete();
 
-}
+  /** \brief Generate port for testing
+   *
+   *  Need before use run srand(time(0))
+   */
+  uint16_t gen_test_port();
+
+  auto gen_file_name(const size_t & it) -> std::string;
+
+  //------------------------------------------------------------------------------
+
+  /** \brief Helper class for check logging
+   *
+   *  Use levels 1..N
+   */
+  template<size_t N>
+  class FakeLog
+  {
+  protected:
+    bool verb_;
+    std::array<size_t, N> stor_;
+  public:
+
+    FakeLog(bool ver=false): verb_{ver}, stor_{0U} {}
+
+    FakeLog(const std::array<size_t, N> & src, bool ver=false): verb_{ver}, stor_(src) {}
+
+    void syslog(const tftp::LogLvl l, std::string_view m)
+    {
+      if(verb_)
+      {
+        std::cout << "[LOG] " << tftp::to_string(l) << " " << m << std::endl;
+      }
+
+      if(int tmp_lvl=(int)l; (tmp_lvl>0) && (tmp_lvl<=(int)N)) ++stor_[(size_t)(tmp_lvl-1)];
+    }
+
+    void show() const
+    {
+      std::cout << "*log* ";
+      for(const auto & c : stor_) std::cout << c << " ";
+      std::cout << std::endl;
+    }
+
+    void clear() { for(size_t it=0U; it < N; ++it) stor_[it] = 0U; }
+
+    auto operator[](const size_t & idx) -> const size_t & { return stor_[idx-1U]; }
+
+    bool chk(std::array<size_t,N> v) const
+    {
+      for(size_t it=0U; it < N; ++it) if(stor_[it] != v[it]) return false;
+      return true;
+    }
+
+    bool chk_clear(std::array<size_t,N> v)
+    {
+      bool ret = chk(v);
+      clear();
+      return ret;
+    }
+
+    void verb_on() { verb_ = true; }
+    void verb_off() { verb_ = false; }
+
+  };
+
+  //------------------------------------------------------------------------------
+
+  /** \brief Helper class for check set errors
+   */
+  class FakeError
+  {
+  protected:
+    uint16_t    code_;
+    std::string msg_;
+    size_t      count_;
+  public:
+    FakeError(): code_{0U}, msg_{}, count_{0U} {}
+
+    auto was_error() const -> const size_t & { return count_; }
+
+    auto code() const -> const uint16_t & { return code_; }
+
+    auto err_msg() const -> const std::string & { return msg_; }
+
+    void set_error(const uint16_t new_code, std::string_view new_msg)
+    {
+      if(!count_++) { code_ = new_code; msg_.assign(new_msg); }
+    }
+
+    void clear() { code_ = 0U; msg_.clear(); count_ = 0U; }
+
+    void show() const
+    {
+      std::cout << "*err* #" << code_ << " '" << msg_ << "' total count=" << count_ << std::endl;
+    }
+  };
+
+} // namespace unit_tests
 
 //------------------------------------------------------------------------------
 
