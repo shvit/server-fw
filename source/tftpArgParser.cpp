@@ -56,8 +56,7 @@ auto ArgParser::run(
 
   L_DBG("Parsing arguments started");
 
-  data_result_.first.clear();
-  data_result_.second.clear();
+  clear();
 
   bool is_end_parse=false;
 
@@ -447,6 +446,14 @@ auto ArgParser::get_parsed_int(const int & id) const -> std::optional<int>
   }
 
   return ret;
+}
+
+// -----------------------------------------------------------------------------
+
+void ArgParser::clear()
+{
+  data_result_.first.clear();
+  data_result_.second.clear();
 }
 
 // -----------------------------------------------------------------------------

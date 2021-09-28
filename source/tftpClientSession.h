@@ -55,6 +55,7 @@ protected:
   std::atomic_bool stopped_;    ///< Flag for stop session
 
   pDataMgr         file_man_;   ///< Data manager
+  bool             srv_session_set_;
 
   /** \brief Switch state machine no new state
    *
@@ -93,13 +94,6 @@ protected:
    *  \return Block size value
    */
   auto block_size() const -> uint16_t;
-
-  /** \brief Run client TFTP session
-   *
-   *  Need already inited
-   *  \return Value of enum type ClientSessionResult
-   */
-  auto run_session() -> ClientSessionResult;
 
   /** \brief Construct tftp request
    *
@@ -158,6 +152,8 @@ public:
    */
   ClientSession(pClientSettings && sett, fLogMsg new_cb);
 
+  static auto create(pClientSettings && sett, fLogMsg new_cb) -> pClientSession;
+
   /** \brief Init session
    *
    *  Doing:
@@ -177,6 +173,13 @@ public:
    *  \return Value of enum type ClientSessionResult
    */
   auto run() -> ClientSessionResult;
+
+  /** \brief Run client TFTP session
+   *
+   *  Need already inited
+   *  \return Value of enum type ClientSessionResult
+   */
+  auto run_session() -> ClientSessionResult;
 
   /** \brief Check opened any file
    *
@@ -224,7 +227,7 @@ public:
 
   bool is_finished() const;
 
-  void set_srv_port(uint16_t new_port);
+  //void set_srv_session(uint16_t new_port);
 
 };
 

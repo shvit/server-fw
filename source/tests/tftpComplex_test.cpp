@@ -29,8 +29,17 @@ using ClientCases = std::vector<ClientCase>;
 
 const ClientCases cc{
   {{},{0U,0U,0U,0U,0U,0U,0U}, 0U},
-  {{"--blksize", "1000"},{0U,0U,0U,0U,0U,0U,0U}, 0U},
+//  {{"--blksize", "1000"},{0U,0U,0U,0U,0U,0U,0U}, 0U},
 };
+
+struct ClientData
+{
+  unit_tests::FakeLog<7> log{false};
+  tftp::pClientSession  p_ses{nullptr};
+  std::thread           thr{};
+};
+
+using ClientsData = std::vector<ClientData>;
 
 UNIT_TEST_CASE_BEGIN(main, "Test server with client")
 
@@ -74,12 +83,12 @@ auto cb_syslog_srv = std::bind(
     std::placeholders::_1,
     std::placeholders::_2);
 
-unit_tests::FakeLog<7> fl_clnt;
-auto cb_syslog_clnt = std::bind(
-    & unit_tests::FakeLog<7>::syslog,
-    & fl_clnt,
-    std::placeholders::_1,
-    std::placeholders::_2);
+//unit_tests::FakeLog<7> fl_clnt;
+//auto cb_syslog_clnt = std::bind(
+//    & unit_tests::FakeLog<7>::syslog,
+//    & fl_clnt,
+//    std::placeholders::_1,
+//    std::placeholders::_2);
 
 
 //unit_tests::FakeError fe;
@@ -127,24 +136,39 @@ TEST_CHECK_TRUE(fl_srv.chk_clear({0,0,0,0,0,3,0}));
 if(!is_srv_init)
 {
   std::cout << "Skip server-client complex tests (server init failed)" << std::endl;
-  goto FINISH;
 }
-
-{ // server OK
-
+else
+{
+  // Run server
   auto srv_thr = std::thread{& tftp::Srv::main_loop, tst_srv.get()};
   usleep(500000U);
 
+  // Run sesions
+
+  ClientsData cl_data;
+  tftp::ArgParser ap_cl{tftp::constants::client_arg_settings};
+
   const char * tst_argv[100U];
   size_t tst_argc;
-  size_t it_case=0U;
+  //size_t it_case=0U;
+
+  //auto log_clients=[&](size_t id, const tftp::LogLvl lvl, std::string_view msg) -> void
+  //  {
+      //++cl_data[id].log[(int)lvl - 1];
+  //    cl_data[id].log.syslog(lvl, msg);
+  //  };
 
   for(size_t it_cl = 0U; it_cl < cc.size(); ++it_cl)
   {
-    for(int it_dir=1; it_dir >= 0; --it_dir)
+    for(int it_dir=1; it_dir > 0; --it_dir)
     {
-      ++it_case;
-      std::string f_new{unit_tests::gen_file_name(it_case)};
+      cl_data.emplace_back();
+
+      filesystem::path pf_new{unit_tests::local_dir};
+      pf_new /= unit_tests::gen_file_name(cl_data.size());
+
+      std::string f_new{pf_new.string()};
+      std::cout << " * Client file (" << cl_data.size() << ") " << f_new << std::endl;
 
       tst_argc =0U;
       tst_argv[tst_argc++] = "tftp-client-fake";
@@ -167,38 +191,81 @@ if(!is_srv_init)
 
 
       tst_argv[tst_argc++] = srv_addr.c_str();
+
+    auto cb_syslog_clnt = std::bind(
+        & unit_tests::FakeLog<7>::syslog,
+        & cl_data[cl_data.size() - 1U].log,
+        std::placeholders::_1,
+        std::placeholders::_2);
+
+    ap_cl.run(
+        cb_syslog_clnt,
+        tst_argc,
+        const_cast<char **>(tst_argv));
+
+    auto p_sett = tftp::ClientSettings::create();
+
+    p_sett->load_options(cb_syslog_clnt, ap_cl);
+
+    cl_data[cl_data.size() - 1U].p_ses = tftp::ClientSession::create(
+        std::move(p_sett),
+        cb_syslog_clnt);
+
+    TEST_CHECK_TRUE(cl_data[cl_data.size() - 1U].p_ses->init());
+
+    cl_data[cl_data.size() - 1U].thr = std::thread{
+      & tftp::ClientSession::run_session,
+      cl_data[cl_data.size() - 1U].p_ses.get()};
+
+    }
+  }
+
+  // Wait all clients finished
+  if(cl_data.size())
+  {
+    bool any_alive = true;
+    while(any_alive)
+    {
+      any_alive = false;
+
+      for(auto & cl : cl_data)
+      {
+        any_alive = any_alive || !cl.p_ses->is_finished();
+      }
     }
 
-
+    for(auto & cl : cl_data) cl.thr.join();
   }
 
 //fl_srv.show();
 //fl_srv.verb_on();
 
-tftp::ArgParser ap_clnt{tftp::constants::client_arg_settings};
+//tftp::ArgParser ap_clnt{tftp::constants::client_arg_settings};
 
-ap_clnt.run(cb_syslog_clnt, 0, nullptr);
-
-
-
-std::cout << "* 1" << std::endl;
-
-usleep(15000000U);
-
-std::cout << "* 2" << std::endl;
+//ap_clnt.run(cb_syslog_clnt, 0, nullptr);
 
 
-//FIN_THR: // terminate server
 
-tst_srv->stop();
-while(!tst_srv->is_stopped()) {};
-srv_thr.join();
+//std::cout << "* 1" << std::endl;
+
+//usleep(15000000U);
+
+//std::cout << "* 2" << std::endl;
+
+
+//FIN_THR:
+
+  // terminate server
+  tst_srv->stop();
+  while(!tst_srv->is_stopped()) {};
+  srv_thr.join();
 }
 
-FINISH:
+//FINISH:
+//  usleep(1000U);
 
 // delete temporary files
-unit_tests::files_delete();
+//unit_tests::files_delete();
 
 //
 UNIT_TEST_CASE_END

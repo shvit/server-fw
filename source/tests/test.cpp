@@ -115,7 +115,7 @@ uint16_t gen_test_port()
 
 auto gen_file_name(const size_t & it) -> std::string
 {
-  return "file_"+std::to_string(it+1);
+  return "file_"+std::to_string(it);
 }
 
 } // namespace unit_tests ------------------------------------------------------

@@ -31,7 +31,8 @@ ClientSession::ClientSession(pClientSettings && sett, fLogMsg new_cb):
     error_message_{},
     need_break_{false},
     stopped_{false},
-    file_man_{nullptr}
+    file_man_{nullptr},
+    srv_session_set_{false}
 {
 }
 
@@ -40,6 +41,19 @@ ClientSession::ClientSession(pClientSettings && sett, fLogMsg new_cb):
 ClientSession::ClientSession():
     ClientSession(ClientSettings::create(), nullptr)
 {
+}
+
+//------------------------------------------------------------------------------
+
+auto ClientSession::create(pClientSettings && sett, fLogMsg new_cb) -> pClientSession
+{
+  struct Enabler: public ClientSession
+  {
+    Enabler(pClientSettings && n_sett, fLogMsg n_new_cb):
+      ClientSession(std::move(n_sett), n_new_cb) {};
+  };
+
+  return std::make_unique<Enabler>(std::move(sett), new_cb);
 }
 
 //------------------------------------------------------------------------------
@@ -235,7 +249,8 @@ bool ClientSession::init()
   }
 
 RET_INIT:
-
+  if(ret) switch_to(State::request);
+  stopped_.store(!ret);
   L_INF("Session initialise is "+(ret ? "SUCCESSFUL" : "FAIL"));
   return ret;
 }
@@ -293,7 +308,7 @@ auto ClientSession::run_session() -> ClientSessionResult
 
 
   stage_ = 0U;
-  while(!is_finished())
+  while(!is_finished() && !stopped_)
   {
     switch(stat_)
     {
@@ -515,10 +530,8 @@ auto ClientSession::run_session() -> ClientSessionResult
 
 
   //cancel();
-  //stopped_ = true;
-
   L_INF("Finish session");
-
+  stopped_.store(true);
   return ClientSessionResult::ok;
 }
 
@@ -722,11 +735,11 @@ bool ClientSession::transmit_no_wait(const SmBufEx & buf)
 
 // -----------------------------------------------------------------------------
 
-void ClientSession::set_srv_port(uint16_t new_port)
-{
-  L_DBG("Set new session server port ("+std::to_string(new_port)+") from server reply");
-  settings_->srv_addr.set_port(new_port);
-}
+//void ClientSession::set_srv_port(uint16_t new_port)
+//{
+//  L_DBG("Set new session server port ("+std::to_string(new_port)+") from server reply");
+//  settings_->srv_addr.set_port(new_port);
+//}
 
 // -----------------------------------------------------------------------------
 
@@ -787,7 +800,14 @@ auto ClientSession::receive_no_wait(SmBufEx & buf) -> TripleResult
   }
 
   // Set server port from first server pkt
-  if(stage_ == 0U) set_srv_port(rx_client.port());
+  if(!srv_session_set_)
+  {
+    L_DBG("Set new session server value ("+rx_client.str()+") from server reply");
+    //set_srv_port(rx_client.port());
+    settings_->srv_addr = rx_client;
+
+    srv_session_set_ = true;
+  }
 
   // Check client address is right
   if(rx_client.eqv_addr_only(settings_->srv_addr))
@@ -796,6 +816,8 @@ auto ClientSession::receive_no_wait(SmBufEx & buf) -> TripleResult
   }
   else
   {
+    L_DBG("SRV from settings "+settings_->srv_addr.str());
+    L_DBG("SRV from packet   "+rx_client.str());
     L_WRN("Alarm! Intrusion detect from addr "+rx_client.str()+
           " with data: "+rx_msg+". Ignore pkt!");
     return TripleResult::nop;

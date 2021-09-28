@@ -261,6 +261,8 @@ public:
    */
   auto get_parsed_int(const int & id) const -> std::optional<int>;
 
+  void clear();
+
 };
 
 // -----------------------------------------------------------------------------

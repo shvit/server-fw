@@ -347,4 +347,17 @@ bool Addr::eqv_addr_only(const Addr & right)
 
 // -----------------------------------------------------------------------------
 
+auto Addr::operator=(const Addr & right) -> Addr &
+{
+  std::copy(right.cbegin(),
+            right.cend(),
+            begin());
+
+  data_size_ = right.data_size_;
+
+  return *this;
+}
+
+// -----------------------------------------------------------------------------
+
 } // namespace tftp

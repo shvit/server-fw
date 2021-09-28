@@ -175,6 +175,13 @@ public:
    */
   operator std::string() const;
 
+  /** \brief Copy operator
+   *
+   *  \param [in] right Value of Addr type
+   *  \return Self reference
+   */
+  auto operator=(const Addr & right) -> Addr &;
+
   /* \brief Set family value
    *
    *  Set new value for "data_size"

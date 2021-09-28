@@ -98,6 +98,10 @@ class ClientSettings;
 
 using pClientSettings = std::unique_ptr<ClientSettings>;
 
+class ClientSession;
+
+using pClientSession = std::unique_ptr<ClientSession>;
+
 using VecStr = std::vector<std::string>;
 
 class FileNewAttr;
