@@ -15,6 +15,7 @@
 #include <iostream>
 #include <openssl/md5.h>
 #include <experimental/filesystem>
+#include <sys/syscall.h>
 
 #include "../tftpCommon.h"
 
@@ -132,7 +133,8 @@ namespace unit_tests
     {
       if(verb_)
       {
-        std::cout << "[LOG] " << tftp::to_string(l) << " " << m << std::endl;
+
+        std::cout << "[" << (int)syscall(SYS_gettid) <<"] " << tftp::to_string(l) << " " << m << std::endl;
       }
 
       if(int tmp_lvl=(int)l; (tmp_lvl>0) && (tmp_lvl<=(int)N)) ++stor_[(size_t)(tmp_lvl-1)];
